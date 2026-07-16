@@ -252,65 +252,57 @@ renderWithProviders(<MyComponent />, { route: '/map' })
 
 ## 커밋 컨벤션
 
-이 프로젝트는 [Conventional Commits](https://www.conventionalcommits.org/)을 기반으로 한 커밋 규칙을 따릅니다.
-
-### 커밋 메시지 구조
-
-```text
-<type>(<scope>): <제목>
-
-<본문 (선택)>
-```
-
-### Type
+이 프로젝트는 [Conventional Commits](https://www.conventionalcommits.org/)을 기반으로 한 커밋 규칙을 따릅니다.## Commit Type
 
 | Type | 설명 |
 | --- | --- |
-| `feat` | 새로운 기능 추가 |
-| `fix` | 버그 수정 |
-| `docs` | 문서 수정 (README 등) |
-| `style` | 코드 포맷팅, 세미콜론 등 (로직 변경 없음) |
-| `refactor` | 기능 변화 없이 코드 구조 개선 |
-| `test` | 테스트 추가/수정 |
-| `chore` | 빌드, 설정, 패키지 매니저 등 기타 작업 |
+| `Feat` | 새로운 기능 구현 |
+| `Delete` | 불필요한 코드나 파일 삭제 |
+| `Mod` | 코드 및 내부 파일 수정 |
+| `Add` | feat 이외의 부수적인 코드, 파일, 라이브러리 추가 |
+| `Fix` | 버그 및 오류 해결 |
+| `Chore` | 버전, 패키지 구조, 함수·변수명 변경 등 작은 작업 |
+| `HOTFIX` | 배포본 긴급 수정 |
+| `Rename` | 파일·폴더명 수정 |
+| `Docs` | README, Wiki 등 문서 작업 |
+| `Refactor` | 코드 리팩토링 |
+| `Comment` | 주석 추가 및 변경 |
+| `Test` | 테스트 추가·수정 (FE) |
+| `Style` | 포맷팅만 변경, 로직 변경 없음 (FE) |
 
-### 작성 규칙
+### 커밋 메시지 양식
 
-- 제목은 **50자 이내**로 간결하게 작성합니다.
-- 제목은 마침표로 끝내지 않습니다.
-- 하나의 커밋에는 하나의 논리적 변경만 담습니다.
-- 본문에는 **"무엇을 했는지"보다 "왜 했는지"**를 적습니다.
-- 관련 이슈가 있다면 제목 끝에 이슈 번호를 붙입니다. (예: `(#123)`)
+```
+[type] #Issue Number 제목(작업 내용)
 
-### 예시
-
-```text
-feat(auth): 카카오 로그인 연동
-
-fix(cart): 수량 0일 때 상품이 삭제되지 않는 버그 수정
-
-docs: 설치 가이드에 환경 변수 설명 추가 (#42)
-
-refactor: 유저 서비스 로직 분리
+본문 (한 줄로 설명이 가능하면 생략)
 ```
 
-### 커밋 작성 예시 (pnpm / git)
+규칙:
 
-```bash
-# 변경 확인
-git status
-git diff
+- 커밋은 기능/수정 단위로 **잘게** 나눈다.
+- 양식을 반드시 지킨다.
+- 제목은 간결하게, 마침표로 끝내지 않는다.
 
-# 스테이징 후 커밋
-git add .
-git commit -m "feat(places): 장소 카드 컴포넌트 추가"
+예시:
+
+```
+[Feat] #12 장소 카드 컴포넌트 구현
+[Feat] #12 장소 목록 API 연동
+[Mod] #12 장소 카드 레이아웃 변경
+[Delete] #12 불필요한 import 제거
+[Chore] #12 BottomNavigation 코드 정렬
+[Fix] #12 홈 빈 상태 CTA 클릭 버그 수정
+[Refactor] #6 브릿지 메시지 파싱 로직 분리
+[Test] #12 PlaceCard 유닛 테스트 추가
+[Docs] #15 README에 pnpm 가이드 추가
 ```
 
 본문이 필요하면:
 
 ```bash
 git commit -m "$(cat <<'EOF'
-feat(bridge): Android 뒤로가기 이벤트 처리
+[Feat] #12: Android 뒤로가기 이벤트 처리
 
 WebView에서 시스템 뒤로가기를 웹 히스토리와 맞추기 위함
 EOF
