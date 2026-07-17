@@ -1,23 +1,24 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const inputStyle = style({
   width: '100%',
   minHeight: vars.size.touch,
   padding: `${vars.space[3]} ${vars.space[4]}`,
   borderRadius: vars.radius.md,
-  border: `1px solid ${vars.color.border}`,
-  backgroundColor: vars.color.surface,
-  color: vars.color.text,
+  border: `1px solid ${colors.border[1]}`,
+  backgroundColor: colors.surface[1],
+  color: colors.text[1],
   fontSize: vars.fontSize.md,
   selectors: {
     '&::placeholder': {
-      color: vars.color.textMuted,
+      color: colors.text[3],
     },
     '&:focus': {
       outline: 'none',
-      borderColor: vars.color.brand,
-      boxShadow: `0 0 0 3px ${vars.color.brandSoft}`,
+      borderColor: colors.primary[500],
+      boxShadow: `0 0 0 3px ${colors.primary[100]}`,
     },
   },
 })

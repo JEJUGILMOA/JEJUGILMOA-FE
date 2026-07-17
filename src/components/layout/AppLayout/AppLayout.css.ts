@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const layoutStyle = style({
   display: 'flex',
@@ -10,7 +11,7 @@ export const layoutStyle = style({
       minHeight: '100dvh',
     },
   },
-  backgroundColor: vars.color.background,
+  backgroundColor: colors.background[2],
   paddingBottom: 'calc(var(--keyboard-inset, 0px))',
 })
 

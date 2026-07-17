@@ -1,6 +1,7 @@
 import { style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const navStyle = style({
   position: 'fixed',
@@ -12,8 +13,8 @@ export const navStyle = style({
   gridTemplateColumns: 'repeat(5, 1fr)',
   minHeight: vars.size.bottomNav,
   paddingBottom: 'env(safe-area-inset-bottom)',
-  backgroundColor: vars.color.surface,
-  borderTop: `1px solid ${vars.color.border}`,
+  backgroundColor: colors.surface[1],
+  borderTop: `1px solid ${colors.border[1]}`,
 })
 
 export const linkStyle = recipe({
@@ -24,14 +25,14 @@ export const linkStyle = recipe({
     justifyContent: 'center',
     gap: vars.space[1],
     minHeight: vars.size.touch,
-    color: vars.color.textMuted,
+    color: colors.text[3],
     fontSize: vars.fontSize.xs,
     fontWeight: vars.fontWeight.medium,
   },
   variants: {
     active: {
       true: {
-        color: vars.color.brand,
+        color: colors.primary[500],
       },
     },
   },

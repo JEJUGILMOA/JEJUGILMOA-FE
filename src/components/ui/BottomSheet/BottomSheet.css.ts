@@ -1,11 +1,12 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const overlayStyle = style({
   position: 'fixed',
   inset: 0,
   zIndex: vars.zIndex.overlay,
-  backgroundColor: vars.color.overlay,
+  backgroundColor: vars.overlay,
 })
 
 export const contentStyle = style({
@@ -22,7 +23,7 @@ export const contentStyle = style({
   paddingBottom: `calc(${vars.space[6]} + env(safe-area-inset-bottom))`,
   borderTopLeftRadius: vars.radius.xl,
   borderTopRightRadius: vars.radius.xl,
-  backgroundColor: vars.color.surface,
+  backgroundColor: colors.surface[1],
   outline: 'none',
 })
 
@@ -31,7 +32,7 @@ export const handleStyle = style({
   height: '4px',
   marginInline: 'auto',
   borderRadius: vars.radius.full,
-  backgroundColor: vars.color.border,
+  backgroundColor: colors.border[1],
 })
 
 export const titleStyle = style({

@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const headerStyle = style({
   position: 'sticky',
@@ -12,8 +13,8 @@ export const headerStyle = style({
   paddingTop: 'env(safe-area-inset-top)',
   paddingLeft: `max(${vars.space[4]}, env(safe-area-inset-left))`,
   paddingRight: `max(${vars.space[4]}, env(safe-area-inset-right))`,
-  backgroundColor: vars.color.surface,
-  borderBottom: `1px solid ${vars.color.border}`,
+  backgroundColor: colors.surface[1],
+  borderBottom: `1px solid ${colors.border[1]}`,
 })
 
 export const titleStyle = style({

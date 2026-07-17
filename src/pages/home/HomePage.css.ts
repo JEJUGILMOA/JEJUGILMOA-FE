@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const pageStyle = style({
   display: 'flex',
@@ -13,8 +14,8 @@ export const heroStyle = style({
   gap: vars.space[2],
   padding: vars.space[5],
   borderRadius: vars.radius.xl,
-  background: `linear-gradient(160deg, ${vars.color.brandSoft}, ${vars.color.surface})`,
-  border: `1px solid ${vars.color.border}`,
+  background: `linear-gradient(160deg, ${colors.primary[100]}, ${colors.surface[1]})`,
+  border: `1px solid ${colors.border[1]}`,
 })
 
 export const sectionStyle = style({

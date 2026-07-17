@@ -1,7 +1,8 @@
 import { defineProperties, createSprinkles } from '@vanilla-extract/sprinkles'
-import { vars } from './theme.css.ts'
+import { colors } from './colors.css.ts'
+import { vars } from './vars.css.ts'
 
-const spaceProperties = defineProperties({
+const properties = defineProperties({
   properties: {
     display: ['none', 'flex', 'block', 'inline-flex', 'grid'],
     flexDirection: ['row', 'column'],
@@ -20,21 +21,22 @@ const spaceProperties = defineProperties({
     minHeight: vars.size,
     borderRadius: vars.radius,
     background: {
-      surface: vars.color.surface,
-      background: vars.color.background,
-      brand: vars.color.brand,
-      brandSoft: vars.color.brandSoft,
-      muted: vars.color.surfaceMuted,
+      surface: colors.surface[1],
+      background: colors.background[2],
+      primary: colors.primary[500],
+      primarySoft: colors.primary[100],
+      muted: colors.surface[3],
     },
     color: {
-      text: vars.color.text,
-      muted: vars.color.textMuted,
-      inverse: vars.color.textInverse,
-      brand: vars.color.brand,
-      danger: vars.color.danger,
+      text: colors.text[1],
+      muted: colors.text[3],
+      inverse: colors.text[5],
+      primary: colors.primary[500],
+      secondary: colors.secondary[500],
+      error: colors.error[500],
     },
   },
 })
 
-export const sprinkles = createSprinkles(spaceProperties)
+export const sprinkles = createSprinkles(properties)
 export type Sprinkles = Parameters<typeof sprinkles>[0]

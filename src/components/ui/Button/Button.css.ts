@@ -1,5 +1,6 @@
 import { recipe } from '@vanilla-extract/recipes'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const buttonRecipe = recipe({
   base: {
@@ -27,21 +28,21 @@ export const buttonRecipe = recipe({
   variants: {
     variant: {
       primary: {
-        backgroundColor: vars.color.brand,
-        color: vars.color.textInverse,
+        backgroundColor: colors.primary[500],
+        color: colors.text[5],
       },
       secondary: {
-        backgroundColor: vars.color.brandSoft,
-        color: vars.color.brand,
+        backgroundColor: colors.primary[100],
+        color: colors.primary[500],
       },
       ghost: {
         backgroundColor: 'transparent',
-        color: vars.color.text,
-        border: `1px solid ${vars.color.border}`,
+        color: colors.text[1],
+        border: `1px solid ${colors.border[1]}`,
       },
       danger: {
-        backgroundColor: vars.color.danger,
-        color: vars.color.textInverse,
+        backgroundColor: colors.error[500],
+        color: colors.text[5],
       },
     },
     size: {

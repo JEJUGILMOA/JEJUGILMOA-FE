@@ -4,7 +4,6 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { Toaster } from 'sonner'
 import { queryClient } from '@/api/queryClient'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
-import { lightTheme } from '@/styles/theme.css.ts'
 
 type AppProvidersProps = {
   children: ReactNode
@@ -22,13 +21,11 @@ function AppErrorFallback({ resetErrorBoundary }: { resetErrorBoundary: () => vo
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
-    <div className={lightTheme}>
-      <QueryClientProvider client={queryClient}>
-        <ErrorBoundary FallbackComponent={AppErrorFallback}>
-          {children}
-          <Toaster position="top-center" richColors closeButton />
-        </ErrorBoundary>
-      </QueryClientProvider>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary FallbackComponent={AppErrorFallback}>
+        {children}
+        <Toaster position="top-center" richColors closeButton />
+      </ErrorBoundary>
+    </QueryClientProvider>
   )
 }

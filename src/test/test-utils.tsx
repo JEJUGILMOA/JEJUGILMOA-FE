@@ -2,7 +2,6 @@ import { render } from '@testing-library/react'
 import type { ReactElement, ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
-import { lightTheme } from '@/styles/theme.css.ts'
 
 function createTestQueryClient() {
   return new QueryClient({
@@ -22,11 +21,9 @@ export function renderWithProviders(
 
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <div className={lightTheme}>
-        <QueryClientProvider client={queryClient}>
-          <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
-        </QueryClientProvider>
-      </div>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+      </QueryClientProvider>
     )
   }
 

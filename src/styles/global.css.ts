@@ -1,13 +1,15 @@
 import { globalStyle } from '@vanilla-extract/css'
-import { vars } from './theme.css.ts'
+import { colors } from './colors.css.ts'
+import { vars } from './vars.css.ts'
 
 globalStyle('body', {
-  fontFamily:
-    '"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-  fontSize: vars.fontSize.md,
+  fontFamily: vars.fontFamily.sans,
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.regular,
+  letterSpacing: '-0.01em',
   lineHeight: vars.lineHeight.normal,
-  color: vars.color.text,
-  backgroundColor: vars.color.background,
+  color: colors.text[1],
+  backgroundColor: colors.background[2],
   fontSynthesis: 'none',
   textRendering: 'optimizeLegibility',
   WebkitFontSmoothing: 'antialiased',
@@ -15,13 +17,14 @@ globalStyle('body', {
 })
 
 globalStyle('h1, h2, h3, h4, h5, h6', {
-  color: vars.color.text,
+  color: colors.text[1],
+  fontFamily: vars.fontFamily.sans,
   lineHeight: vars.lineHeight.tight,
-  fontWeight: vars.fontWeight.semibold,
+  fontWeight: vars.fontWeight.bold,
 })
 
 globalStyle(':focus-visible', {
-  outline: `2px solid ${vars.color.brand}`,
+  outline: `2px solid ${colors.primary[500]}`,
   outlineOffset: '2px',
 })
 

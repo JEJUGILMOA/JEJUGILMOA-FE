@@ -1,9 +1,10 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const cardStyle = style({
-  backgroundColor: vars.color.surface,
-  border: `1px solid ${vars.color.border}`,
+  backgroundColor: colors.surface[1],
+  border: `1px solid ${colors.border[1]}`,
   borderRadius: vars.radius.lg,
   boxShadow: vars.shadow.sm,
   padding: vars.space[4],
@@ -16,7 +17,7 @@ export const cardTitleStyle = style({
 })
 
 export const cardBodyStyle = style({
-  color: vars.color.textMuted,
+  color: colors.text[3],
   fontSize: vars.fontSize.sm,
   lineHeight: vars.lineHeight.normal,
 })

@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const pageStyle = style({
   display: 'flex',

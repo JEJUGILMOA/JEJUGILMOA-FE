@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const overlayStyle = style({
   position: 'fixed',
@@ -9,7 +10,7 @@ export const overlayStyle = style({
   alignItems: 'center',
   justifyContent: 'center',
   padding: vars.space[4],
-  backgroundColor: vars.color.overlay,
+  backgroundColor: vars.overlay,
 })
 
 export const panelStyle = style({
@@ -20,7 +21,7 @@ export const panelStyle = style({
   gap: vars.space[3],
   padding: vars.space[5],
   borderRadius: vars.radius.xl,
-  backgroundColor: vars.color.surface,
+  backgroundColor: colors.surface[1],
   boxShadow: vars.shadow.lg,
 })
 

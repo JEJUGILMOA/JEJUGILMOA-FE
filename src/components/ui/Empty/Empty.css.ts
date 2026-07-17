@@ -1,5 +1,6 @@
 import { style } from '@vanilla-extract/css'
-import { vars } from '@/styles/theme.css.ts'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
 
 export const emptyStyle = style({
   display: 'flex',
@@ -15,11 +16,11 @@ export const emptyStyle = style({
 export const emptyTitleStyle = style({
   fontSize: vars.fontSize.lg,
   fontWeight: vars.fontWeight.semibold,
-  color: vars.color.text,
+  color: colors.text[1],
 })
 
 export const emptyDescriptionStyle = style({
   fontSize: vars.fontSize.sm,
-  color: vars.color.textMuted,
+  color: colors.text[3],
   marginBottom: vars.space[3],
 })
