@@ -250,6 +250,79 @@ renderWithProviders(<MyComponent />, { route: '/map' })
 
 ---
 
+### PR 올리기 전 필수 사항
+
+1. 본인 브랜치에 **develop**(기본 브랜치)을 Pull 받은 뒤 작업한다.
+2. **Push 전** 로컬에서 빌드·테스트가 통과하는지 확인한다.
+    - FE 기준: `pnpm build`, `pnpm test`, `pnpm lint` 등
+    - 확인 결과(스크린샷)를 PR에 첨부한다.
+    - GitHub에서 CI/CD 진행 상황을 확인한다.
+3. Merge 시 컨플릭트가 나면 **자체 해결**한다. 리뷰가 끝나면 **self Merge**한다.
+
+### 브랜치 만들 때 필수 사항
+
+**브랜치 룰**
+
+- `develop` 직접 push 금지 (강제 푸시 방지)
+- Merge는 **리뷰어 2명 승인** 후 (무분별 머지 방지)
+
+**순서**
+
+1. 이슈 생성 후 브랜치 생성
+2. `develop` 브랜치 Pull (진행 중인 브랜치에서 이동 후 Pull & Checkout)
+3. **작업 브랜치가 아닌 `develop`에서** 새 브랜치를 만든다.
+
+### 금지 사항
+
+- `-force` / 강제 푸시 금지
+- `develop`으로 직접 Push 금지
+- 깃이 꼬이면 담당자와 상의한다. 강제 푸시 대신 재클론·재연결을 우선한다.
+
+### 시크릿 / 환경 파일
+
+다음 파일은 **절대 커밋하지 않는다.**
+
+- `.env`, `.env.local`, `.env.*.local`
+- API 키, 토큰, 자격 증명이 들어간 설정 파일
+
+이미 추적 중이라면:
+
+```bash
+git rm -r --cached .
+# .gitignore 반영 후 필요한 파일만 다시 add
+```
+
+---
+
+## Branch Convention
+
+### Strategy (Git Flow)
+
+| 브랜치 | 역할 |
+| --- | --- |
+| `main` | 배포 브랜치 |
+| `develop` | 개발 기본 브랜치 (default) |
+| `{type}/#{Issue Number}` | `develop`에서 파생한 작업 브랜치 |
+
+### 브랜치 이름
+
+```
+{type}/#{Issue Number}
+```
+
+예시:
+
+```
+feat/#1
+fix/#2
+docs/#10
+refactor/#6
+```
+
+`type`은 Commit Type과 동일한 계열을 사용한다. (`feat`, `fix`, `docs`, `refactor` 등)
+
+---
+
 ## 커밋 컨벤션
 
 이 프로젝트는 [Conventional Commits](https://www.conventionalcommits.org/)을 기반으로 한 커밋 규칙을 따릅니다.## Commit Type
