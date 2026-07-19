@@ -1,21 +1,44 @@
 import type { ReactNode } from 'react'
-import { emptyStyle, emptyTitleStyle, emptyDescriptionStyle } from './Empty.css.ts'
+import { AlertCircle, Heart, Search } from 'lucide-react'
+import {
+  emptyDescriptionStyle,
+  emptyStyle,
+  emptyTitleStyle,
+  iconWrapRecipe,
+} from './Empty.css.ts'
+
+type EmptyTone = 'neutral' | 'primary' | 'danger'
 
 type EmptyProps = {
   title?: string
   description?: string
+  tone?: EmptyTone
+  icon?: ReactNode
   action?: ReactNode
 }
 
+const defaultIcons: Record<EmptyTone, ReactNode> = {
+  neutral: <Search size={24} />,
+  primary: <Heart size={24} />,
+  danger: <AlertCircle size={24} />,
+}
+
 export function Empty({
-  title = '아직 내용이 없어요',
-  description = '새로운 여행 장소를 탐색해 보세요.',
+  title = '',
+  description = '',
+  tone = 'neutral',
+  icon,
   action,
 }: EmptyProps) {
   return (
     <div className={emptyStyle} role="status">
-      <p className={emptyTitleStyle}>{title}</p>
-      <p className={emptyDescriptionStyle}>{description}</p>
+      <span className={iconWrapRecipe({ tone })} aria-hidden>
+        {icon ?? defaultIcons[tone]}
+      </span>
+      <div>
+        <p className={emptyTitleStyle}>{title}</p>
+        <p className={emptyDescriptionStyle}>{description}</p>
+      </div>
       {action}
     </div>
   )
