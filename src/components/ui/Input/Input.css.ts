@@ -17,8 +17,7 @@ export const inputStyle = style({
     },
     '&:focus': {
       outline: 'none',
-      borderColor: colors.primary[500],
-      boxShadow: `0 0 0 3px ${colors.primary[100]}`,
+      borderColor: colors.secondary[500],
     },
   },
 })
