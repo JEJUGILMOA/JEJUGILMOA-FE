@@ -1,0 +1,10 @@
+---
+description: Git 커밋/PR에 Cursor attribution trailer 금지
+alwaysApply: true
+---
+
+# Git commit attribution
+
+- 커밋 메시지는 제목(과 필요 시 본문)만 작성한다.
+- `Co-authored-by:`, `Made-with: Cursor`, `Made with Cursor` 등 Cursor attribution/trailer를 커밋·PR·코드 주석에 넣지 않는다.
+- `git commit` / `gh pr create` 시 attribution 관련 trailer를 추가하거나 amend로 붙이지 않는다.
