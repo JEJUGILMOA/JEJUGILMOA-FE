@@ -1,7 +1,6 @@
 import { style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
 import { colors } from '../../../styles/colors.css' // 실제 colors가 정의된 파일 경로로 맞춰주세요
-
 import * as typography from '../../../styles/typography.css' // 실제 타이포그래피 스타일이 정의된 파일 경로
 
 // 공통 기본 스타일
@@ -94,6 +93,8 @@ export const chipRecipe = recipe({
 })
 
 // 내부 아이콘 전용 스타일
+//fill="currentColor"나 stroke="currentColor"로 사용
+
 export const iconStyle = style({
   display: 'flex',
   alignItems: 'center',
