@@ -1,7 +1,8 @@
 import { style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
-import { colors } from './styles/colors.css.ts' // 실제 colors가 정의된 파일 경로로 맞춰주세요
-import * as typography from './typography.css' // 실제 타이포그래피 스타일이 정의된 파일 경로
+import { colors } from '../../../styles/colors.css' // 실제 colors가 정의된 파일 경로로 맞춰주세요
+
+import * as typography from '../../../styles/typography.css' // 실제 타이포그래피 스타일이 정의된 파일 경로
 
 // 공통 기본 스타일
 const baseChip = style({
@@ -47,35 +48,48 @@ export const chipRecipe = recipe({
 
     // 2. 상태별 색상 테마 적용
     variant: {
-      // 초록색 활성화 상태 (전체, 내 주변 등)
+      // 1. 강한 초록 배경 (전체 칩)
       selected: {
         backgroundColor: colors.primary[500],
         color: colors.text[5],
         borderColor: colors.primary[500],
       },
-      // 기본 테두리가 있는 흰색 배경 (자연, 맛집, 찜한 장소 등)
+      // 2. [신규] 연한 초록 배경 + 진한 초록 글자 ('내 주변' 칩)
+      primaryLight: {
+        backgroundColor: colors.primary[300], // #92DCAE
+        color: colors.primary[700], // #17783C
+        borderColor: colors.primary[300],
+      },
+      // 3. 외곽선 스타일 (자연, 맛집, 찜한 장소)
       outline: {
         backgroundColor: colors.surface[1],
         color: colors.text[2],
         borderColor: colors.border[1],
         selectors: {
-          '&:hover': {
-            backgroundColor: colors.surface[3],
-          },
+          '&:hover': { backgroundColor: colors.surface[3] },
         },
       },
-      // 비활성화 또는 배경이 깔린 연회색 스타일 (우측 끝 맛집, 도보 10분 이내 등)
+      // 4. 연회색 배경 스타일 (도보 10분 이내 등)
       filled: {
         backgroundColor: colors.surface[4],
         color: colors.text[3],
         borderColor: colors.surface[4],
       },
     },
+    // [신규] 3. Removable 전용 스타일 규격
+    // 삭제 버튼이 있는 경우 여백과 텍스트와의 간격을 별도로 정의
+    removable: {
+      true: style({
+        paddingRight: '12px', // 삭제 버튼 공간 확보를 위해 우측 여백 축소
+        gap: '4px', // 텍스트와 삭제 버튼 사이 간격
+      }),
+    },
   },
 
   defaultVariants: {
     size: 'MD',
     variant: 'outline',
+    removable: false,
   },
 })
 
@@ -85,21 +99,34 @@ export const iconStyle = style({
   alignItems: 'center',
   justifyContent: 'center',
   flexShrink: 0,
+  color: 'inherit',
 })
 
 // REMOVABLE의 X 삭제 버튼 스타일
 export const removeBtnStyle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   background: 'none',
   border: 'none',
   padding: 0,
   cursor: 'pointer',
-  display: 'inline-flex',
-  alignItems: 'center',
-  marginLeft: '2px',
-  color: colors.text[4],
-  transition: 'color 0.2s ease',
+  marginLeft: '2px', // 텍스트와의 미세 간격
+
+  // 원형 배경 구현
+  width: '18px', // 버튼 전체 크기
+  height: '18px',
+  borderRadius: '50%', // 완벽한 원
+  backgroundColor: colors.background[2], // 연회색 배경 (#F3F4F8)
+
+  // 내부 X 아이콘 색상
+  color: colors.text[4], // 더 진한 회색 (#9C9C97)
+
+  // 호버 효과
+  transition: 'all 0.15s ease',
   selectors: {
     '&:hover': {
+      backgroundColor: colors.border[1], // 호버 시 배경색 조금 더 진하게
       color: colors.text[2],
     },
   },

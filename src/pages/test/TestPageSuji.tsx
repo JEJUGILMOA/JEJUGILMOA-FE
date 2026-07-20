@@ -1,6 +1,18 @@
 import { Card } from '@/components/ui/Card/Card'
 import { Chip } from '@/components/ui/Chip/Chip'
 
+const HomeIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M11.293 2.293a1 1 0 0 1 1.414 0l8 8A1 1 0 0 1 20 12h-1v7a2 2 0 0 1-2 2h-3a1 1 0 0 1-1-1v-4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v4a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2v-7H2a1 1 0 0 1-.707-1.707l8-8z" />
+  </svg>
+)
+
 export function TestPageSuji() {
   return (
     <Card title="이곳에서 컴포넌트를 마음껏 테스트하세요! 수지 페이지">
@@ -24,7 +36,7 @@ export function TestPageSuji() {
             <Chip variant="outline" icon={<span>♡</span>}>
               찜한 장소
             </Chip>
-            <Chip variant="selected" icon={<span>🏠</span>}>
+            <Chip variant="primaryLight" icon={<HomeIcon size={16} />}>
               내 주변
             </Chip>
           </div>
