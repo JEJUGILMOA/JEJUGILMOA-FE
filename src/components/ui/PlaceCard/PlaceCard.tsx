@@ -20,12 +20,19 @@ export type PlaceCardVariant = 'vertical' | 'horizontal' | 'compact'
 type SizeValue = number | string
 
 export type PlaceCardProps = {
+  /** 레이아웃. 기본값 vertical */
   variant?: PlaceCardVariant
+  /** 장소명 */
   title: string
+  /** 썸네일 이미지 URL */
   imageUrl?: string
+  /** 평점 (소수 1자리로 표시) */
   rating?: number
+  /** 부가 설명 (카테고리·주소 등) */
   meta?: string
+  /** 뱃지 텍스트 */
   badge?: string
+  /** 거리 표시 (compact에서 우선) */
   distance?: string
   /** 숫자면 px, 문자열은 CSS 값 (`100%`, `12rem` 등) */
   width?: SizeValue
@@ -33,6 +40,7 @@ export type PlaceCardProps = {
   height?: SizeValue
   /** CSS aspect-ratio (`16/10`, `1`, `"4 / 3"` 등) */
   aspectRatio?: SizeValue
+  /** 클릭 핸들러. 있으면 키보드로도 활성화 */
   onClick?: () => void
   className?: string
 }
@@ -51,6 +59,12 @@ function Rating({ value }: { value: number }) {
   )
 }
 
+/**
+ * 장소 썸네일·평점·메타 정보를 보여주는 카드.
+ *
+ * @example
+ * <PlaceCard variant="vertical" title="성산일출봉" rating={4.8} onClick={openDetail} />
+ */
 export function PlaceCard({
   variant = 'vertical',
   title,

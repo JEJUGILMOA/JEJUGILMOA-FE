@@ -57,12 +57,21 @@ function dayTone(date: Date) {
 }
 
 export type DateFieldProps = {
+  /** 선택 날짜. `yyyy.MM.dd` 형식 */
   value: string
+  /** 날짜 변경 핸들러 (`yyyy.MM.dd`) */
   onChange: (value: string) => void
+  /** 미선택 시 표시 문구. 기본값 "날짜를 선택하세요" */
   placeholder?: string
   className?: string
 }
 
+/**
+ * 캘린더 팝오버로 날짜를 고르는 입력 필드. 값은 `yyyy.MM.dd` 형식입니다.
+ *
+ * @example
+ * <DateField value={date} onChange={setDate} />
+ */
 export function DateField({
   value,
   onChange,

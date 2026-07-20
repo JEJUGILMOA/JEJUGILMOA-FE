@@ -3,13 +3,23 @@ import { countStyle, textAreaRecipe, textAreaRoot } from './TextArea.css.ts'
 import { cn } from '@/utils/cn'
 
 export type TextAreaProps = {
+  /** 제어 값 */
   value: string
+  /** 값 변경 핸들러 */
   onChange: (value: string) => void
+  /** 최대 글자 수. 지정 시 하단에 카운터 표시 */
   maxLength?: number
+  /** 플레이스홀더 */
   placeholder?: string
   className?: string
 }
 
+/**
+ * 여러 줄 텍스트 입력. 글자 수 제한 표시를 지원합니다.
+ *
+ * @example
+ * <TextArea value={bio} onChange={setBio} maxLength={200} placeholder="소개를 입력하세요" />
+ */
 export function TextArea({
   value,
   onChange,

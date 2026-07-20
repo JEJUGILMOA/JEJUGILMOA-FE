@@ -2,19 +2,32 @@ import { useId, useRef, type KeyboardEvent, type ReactNode } from 'react'
 import { tabPanelStyle, tabRecipe, tabsRoot } from './Tabs.css.ts'
 
 export type TabItem = {
+  /** 탭 고유 값 */
   value: string
+  /** 탭 라벨 */
   label: string
+  /** 선택 시 표시할 패널 내용. 없으면 탭 목록만 렌더 */
   content?: ReactNode
+  /** true면 선택 불가 */
   disabled?: boolean
 }
 
 export type TabsProps = {
+  /** 탭 항목 목록 */
   items: TabItem[]
+  /** 현재 선택된 탭 value */
   value: string
+  /** 탭 변경 핸들러 */
   onChange: (value: string) => void
   className?: string
 }
 
+/**
+ * 탭 목록과 선택 패널을 제어하는 탭 네비게이션.
+ *
+ * @example
+ * <Tabs items={[{ value: 'a', label: '소개', content: <Intro /> }]} value={tab} onChange={setTab} />
+ */
 export function Tabs({ items, value, onChange, className }: TabsProps) {
   const baseId = useId()
   const tabRefs = useRef<Map<string, HTMLButtonElement>>(new Map())

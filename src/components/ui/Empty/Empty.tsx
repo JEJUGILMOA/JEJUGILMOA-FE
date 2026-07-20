@@ -10,10 +10,15 @@ import {
 type EmptyTone = 'neutral' | 'primary' | 'danger'
 
 type EmptyProps = {
+  /** 제목. 기본값 빈 문자열 */
   title?: string
+  /** 보조 설명. 기본값 빈 문자열 */
   description?: string
+  /** 아이콘·톤. 기본값 neutral */
   tone?: EmptyTone
+  /** 커스텀 아이콘. 없으면 tone별 기본 아이콘 */
   icon?: ReactNode
+  /** 하단 액션 슬롯 (버튼 등) */
   action?: ReactNode
 }
 
@@ -23,6 +28,12 @@ const defaultIcons: Record<EmptyTone, ReactNode> = {
   danger: <AlertCircle size={24} />,
 }
 
+/**
+ * 데이터가 없을 때 보여주는 빈 상태.
+ *
+ * @example
+ * <Empty title="결과가 없어요" description="다른 조건으로 검색해 보세요" tone="neutral" />
+ */
 export function Empty({
   title = '',
   description = '',

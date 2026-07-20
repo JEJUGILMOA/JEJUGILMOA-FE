@@ -23,22 +23,37 @@ const FOCUSABLE_SELECTOR = [
 ].join(',')
 
 export type ModalAction = {
+  /** 버튼 라벨 */
   label: string
+  /** 클릭 핸들러 */
   onClick: () => void
+  /** 버튼 스타일. 기본값 primary */
   variant?: ButtonVariant
-  /** ? ??? ? ??? ?? ?? true */
+  /** false면 고정 너비, 그 외(기본) 가로로 늘어남 */
   grow?: boolean
 }
 
 type ModalProps = {
+  /** true면 모달 표시 */
   open: boolean
+  /** 다이얼로그 제목 */
   title: string
+  /** 제목 아래 설명 */
   description?: string
+  /** 본문 추가 콘텐츠 */
   children?: ReactNode
+  /** 하단 액션 버튼. 미지정 시 닫기 버튼 하나 */
   actions?: ModalAction[]
+  /** 닫기 (오버레이·Esc) */
   onClose: () => void
 }
 
+/**
+ * 포커스 트랩·Esc 닫기를 지원하는 중앙 모달 다이얼로그.
+ *
+ * @example
+ * <Modal open={open} title="삭제할까요?" onClose={close} actions={[{ label: '삭제', onClick: remove, variant: 'danger' }]} />
+ */
 export function Modal({
   open,
   title,

@@ -10,13 +10,23 @@ import {
 import { cn } from '@/utils/cn'
 
 export type ImageUploadProps = {
+  /** 미선택 시 안내 문구. 기본값 "사진을 추가해주세요" */
   label?: string
+  /** 허용 MIME. 기본값 image/* */
   accept?: string
+  /** true면 여러 장 선택. 기본값 false */
   multiple?: boolean
+  /** 선택된 파일 목록 콜백 */
   onChange?: (files: File[]) => void
   className?: string
 }
 
+/**
+ * 이미지 파일 선택·미리보기 업로드 버튼.
+ *
+ * @example
+ * <ImageUpload multiple onChange={setFiles} />
+ */
 export function ImageUpload({
   label = '사진을 추가해주세요',
   accept = 'image/*',

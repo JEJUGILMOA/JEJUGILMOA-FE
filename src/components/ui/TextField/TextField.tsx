@@ -15,21 +15,39 @@ import {
 import { cn } from '@/utils/cn'
 
 export type TextFieldProps = {
+  /** 필드 라벨 */
   label?: string
+  /** 제어 값 */
   value: string
+  /** 값 변경 핸들러 */
   onChange: (value: string) => void
+  /** 플레이스홀더 */
   placeholder?: string
+  /** 에러 메시지. 있으면 에러 스타일 적용 */
   error?: string
+  /** 최대 글자 수 */
   maxLength?: number
+  /** true면 글자 수(현재/최대) 표시. maxLength와 함께 사용 */
   showCount?: boolean
+  /** 입력란 앞쪽 접두 콘텐츠 */
   prefix?: ReactNode
+  /** 입력란 뒤쪽 접미 콘텐츠 */
   suffix?: ReactNode
+  /** 입력란 왼쪽 아이콘 */
   leftIcon?: ReactNode
+  /** input type. 기본값 text */
   type?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'search' | 'number'
+  /** password일 때 표시/숨김 토글 버튼. 기본값 false */
   togglePassword?: boolean
   className?: string
 }
 
+/**
+ * 라벨·에러·글자 수·아이콘을 지원하는 폼 입력 필드.
+ *
+ * @example
+ * <TextField label="닉네임" value={name} onChange={setName} error={error} />
+ */
 export function TextField({
   label,
   value,

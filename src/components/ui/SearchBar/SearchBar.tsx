@@ -16,22 +16,38 @@ import { fieldChromeRecipe, fieldInputReset } from '@/styles/fieldChrome.css.ts'
 import { cn } from '@/utils/cn'
 
 export type SearchSuggestion = {
+  /** 고유 식별자 */
   id: string
+  /** 표시 텍스트 */
   label: string
+  /** 제안 종류. history=최근 검색, place=장소 */
   type?: 'history' | 'place'
 }
 
 export type SearchBarProps = {
+  /** 검색어 */
   value: string
+  /** 검색어 변경 핸들러 */
   onChange: (value: string) => void
+  /** 플레이스홀더. 기본값 "어디로 떠나고 싶으신가요?" */
   placeholder?: string
+  /** 지우기 버튼 클릭 시 추가 콜백 (값은 항상 빈 문자열로 초기화) */
   onClear?: () => void
+  /** 포커스 시 표시할 제안 목록 */
   suggestions?: SearchSuggestion[]
+  /** 제안 항목 선택 */
   onSelectSuggestion?: (suggestion: SearchSuggestion) => void
+  /** 제안 항목 삭제 (삭제 버튼 표시) */
   onRemoveSuggestion?: (suggestion: SearchSuggestion) => void
   className?: string
 }
 
+/**
+ * 검색어 입력과 제안 목록을 제공하는 검색바.
+ *
+ * @example
+ * <SearchBar value={q} onChange={setQ} suggestions={items} onSelectSuggestion={select} />
+ */
 export function SearchBar({
   value,
   onChange,

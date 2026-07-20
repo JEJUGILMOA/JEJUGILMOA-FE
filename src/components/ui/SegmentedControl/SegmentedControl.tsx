@@ -3,15 +3,21 @@ import { cn } from '@/utils/cn'
 import { indicatorStyle, segmentRecipe, segmentedRoot } from './SegmentedControl.css.ts'
 
 export type SegmentedControlItem = {
+  /** 세그먼트 고유 값 */
   value: string
+  /** 표시 라벨 */
   label: string
 }
 
 export type SegmentedControlProps = {
+  /** 선택지 목록 */
   items: SegmentedControlItem[]
+  /** 현재 선택된 value */
   value: string
+  /** 선택 변경 핸들러 */
   onChange: (value: string) => void
   className?: string
+  /** radiogroup 접근성 라벨. 기본값 "옵션 선택" */
   'aria-label'?: string
 }
 
@@ -20,6 +26,12 @@ type IndicatorRect = {
   width: number
 }
 
+/**
+ * 서로 배타적인 옵션을 고르는 세그먼트 컨트롤.
+ *
+ * @example
+ * <SegmentedControl items={[{ value: 'list', label: '목록' }, { value: 'map', label: '지도' }]} value={mode} onChange={setMode} />
+ */
 export function SegmentedControl({
   items,
   value,
