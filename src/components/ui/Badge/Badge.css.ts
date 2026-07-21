@@ -1,7 +1,6 @@
 import { style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
-import { colors } from '../../../styles/colors.css' // 실제 colors가 정의된 파일 경로로 맞춰주세요
-import * as typography from '../../../styles/typography.css' // 실제 타이포그래피 스타일이 정의된 파일 경로
+import { colors, typography } from '@/styles'
 
 // 종 아이콘과 뱃지를 감싸는 컨테이너
 export const badgeContainer = style({
@@ -21,6 +20,7 @@ export const badgeContainer = style({
             우측 상단에 걸치도록 위치하는 Dot Badge 
            <Badge size="Xsmall" status="error" />
           </div> */
+
 // 기본 뱃지 공통 스타일 (조금 더 둥근 모서리)
 const baseBadge = style({
   display: 'inline-flex',
