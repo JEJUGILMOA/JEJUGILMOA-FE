@@ -14,6 +14,7 @@ const baseChip = style({
   transition: 'all 0.2s ease',
   userSelect: 'none',
   gap: '6px',
+  whiteSpace: 'nowrap',
 })
 
 export const chipRecipe = recipe({
@@ -118,53 +119,6 @@ export const chipRecipe = recipe({
     removable: false,
   },
 })
-
-//     // 2. 상태별 색상 테마 적용
-//     variant: {
-//       // 1. 강한 초록 배경 (전체 칩)
-//       selected: {
-//         backgroundColor: colors.primary[500],
-//         color: colors.text[5],
-//         borderColor: colors.primary[500],
-//       },
-//       // 2. 연한 초록 배경 + 진한 초록 글자 ('내 주변' 칩)
-//       primaryLight: {
-//         backgroundColor: colors.primary[300], // #92DCAE
-//         color: colors.primary[700], // #17783C
-//         borderColor: colors.primary[300],
-//       },
-//       // 3. 외곽선 스타일 (자연, 맛집, 찜한 장소)
-//       outline: {
-//         backgroundColor: colors.surface[1],
-//         color: colors.text[2],
-//         borderColor: colors.border[1],
-//         selectors: {
-//           '&:hover': { backgroundColor: colors.surface[3] },
-//         },
-//       },
-//       // 4. 연회색 배경 스타일 (도보 10분 이내 등)
-//       filled: {
-//         backgroundColor: colors.surface[1],
-//         color: colors.text[3],
-//         borderColor: colors.border[1],
-//       },
-//     },
-//     // [신규] 3. Removable 전용 스타일 규격
-//     // 삭제 버튼이 있는 경우 여백과 텍스트와의 간격을 별도로 정의
-//     removable: {
-//       true: style({
-//         paddingRight: '12px', // 삭제 버튼 공간 확보를 위해 우측 여백 축소
-//         gap: '4px', // 텍스트와 삭제 버튼 사이 간격
-//       }),
-//     },
-//   },
-
-//   defaultVariants: {
-//     size: 'MD',
-//     variant: 'outline',
-//     removable: false,
-//   },
-// })
 
 // 내부 아이콘 전용 스타일
 //fill="currentColor"나 stroke="currentColor"로 사용
