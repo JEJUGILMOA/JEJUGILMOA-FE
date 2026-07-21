@@ -24,8 +24,12 @@ globalStyle('h1, h2, h3, h4, h5, h6', {
 })
 
 globalStyle(':focus-visible', {
-  outline: `2px solid ${colors.primary[500]}`,
+  outline: `2px solid ${colors.secondary[500]}`,
   outlineOffset: '2px',
+})
+
+globalStyle('input:focus-visible, textarea:focus-visible, select:focus-visible', {
+  outline: 'none',
 })
 
 globalStyle('*, *::before, *::after', {
