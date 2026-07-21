@@ -2,7 +2,7 @@ import React from 'react'
 import { chipRecipe, iconStyle, removeBtnStyle } from './Chip.css'
 
 interface ChipProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: 'SM' | 'MD' | 'LG'
+  size?: 'sm' | 'md' | 'lg'
   /**
    * 칩의 테마 색상 (기본값: 'neutral')
    * - primary: 선택 시 초록색 배경
@@ -19,7 +19,7 @@ interface ChipProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Chip = ({
-  size = 'MD',
+  size = 'md',
   colorScheme = 'neutral',
   isSelected = false,
   icon,

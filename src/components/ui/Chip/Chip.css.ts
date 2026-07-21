@@ -20,24 +20,24 @@ export const chipRecipe = recipe({
   base: baseChip,
 
   variants: {
-    // 1. 크기 규격 (SM, MD, LG) 및 타이포그래피 매핑
+    // 1. 크기 규격 (SM, md, lg) 및 타이포그래피 매핑
     size: {
-      SM: [
+      sm: [
         typography.labelSmall, // 12px, 500, -0.005em
         style({
           height: '22px',
           padding: '0 12px',
         }),
       ],
-      MD: [
+      md: [
         typography.labelMedium, // 14px, 500, -0.005em
         style({
           height: '33px',
           padding: '0 16px',
         }),
       ],
-      LG: [
-        typography.labelLarge, // 16px, 600, -0.025em (LG 글자 크기와 매칭)
+      lg: [
+        typography.labelLarge, // 16px, 600, -0.025em (lg 글자 크기와 매칭)
         style({
           height: '40px',
           padding: '0 20px',
@@ -112,7 +112,7 @@ export const chipRecipe = recipe({
   ],
 
   defaultVariants: {
-    size: 'MD',
+    size: 'md',
     colorScheme: 'neutral',
     isSelected: false,
     removable: false,

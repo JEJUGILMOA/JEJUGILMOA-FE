@@ -10,17 +10,6 @@ export const badgeContainer = style({
   justifyContent: 'center',
 })
 
-/* Xsmall은 이런식으로 사용
- <div className={badgeContainer}>
-            종 아이콘 SVG
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="#5B5C60">
-              <path d="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-            </svg>
-
-            우측 상단에 걸치도록 위치하는 Dot Badge 
-           <Badge size="Xsmall" status="error" />
-          </div> */
-
 // 기본 뱃지 공통 스타일 (조금 더 둥근 모서리)
 const baseBadge = style({
   display: 'inline-flex',
@@ -37,10 +26,10 @@ export const badgeRecipe = recipe({
   base: baseBadge,
 
   variants: {
-    // 1. 크기 규격 (Xsmall, small, Medium)
+    // 1. 크기 규격 (xs, sm, md)
     size: {
-      // Xsmall: 종 아이콘 우측 상단에 붙는 붉은색 Dot 뱃지
-      Xsmall: style({
+      // xs: 종 아이콘 우측 상단에 붙는 붉은색 Dot 뱃지
+      xs: style({
         position: 'absolute',
         top: '2px', // 위쪽 위치 조정 (더 올리려면 -2px, -4px 등 음수 사용)
         right: '2px', // 오른쪽 위치 조정
@@ -50,16 +39,16 @@ export const badgeRecipe = recipe({
         borderRadius: '50%',
         minWidth: '6px',
       }),
-      // small (기본)
-      small: [
+      // sm (기본)
+      sm: [
         typography.labelSmall, // 12px
         style({
           height: '22px',
           padding: '0 8px',
         }),
       ],
-      // Medium
-      Medium: [
+      // md
+      md: [
         typography.labelMedium, // 12px, font-weight 500
         style({
           height: '25px',
@@ -80,10 +69,10 @@ export const badgeRecipe = recipe({
         backgroundColor: colors.secondary[200],
         color: colors.secondary[500],
       },
-      // 마감 / Xsmall Dot (빨강 연한 배경 + 빨강 텍스트 / Dot은 진한 빨강)
+      // 마감 / xs Dot (빨강 연한 배경 + 빨강 텍스트 / Dot은 진한 빨강)
       error: {
         backgroundColor: colors.error[100],
-        color: colors.error[300],
+        color: colors.error[500],
       },
       // 준비중 (회색 연한 배경 + 회색 텍스트)
       neutral: {
@@ -118,7 +107,7 @@ export const badgeRecipe = recipe({
       },
     },
     {
-      variants: { size: 'Xsmall', status: 'error' },
+      variants: { size: 'xs', status: 'error' },
       style: {
         backgroundColor: colors.error[500], // Red Dot
       },
@@ -126,7 +115,7 @@ export const badgeRecipe = recipe({
   ],
 
   defaultVariants: {
-    size: 'small',
+    size: 'sm',
     status: 'success',
     variant: 'filled',
   },
