@@ -25,3 +25,15 @@ export const contentStyle = style({
   overflowY: 'auto',
   WebkitOverflowScrolling: 'touch',
 })
+
+export const contentFlushStyle = style({
+  flex: 1,
+  width: '100%',
+  maxWidth: '720px',
+  marginInline: 'auto',
+  padding: 0,
+  paddingBottom: `calc(env(safe-area-inset-bottom) + ${vars.space[4]})`,
+  overflowY: 'auto',
+  WebkitOverflowScrolling: 'touch',
+  backgroundColor: colors.background[1],
+})

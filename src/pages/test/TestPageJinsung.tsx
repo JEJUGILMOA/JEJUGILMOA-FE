@@ -222,8 +222,10 @@ export function TestPageJinsung() {
             variant="horizontal"
             title="협재 해수욕장"
             meta="제주 한림읍 · 도보 10분"
-            badge="무료"
-            rating={4.8}
+            badges={[
+              { label: '무료' },
+              { label: '4.8', status: 'neutral' },
+            ]}
             width="100%"
           />
           <PlaceCard variant="compact" width="100%" title="화리화리" distance="1.2km" />

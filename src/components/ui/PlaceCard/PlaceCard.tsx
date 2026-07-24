@@ -1,7 +1,9 @@
 import { Star } from 'lucide-react'
 import { type KeyboardEvent } from 'react'
+import { Badge, type BadgeProps } from '@/components/ui/Badge/Badge'
 import { cn } from '@/utils/cn'
 import {
+  badgesRow,
   badgeStyle,
   contentRecipe,
   distanceStyle,
@@ -19,6 +21,15 @@ export type PlaceCardVariant = 'vertical' | 'horizontal' | 'compact'
 
 type SizeValue = number | string
 
+export type PlaceCardBadge = {
+  /** 뱃지 텍스트 */
+  label: string
+  /** Badge status. 기본값 success */
+  status?: BadgeProps['status']
+  /** Badge variant. 기본값 filled */
+  variant?: BadgeProps['variant']
+}
+
 export type PlaceCardProps = {
   /** 레이아웃. 기본값 vertical */
   variant?: PlaceCardVariant
@@ -30,8 +41,10 @@ export type PlaceCardProps = {
   rating?: number
   /** 부가 설명 (카테고리·주소 등) */
   meta?: string
-  /** 뱃지 텍스트 */
+  /** 단일 뱃지 텍스트 (하위 호환). `badges`가 있으면 무시 */
   badge?: string
+  /** Badge 컴포넌트로 렌더되는 뱃지 목록 */
+  badges?: PlaceCardBadge[]
   /** 거리 표시 (compact에서 우선) */
   distance?: string
   /** 숫자면 px, 문자열은 CSS 값 (`100%`, `12rem` 등) */
@@ -64,6 +77,12 @@ function Rating({ value }: { value: number }) {
  *
  * @example
  * <PlaceCard variant="vertical" title="성산일출봉" rating={4.8} onClick={openDetail} />
+ * <PlaceCard
+ *   variant="horizontal"
+ *   title="협재 해수욕장"
+ *   meta="제주 한림읍 · 도보 10분"
+ *   badges={[{ label: '무료' }, { label: '4.8', status: 'neutral' }]}
+ * />
  */
 export function PlaceCard({
   variant = 'vertical',
@@ -72,6 +91,7 @@ export function PlaceCard({
   rating,
   meta,
   badge,
+  badges,
   distance,
   width,
   height,
@@ -104,7 +124,23 @@ export function PlaceCard({
 
   const titleEl = title ? <h3 className={titleRecipe({ variant })}>{title}</h3> : null
   const metaEl = meta ? <span className={metaText}>{meta}</span> : null
-  const badgeEl = badge ? <span className={badgeStyle}>{badge}</span> : null
+  const badgesEl =
+    badges && badges.length > 0 ? (
+      <div className={badgesRow}>
+        {badges.map((item) => (
+          <Badge
+            key={item.label}
+            size="sm"
+            status={item.status ?? 'success'}
+            variant={item.variant ?? 'filled'}
+          >
+            {item.label}
+          </Badge>
+        ))}
+      </div>
+    ) : badge ? (
+      <span className={badgeStyle}>{badge}</span>
+    ) : null
   const ratingEl = rating !== undefined ? <Rating value={rating} /> : null
   const distanceEl = distance ? <span className={distanceStyle}>{distance}</span> : null
 
@@ -124,12 +160,11 @@ export function PlaceCard({
         <div className={infoColumn}>
           {titleEl}
           {metaEl}
-          {badgeEl}
+          {badgesEl}
         </div>
         {ratingEl}
       </div>
     )
-
   return (
     <article
       className={cn(placeCardRecipe({ variant }), className)}
