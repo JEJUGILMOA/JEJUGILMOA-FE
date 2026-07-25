@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants'
-import { createRecord, fetchCompletedTrips, fetchMyRecords } from './api'
+import { createRecord, fetchCompletedTrips, fetchExploreRecords, fetchMyRecords } from './api'
 
 export function useCompletedTripsQuery() {
   return useQuery({
@@ -13,6 +13,13 @@ export function useMyRecordsQuery() {
   return useQuery({
     queryKey: QUERY_KEYS.myRecords,
     queryFn: fetchMyRecords,
+  })
+}
+
+export function useExploreRecordsQuery() {
+  return useQuery({
+    queryKey: QUERY_KEYS.exploreRecords,
+    queryFn: fetchExploreRecords,
   })
 }
 

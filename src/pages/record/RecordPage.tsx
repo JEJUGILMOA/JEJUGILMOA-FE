@@ -6,6 +6,7 @@ import { Loading } from '@/components/ui/Loading/Loading'
 import { SegmentedControl } from '@/components/ui/SegmentedControl/SegmentedControl'
 import { ROUTES } from '@/constants'
 import { useMyRecordsQuery } from '@/features/records/hooks'
+import { ExploreView } from './components/ExploreView'
 import { FloatingActionButton } from './components/FloatingActionButton'
 import { RecordCard } from './components/RecordCard'
 import { descriptionStyle, headerStyle, listStyle, pageStyle, titleStyle } from './RecordPage.css.ts'
@@ -54,7 +55,7 @@ export function RecordPage() {
           </div>
         )
       ) : (
-        <Empty title="곧 만나볼 수 있어요" description="다른 사용자의 기록 둘러보기는 준비 중이에요." />
+        <ExploreView />
       )}
 
       <FloatingActionButton onClick={goToCreate} aria-label="기록 작성하기" />

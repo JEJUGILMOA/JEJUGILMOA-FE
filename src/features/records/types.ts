@@ -38,3 +38,17 @@ export type SavedRecord = {
   dislikeCount: number
   createdAt: string
 }
+
+export type PathPoint = {
+  x: number
+  y: number
+}
+
+export type ExploreRecord = {
+  id: string
+  title: string
+  summary: string
+  authorName: string
+  linkedPlanTitle: string | null
+  path: PathPoint[]
+}

@@ -19,4 +19,5 @@ export const QUERY_KEYS = {
   reviews: (placeId: string) => ['reviews', placeId] as const,
   completedTrips: ['records', 'completedTrips'] as const,
   myRecords: ['records', 'my'] as const,
+  exploreRecords: ['records', 'explore'] as const,
 } as const

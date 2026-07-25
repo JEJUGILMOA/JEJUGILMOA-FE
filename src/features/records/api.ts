@@ -1,5 +1,6 @@
 import { mockCompletedTrips } from './mockCompletedTrips'
-import type { CompletedTrip, RecordDraft, SavedRecord } from './types'
+import { mockExploreRecords } from './mockExploreRecords'
+import type { CompletedTrip, ExploreRecord, RecordDraft, SavedRecord } from './types'
 
 /** TODO: 백엔드 API 연동 전까지 목데이터를 사용하는 스텁 */
 export async function fetchCompletedTrips(): Promise<CompletedTrip[]> {
@@ -40,4 +41,9 @@ export async function createRecord(draft: RecordDraft): Promise<{ id: string }> 
 /** TODO: 백엔드 API가 준비되면 apiClient.get('/records/me')로 교체 */
 export async function fetchMyRecords(): Promise<SavedRecord[]> {
   return myRecords
+}
+
+/** TODO: 둘러보기 API가 준비되면 apiClient.get('/records/explore')로 교체 */
+export async function fetchExploreRecords(): Promise<ExploreRecord[]> {
+  return mockExploreRecords
 }
