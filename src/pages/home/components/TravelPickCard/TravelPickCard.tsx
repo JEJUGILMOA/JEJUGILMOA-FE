@@ -62,10 +62,20 @@ export function TravelPickCard({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!onClick) return
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      onClick()
+    if (event.key !== 'Enter' && event.key !== ' ') return
+
+    const target = event.target
+    if (target instanceof Element) {
+      const interactive = target.closest(
+        'a, button, input, select, textarea, [role="button"]',
+      )
+      if (interactive && interactive !== event.currentTarget) {
+        return
+      }
     }
+
+    event.preventDefault()
+    onClick()
   }
 
   return (
