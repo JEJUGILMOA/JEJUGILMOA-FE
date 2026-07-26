@@ -9,10 +9,12 @@ import {
 } from 'react'
 import { useNavigate } from 'react-router'
 import homeHeroImage from '@/assets/images/home-hero.png'
+import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
 import { PlaceCard } from '@/components/ui/PlaceCard/PlaceCard'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
-import { ROUTES, coursePath, placePath } from '@/constants'
-import { MOCK_COURSES, MOCK_PLACES } from '@/data/mockExplore'
+import { TravelPickCard } from '@/components/ui/TravelPickCard/TravelPickCard'
+import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
+import { MOCK_COURSES, MOCK_PLACES, MOCK_TRAVEL_PICKS } from '@/data/mockExplore'
 import {
   categoryIconStyle,
   categoryItemStyle,
@@ -25,6 +27,7 @@ import {
   dotRecipe,
   dotsStyle,
   heroCopyStyle,
+  heroBlockStyle,
   heroImageStyle,
   heroStyle,
   heroSubtitleStyle,
@@ -38,6 +41,7 @@ import {
   sectionHeaderStyle,
   sectionStyle,
   sectionTitleStyle,
+  travelPickRowStyle,
 } from './HomePage.css.ts'
 
 const COURSE_AUTO_MS = 3500
@@ -52,15 +56,6 @@ type DragState = {
   deltaX: number
   axis: 'undecided' | 'x' | 'y'
 }
-
-const CATEGORIES = [
-  { id: 'meal', label: '식사', color: '#E7F3ED' },
-  { id: 'cafe', label: '카페', color: '#E7F3F5' },
-  { id: 'nature', label: '자연', color: '#E7F3EB' },
-  { id: 'history', label: '역사', color: '#FEF6E7' },
-  { id: 'experience', label: '체험', color: '#ECF0FA' },
-  { id: 'photo', label: '인증샷', color: '#FBEDF6' },
-] as const
 
 const COURSE_COUNT = MOCK_COURSES.length
 const COURSE_SLIDES = [
@@ -95,7 +90,6 @@ function SectionHeader({
 
 export function HomePage() {
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
   /** 실슬라이드: 1..COURSE_COUNT, 0=마지막 복제, COURSE_COUNT+1=첫 복제 */
   const [index, setIndex] = useState(1)
   const [animate, setAnimate] = useState(true)
@@ -261,25 +255,28 @@ export function HomePage() {
 
   return (
     <div className={pageStyle}>
-      <section className={heroStyle} aria-label="홈 히어로">
-        <img src={homeHeroImage} alt="" className={heroImageStyle} />
-        <div className={heroCopyStyle}>
-          <h1 className={heroTitleStyle}>
-            오늘, 제주에서
-            <br />
-            어떤 경험을 할까요?
-          </h1>
-          <p className={heroSubtitleStyle}>나만의 코스를 만들고 뱃지를 모아보세요!</p>
-        </div>
-      </section>
+      <div className={heroBlockStyle}>
+        <section className={heroStyle} aria-label="홈 히어로">
+          <img src={homeHeroImage} alt="" className={heroImageStyle} />
+          <div className={heroCopyStyle}>
+            <h1 className={heroTitleStyle}>
+              오늘, 제주에서
+              <br />
+              어떤 경험을 할까요?
+            </h1>
+            <p className={heroSubtitleStyle}>나만의 코스를 만들고 뱃지를 모아보세요!</p>
+          </div>
+        </section>
 
-      <div className={searchWrapStyle}>
-        <SearchBar
-          className={searchBarElevatedStyle}
-          value={query}
-          onChange={setQuery}
-          placeholder="어디로 떠나고 싶으신가요?"
-        />
+        <div className={searchWrapStyle}>
+          <SearchBar
+            className={searchBarElevatedStyle}
+            value=""
+            onChange={() => undefined}
+            placeholder="어디로 떠나고 싶으신가요?"
+            onFocus={() => navigate(ROUTES.search)}
+          />
+        </div>
       </div>
 
       <section className={sectionStyle} aria-labelledby="home-category-title">
@@ -289,25 +286,71 @@ export function HomePage() {
           actionLabel="전체보기 >"
           onAction={() => navigate(ROUTES.placesPopular)}
         />
-        <ul className={categoryListStyle}>
-          {CATEGORIES.map((category) => (
-            <li key={category.id}>
-              <button
-                type="button"
-                className={categoryItemStyle}
-                aria-label={category.label}
-                onClick={() => navigate(ROUTES.placesPopular)}
-              >
-                <span
-                  className={categoryIconStyle}
-                  style={{ backgroundColor: category.color }}
-                  aria-hidden
-                />
-                <span className={categoryLabelStyle}>{category.label}</span>
-              </button>
-            </li>
+        <HorizontalScrollArea
+          as="ul" className={categoryListStyle}
+          aria-label="카테고리 목록"
+        >
+          {PLACE_CATEGORIES.map((category) => {
+            const Icon = category.icon
+            return (
+              <li key={category.id}>
+                <button
+                  type="button"
+                  className={categoryItemStyle}
+                  aria-label={category.label}
+                  onClick={() =>
+                    navigate(ROUTES.placesPopular, { state: { category: category.label } })
+                  }
+                >
+                  <span
+                    className={categoryIconStyle}
+                    style={{ backgroundColor: category.bg, color: category.fg }}
+                    aria-hidden
+                  >
+                    <Icon size={20} strokeWidth={1.75} />
+                  </span>
+                  <span className={categoryLabelStyle}>{category.label}</span>
+                </button>
+              </li>
+            )
+          })}
+        </HorizontalScrollArea>
+      </section>
+
+      <section className={sectionStyle} aria-labelledby="home-travel-picks-title">
+        <div className={sectionHeaderStyle}>
+          <div>
+            <h2 id="home-travel-picks-title" className={sectionTitleStyle}>
+              오늘의 관광지 추천
+            </h2>
+          </div>
+          <button
+            type="button"
+            className={sectionActionStyle}
+            onClick={() => navigate(ROUTES.placesPopular)}
+          >
+            더보기 &gt;
+          </button>
+        </div>
+        <div className={travelPickRowStyle}>
+          {MOCK_TRAVEL_PICKS.map((pick) => (
+            <TravelPickCard
+              key={pick.id}
+              title={pick.title}
+              eyebrow={pick.eyebrow}
+              region={pick.region}
+              description={pick.description}
+              tags={pick.tags}
+              rating={pick.rating}
+              duration={pick.duration}
+              badge={pick.badge}
+              imageUrl={pick.imageUrl}
+              accent={pick.theme.accent}
+              starColor={pick.theme.starColor}
+              onClick={() => navigate(placePath(pick.placeId))}
+            />
           ))}
-        </ul>
+        </div>
       </section>
 
       <section className={sectionStyle} aria-labelledby="home-course-title">
@@ -392,7 +435,7 @@ export function HomePage() {
               key={place.id}
               className={popularCardStyle}
               variant="vertical"
-              width={117}
+              width={148}
               title={place.title}
               rating={place.rating}
               onClick={() => navigate(placePath(place.id))}

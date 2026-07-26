@@ -1,4 +1,4 @@
-import { Bookmark, ChevronLeft } from 'lucide-react'
+import { ChevronLeft, MapPin } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge/Badge'
 import { Button } from '@/components/ui/Button/Button'
@@ -8,10 +8,14 @@ import { getCourseById } from '@/data/mockExplore'
 import {
   badgesRowStyle,
   bodyStyle,
+  contentWrapperStyle,
+  descriptionStyle,
   footerStyle,
   heroActionsStyle,
   heroIconButtonStyle,
   heroStyle,
+  heroTitleStyle,
+  metaStyle,
   pageStyle,
   sectionTitleStyle,
   timelineCardStyle,
@@ -24,7 +28,6 @@ import {
   timelineTextStyle,
   timelineThumbStyle,
   timelineTravelStyle,
-  titleStyle,
 } from './CourseDetailPage.css.ts'
 
 export function CourseDetailPage() {
@@ -60,30 +63,29 @@ export function CourseDetailPage() {
           >
             <ChevronLeft size={22} />
           </button>
-          <button type="button" className={heroIconButtonStyle} aria-label="북마크">
-            <Bookmark size={18} />
+          <button type="button" className={heroIconButtonStyle} aria-label="지도에서 보기">
+            <MapPin size={18} />
           </button>
         </div>
+        <h1 className={heroTitleStyle}>{course.title}</h1>
       </section>
 
       <div className={bodyStyle}>
-        <div>
-          <h1 className={titleStyle}>{course.title}</h1>
+        <div className={contentWrapperStyle}>
           <div className={badgesRowStyle}>
-            {course.tags?.map((tag) => (
-              <Badge
-                key={tag}
-                size="sm"
-                status={tag === '무료' ? 'success' : tag.includes('.') ? 'neutral' : 'info'}
-              >
-                {tag}
+            {course.badges.map((badge) => (
+              <Badge key={badge.label} size="sm" status={badge.status ?? 'success'}>
+                {badge.label}
               </Badge>
             ))}
           </div>
+          <p className={metaStyle}>{course.meta}</p>
         </div>
 
+        <p className={descriptionStyle}>{course.description}</p>
+
         <section>
-          <h2 className={sectionTitleStyle}>코스 구성</h2>
+          <h2 className={sectionTitleStyle}>코스 순서</h2>
           <ol className={timelineStyle}>
             {course.steps.map((step, stepIndex) => (
               <li key={`${step.placeId}-${stepIndex}`} className={timelineItemStyle}>

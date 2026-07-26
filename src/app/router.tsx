@@ -6,6 +6,7 @@ import { PlacePage } from '@/pages/place/PlacePage'
 import { PopularPlacesPage } from '@/pages/places/PopularPlacesPage'
 import { CourseListPage } from '@/pages/courses/CourseListPage'
 import { CourseDetailPage } from '@/pages/courses/CourseDetailPage'
+import { SearchPage } from '@/pages/search/SearchPage'
 import { PlanPage } from '@/pages/plan/PlanPage'
 import { RecordPage } from '@/pages/record/RecordPage'
 import { MyPage } from '@/pages/my/MyPage'
@@ -30,6 +31,16 @@ export const router = createBrowserRouter([
         path: ROUTES.map.slice(1),
         Component: MapPage,
         handle: { title: '지도' } satisfies RouteHandle,
+      },
+      {
+        path: ROUTES.search.slice(1),
+        Component: SearchPage,
+        handle: {
+          title: '검색',
+          hideHeader: true,
+          hideNav: true,
+          flush: true,
+        } satisfies RouteHandle,
       },
       {
         path: 'place/:placeId',

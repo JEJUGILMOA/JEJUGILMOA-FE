@@ -1,4 +1,4 @@
-import { Bookmark, ChevronLeft, Star } from 'lucide-react'
+import { ChevronLeft, Clock3, Footprints, MapPin, Star, Ticket } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
@@ -11,11 +11,14 @@ import {
   heroActionsStyle,
   heroIconButtonStyle,
   heroStyle,
+  heroTitleStyle,
+  infoIconStyle,
   infoItemStyle,
   infoLabelStyle,
   infoListStyle,
   infoValueStyle,
   metaRowStyle,
+  metaTextStyle,
   pageStyle,
   photoItemStyle,
   photoListStyle,
@@ -27,7 +30,6 @@ import {
   reviewListStyle,
   reviewUserStyle,
   sectionTitleStyle,
-  titleStyle,
 } from './PlacePage.css.ts'
 
 export function PlacePage() {
@@ -51,6 +53,9 @@ export function PlacePage() {
     )
   }
 
+  const categoryLabel = place.categoryLabel ?? place.category
+  const reviewCount = place.reviewCount ?? MOCK_REVIEWS.length
+
   return (
     <div className={pageStyle}>
       <section className={heroStyle} aria-label="장소 이미지">
@@ -63,24 +68,22 @@ export function PlacePage() {
           >
             <ChevronLeft size={22} />
           </button>
-          <button type="button" className={heroIconButtonStyle} aria-label="북마크">
-            <Bookmark size={18} />
+          <button type="button" className={heroIconButtonStyle} aria-label="지도에서 보기">
+            <MapPin size={18} />
           </button>
         </div>
+        <h1 className={heroTitleStyle}>{place.title}</h1>
       </section>
 
       <div className={bodyStyle}>
-        <div>
-          <h1 className={titleStyle}>{place.title}</h1>
-          <div className={metaRowStyle}>
-            <span>{place.category}</span>
-            <span>·</span>
-            <span>{place.location}</span>
-            <span className={ratingStyle}>
-              <Star size={14} fill="currentColor" strokeWidth={0} color="#FFB721" />
-              {place.rating.toFixed(1)}
-            </span>
-          </div>
+        <div className={metaRowStyle}>
+          <p className={metaTextStyle}>
+            {categoryLabel} · {place.location}
+          </p>
+          <span className={ratingStyle}>
+            <Star size={14} fill="currentColor" strokeWidth={0} color="#FFB721" />
+            {place.rating.toFixed(2)} ({reviewCount.toLocaleString('ko-KR')})
+          </span>
         </div>
 
         {place.description ? <p className={descriptionStyle}>{place.description}</p> : null}
@@ -88,20 +91,29 @@ export function PlacePage() {
         <ul className={infoListStyle}>
           {place.hours ? (
             <li className={infoItemStyle}>
-              <span className={infoLabelStyle}>영업시간</span>
+              <span className={infoIconStyle} aria-hidden>
+                <Clock3 size={18} />
+              </span>
               <span className={infoValueStyle}>{place.hours}</span>
+              <span className={infoLabelStyle}>영업시간</span>
             </li>
           ) : null}
           {place.distance ? (
             <li className={infoItemStyle}>
-              <span className={infoLabelStyle}>거리</span>
+              <span className={infoIconStyle} aria-hidden>
+                <Footprints size={18} />
+              </span>
               <span className={infoValueStyle}>{place.distance}</span>
+              <span className={infoLabelStyle}>현위치에서</span>
             </li>
           ) : null}
           {place.fee ? (
             <li className={infoItemStyle}>
-              <span className={infoLabelStyle}>입장료</span>
+              <span className={infoIconStyle} aria-hidden>
+                <Ticket size={18} />
+              </span>
               <span className={infoValueStyle}>{place.fee}</span>
+              <span className={infoLabelStyle}>입장료</span>
             </li>
           ) : null}
         </ul>
@@ -109,16 +121,14 @@ export function PlacePage() {
         <section>
           <h2 className={sectionTitleStyle}>사진</h2>
           <div className={photoListStyle}>
-            {Array.from({ length: 4 }, (_, index) => (
-              <div key={index} className={photoItemStyle}>
-                사진
-              </div>
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className={photoItemStyle} aria-hidden />
             ))}
           </div>
         </section>
 
         <section>
-          <h2 className={sectionTitleStyle}>리뷰</h2>
+          <h2 className={sectionTitleStyle}>리뷰 {reviewCount}</h2>
           <ul className={reviewListStyle}>
             {MOCK_REVIEWS.map((review) => (
               <li key={review.id} className={reviewItemStyle}>

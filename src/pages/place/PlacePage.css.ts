@@ -13,8 +13,12 @@ export const pageStyle = style({
 
 export const heroStyle = style({
   position: 'relative',
-  height: '220px',
-  backgroundImage: `linear-gradient(135deg, ${colors.secondary[400]}, ${colors.primary[400]})`,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-end',
+  minHeight: '220px',
+  padding: `${vars.space[4]} ${vars.space[5]} ${vars.space[5]}`,
+  backgroundImage: `linear-gradient(160deg, ${colors.secondary[400]}, ${colors.primary[500]})`,
 })
 
 export const heroActionsStyle = style({
@@ -39,23 +43,23 @@ export const heroIconButtonStyle = style({
   cursor: 'pointer',
 })
 
+export const heroTitleStyle = style({
+  margin: 0,
+  maxWidth: '100%',
+  fontSize: vars.fontSize['2xl'],
+  fontWeight: vars.fontWeight.bold,
+  letterSpacing: '-0.03em',
+  lineHeight: vars.lineHeight.tight,
+  color: colors.text[5],
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.18)',
+})
+
 export const bodyStyle = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[5],
   padding: vars.space[5],
-  marginTop: '-24px',
-  borderRadius: `${vars.radius.xl} ${vars.radius.xl} 0 0`,
   backgroundColor: colors.background[1],
-  position: 'relative',
-})
-
-export const titleStyle = style({
-  margin: 0,
-  fontSize: vars.fontSize.xl,
-  fontWeight: vars.fontWeight.bold,
-  letterSpacing: '-0.03em',
-  color: colors.text[1],
 })
 
 export const metaRowStyle = style({
@@ -63,7 +67,11 @@ export const metaRowStyle = style({
   flexWrap: 'wrap',
   gap: vars.space[2],
   alignItems: 'center',
-  marginTop: vars.space[2],
+  justifyContent: 'space-between',
+})
+
+export const metaTextStyle = style({
+  margin: 0,
   color: colors.text[3],
   fontSize: vars.fontSize.sm,
 })
@@ -73,6 +81,7 @@ export const ratingStyle = style({
   alignItems: 'center',
   gap: '4px',
   color: colors.text[1],
+  fontSize: vars.fontSize.sm,
   fontWeight: vars.fontWeight.semibold,
 })
 
@@ -84,26 +93,40 @@ export const descriptionStyle = style({
 })
 
 export const infoListStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
   gap: vars.space[3],
   margin: 0,
-  padding: 0,
+  padding: vars.space[4],
   listStyle: 'none',
+  borderRadius: vars.radius.lg,
+  backgroundColor: colors.surface[4],
+  border: `1px solid ${colors.border[1]}`,
 })
 
 export const infoItemStyle = style({
-  display: 'grid',
-  gridTemplateColumns: '72px 1fr',
-  gap: vars.space[3],
-  fontSize: vars.fontSize.sm,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: vars.space[1],
+  textAlign: 'center',
+})
+
+export const infoIconStyle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: colors.primary[500],
 })
 
 export const infoLabelStyle = style({
+  fontSize: '12px',
   color: colors.text[4],
 })
 
 export const infoValueStyle = style({
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.semibold,
   color: colors.text[1],
 })
 
@@ -128,17 +151,11 @@ export const photoListStyle = style({
 })
 
 export const photoItemStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
   flexShrink: 0,
   width: '96px',
   height: '96px',
   borderRadius: vars.radius.buttonLg,
   backgroundImage: `linear-gradient(135deg, ${colors.secondary[400]}, ${colors.primary[400]})`,
-  color: colors.text[5],
-  fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.medium,
 })
 
 export const reviewListStyle = style({

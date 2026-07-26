@@ -13,8 +13,12 @@ export const pageStyle = style({
 
 export const heroStyle = style({
   position: 'relative',
-  height: '220px',
-  backgroundImage: `linear-gradient(135deg, ${colors.secondary[400]}, ${colors.primary[400]})`,
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-end',
+  minHeight: '220px',
+  padding: `${vars.space[4]} ${vars.space[5]} ${vars.space[5]}`,
+  backgroundImage: `linear-gradient(160deg, ${colors.secondary[400]}, ${colors.primary[500]})`,
 })
 
 export const heroActionsStyle = style({
@@ -39,29 +43,48 @@ export const heroIconButtonStyle = style({
   cursor: 'pointer',
 })
 
+export const heroTitleStyle = style({
+  margin: 0,
+  maxWidth: '100%',
+  fontSize: vars.fontSize['2xl'],
+  fontWeight: vars.fontWeight.bold,
+  letterSpacing: '-0.03em',
+  lineHeight: vars.lineHeight.tight,
+  color: colors.text[5],
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.18)',
+})
+
 export const bodyStyle = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: vars.space[5],
+  gap: vars.space[4],
   padding: vars.space[5],
-  marginTop: '-24px',
-  borderRadius: `${vars.radius.xl} ${vars.radius.xl} 0 0`,
   backgroundColor: colors.background[1],
-  position: 'relative',
 })
 
-export const titleStyle = style({
-  margin: 0,
-  fontSize: vars.fontSize.xl,
-  fontWeight: vars.fontWeight.bold,
-  letterSpacing: '-0.03em',
-  color: colors.text[1],
+export const contentWrapperStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
 })
 
 export const badgesRowStyle = style({
   display: 'flex',
   flexWrap: 'wrap',
   gap: vars.space[2],
+})
+
+export const metaStyle = style({
+  margin: 0,
+  fontSize: vars.fontSize.sm,
+  color: colors.text[3],
+})
+
+export const descriptionStyle = style({
+  margin: 0,
+  fontSize: vars.fontSize.sm,
+  lineHeight: vars.lineHeight.relaxed,
+  color: colors.text[2],
 })
 
 export const sectionTitleStyle = style({

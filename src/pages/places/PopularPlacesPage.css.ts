@@ -15,11 +15,9 @@ export const pageStyle = style({
 export const chipRowStyle = style({
   display: 'flex',
   gap: vars.space[2],
-  overflowX: 'auto',
-  scrollbarWidth: 'none',
   selectors: {
-    '&::-webkit-scrollbar': {
-      display: 'none',
+    '& > *': {
+      flexShrink: 0,
     },
   },
 })
