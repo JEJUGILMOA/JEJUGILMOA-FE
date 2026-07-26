@@ -12,7 +12,7 @@ import homeHeroImage from '@/assets/images/home-hero.png'
 import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
 import { PlaceCard } from '@/components/ui/PlaceCard/PlaceCard'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
-import { TravelPickCard } from '@/components/ui/TravelPickCard/TravelPickCard'
+import { TravelPickCard } from './components/TravelPickCard/TravelPickCard'
 import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
 import { MOCK_COURSES, MOCK_PLACES, MOCK_TRAVEL_PICKS } from '@/data/mockExplore'
 import {
