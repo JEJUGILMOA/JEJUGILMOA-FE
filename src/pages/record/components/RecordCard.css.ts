@@ -14,7 +14,7 @@ export const cardStyle = style({
 export const thumbnailWrapStyle = style({
   position: 'relative',
   width: '100%',
-  aspectRatio: '4 / 3',
+  aspectRatio: '6 / 3',
   backgroundColor: colors.surface[4],
 })
 
