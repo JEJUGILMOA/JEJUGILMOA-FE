@@ -44,6 +44,8 @@ export type PathPoint = {
   y: number
 }
 
+export type ReactionType = 'like' | 'dislike'
+
 export type ExploreRecord = {
   id: string
   title: string
@@ -51,4 +53,7 @@ export type ExploreRecord = {
   authorName: string
   linkedPlanTitle: string | null
   path: PathPoint[]
+  likeCount: number
+  dislikeCount: number
+  myReaction: ReactionType | null
 }

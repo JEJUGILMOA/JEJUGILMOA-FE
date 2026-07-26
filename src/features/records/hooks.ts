@@ -1,6 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants'
-import { createRecord, fetchCompletedTrips, fetchExploreRecords, fetchMyRecords } from './api'
+import {
+  createRecord,
+  deleteRecord,
+  fetchCompletedTrips,
+  fetchExploreRecords,
+  fetchMyRecords,
+  reactToExploreRecord,
+  updateRecord,
+} from './api'
+import type { ReactionType, SavedRecord } from './types'
 
 export function useCompletedTripsQuery() {
   return useQuery({
@@ -30,6 +39,46 @@ export function useCreateRecordMutation() {
     mutationFn: createRecord,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
+    },
+  })
+}
+
+export function useUpdateRecordMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      patch,
+    }: {
+      id: string
+      patch: Partial<Pick<SavedRecord, 'title' | 'summary' | 'visibility'>>
+    }) => updateRecord(id, patch),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
+    },
+  })
+}
+
+export function useDeleteRecordMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => deleteRecord(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
+    },
+  })
+}
+
+export function useReactToExploreRecordMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, reaction }: { id: string; reaction: ReactionType }) =>
+      reactToExploreRecord(id, reaction),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exploreRecords })
     },
   })
 }

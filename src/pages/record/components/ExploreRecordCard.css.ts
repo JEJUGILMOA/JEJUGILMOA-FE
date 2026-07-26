@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css'
+import { recipe } from '@vanilla-extract/recipes'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
@@ -67,4 +68,58 @@ export const authorNameStyle = style({
 
 export const linkedPlanButtonStyle = style({
   padding: 0,
+})
+
+export const reactionRowStyle = style({
+  display: 'flex',
+  gap: vars.space[2],
+  marginTop: vars.space[3],
+})
+
+export const reactionButtonRecipe = recipe({
+  base: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: vars.space[1],
+    padding: `${vars.space[1]} ${vars.space[3]}`,
+    borderRadius: vars.radius.full,
+    border: `1px solid ${colors.border[1]}`,
+    backgroundColor: colors.surface[1],
+    color: colors.text[3],
+    fontSize: vars.fontSize.xs,
+    fontWeight: vars.fontWeight.medium,
+    cursor: 'pointer',
+  },
+  variants: {
+    tone: {
+      like: {},
+      dislike: {},
+    },
+    active: {
+      true: {},
+      false: {},
+    },
+  },
+  compoundVariants: [
+    {
+      variants: { tone: 'like', active: true },
+      style: {
+        borderColor: colors.primary[500],
+        backgroundColor: colors.primary[100],
+        color: colors.primary[700],
+      },
+    },
+    {
+      variants: { tone: 'dislike', active: true },
+      style: {
+        borderColor: colors.error[300],
+        backgroundColor: colors.error[100],
+        color: colors.error[300],
+      },
+    },
+  ],
+  defaultVariants: {
+    tone: 'like',
+    active: false,
+  },
 })

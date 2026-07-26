@@ -30,9 +30,23 @@ export const pathLineStyle = style({
   fill: 'none',
   stroke: colors.primary[500],
   strokeWidth: 1.5,
+  strokeLinecap: 'round',
   strokeDasharray: '3 3',
 })
 
-export const pathDotStyle = style({
+export const waypointDotStyle = style({
   fill: colors.primary[500],
+  stroke: colors.surface[1],
+  strokeWidth: 1,
+})
+
+export const endpointDotStyle = style({
+  fill: colors.primary[600],
+  stroke: colors.surface[1],
+  strokeWidth: 1.5,
+})
+
+export const endpointHaloStyle = style({
+  fill: colors.primary[500],
+  opacity: 0.18,
 })

@@ -39,6 +39,22 @@ export const badgeWrapStyle = style({
   left: vars.space[3],
 })
 
+export const manageButtonStyle = style({
+  position: 'absolute',
+  top: vars.space[3],
+  right: vars.space[3],
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '28px',
+  height: '28px',
+  border: 'none',
+  borderRadius: vars.radius.full,
+  backgroundColor: 'rgba(37, 37, 45, 0.48)',
+  color: colors.text[5],
+  cursor: 'pointer',
+})
+
 export const bodyStyle = style({
   display: 'flex',
   flexDirection: 'column',

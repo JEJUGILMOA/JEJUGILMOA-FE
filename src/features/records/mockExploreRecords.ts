@@ -14,6 +14,9 @@ export const mockExploreRecords: ExploreRecord[] = [
       { x: 0.6, y: 0.55 },
       { x: 0.9, y: 0.15 },
     ],
+    likeCount: 18,
+    dislikeCount: 1,
+    myReaction: null,
   },
   {
     id: 'explore-busan',
@@ -27,5 +30,8 @@ export const mockExploreRecords: ExploreRecord[] = [
       { x: 0.7, y: 0.3 },
       { x: 0.85, y: 0.7 },
     ],
+    likeCount: 7,
+    dislikeCount: 0,
+    myReaction: null,
   },
 ]
