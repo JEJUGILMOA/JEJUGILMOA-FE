@@ -6,6 +6,7 @@ export const pageStyle = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[5],
+  padding: vars.space[4],
 })
 
 export const heroStyle = style({

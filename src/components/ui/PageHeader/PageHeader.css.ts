@@ -8,7 +8,7 @@ export const pageHeaderRoot = style({
   justifyContent: 'space-between',
   gap: vars.space[3],
   minHeight: vars.size.header,
-  padding: `${vars.space[2]} ${vars.space[4]}`,
+  padding: `${vars.space[2]} 0`,
 })
 
 export const pageHeaderLeft = style({
@@ -33,7 +33,7 @@ export const backButton = style({
   justifyContent: 'center',
   width: vars.size.touch,
   height: vars.size.touch,
-  margin: `0 -${vars.space[2]}`,
+  margin: 0,
   padding: 0,
   border: 'none',
   borderRadius: vars.radius.sm,

@@ -16,12 +16,20 @@ export const layoutStyle = style({
 })
 
 export const contentStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
   flex: 1,
+  minHeight: 0,
   width: '100%',
   maxWidth: '720px',
   marginInline: 'auto',
-  padding: vars.space[4],
-  paddingBottom: `calc(${vars.size.bottomNav} + env(safe-area-inset-bottom) + ${vars.space[4]})`,
+  padding: 0,
+  paddingBottom: `calc(${vars.size.bottomNav} + env(safe-area-inset-bottom))`,
   overflowY: 'auto',
   WebkitOverflowScrolling: 'touch',
+})
+
+/** 하단 네비 없는 서브페이지용 — bottomNav 여백 제거 */
+export const contentFullBleedStyle = style({
+  paddingBottom: 'env(safe-area-inset-bottom)',
 })
