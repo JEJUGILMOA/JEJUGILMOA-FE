@@ -9,7 +9,13 @@ import { useMyRecordsQuery } from '@/features/records/hooks'
 import { ExploreView } from './components/ExploreView'
 import { FloatingActionButton } from './components/FloatingActionButton'
 import { RecordCard } from './components/RecordCard'
-import { descriptionStyle, headerStyle, listStyle, pageStyle, titleStyle } from './RecordPage.css.ts'
+import {
+  descriptionStyle,
+  headerStyle,
+  listStyle,
+  pageStyle,
+  titleStyle,
+} from './RecordPage.css.ts'
 
 type RecordTab = 'mine' | 'explore'
 
