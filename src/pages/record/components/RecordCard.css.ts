@@ -80,6 +80,9 @@ export const metaStyle = style({
 })
 
 export const reactionStyle = style({
+  marginTop: vars.space[2],
+  paddingTop: vars.space[2],
+  borderTop: `1px solid ${colors.border[1]}`,
   fontSize: vars.fontSize.xs,
   color: colors.text[4],
 })

@@ -13,6 +13,11 @@ export const segmentedRoot = style({
   borderRadius: vars.radius.sm,
 })
 
+export const segmentedRootFullWidth = style({
+  display: 'flex',
+  width: '100%',
+})
+
 export const indicatorStyle = style({
   position: 'absolute',
   top: vars.space[1],
@@ -61,8 +66,16 @@ export const segmentRecipe = recipe({
       },
       false: {},
     },
+    fullWidth: {
+      true: {
+        flex: 1,
+        textAlign: 'center',
+      },
+      false: {},
+    },
   },
   defaultVariants: {
     active: false,
+    fullWidth: false,
   },
 })

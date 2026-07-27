@@ -35,6 +35,7 @@ export function RecordPage() {
           value={tab}
           onChange={(value) => setTab(value as RecordTab)}
           aria-label="기록 보기 전환"
+          fullWidth
         />
       </div>
 
