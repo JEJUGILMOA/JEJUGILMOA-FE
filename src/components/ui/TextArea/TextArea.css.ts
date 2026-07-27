@@ -13,7 +13,7 @@ export const textAreaRecipe = recipe({
   base: {
     display: 'block',
     width: '100%',
-    minHeight: '215px',
+    minHeight: '120px',
     padding: `${vars.space[3]} ${vars.space[3]} ${vars.space[8]}`,
     ...fieldChromeState.base,
     color: colors.text[1],

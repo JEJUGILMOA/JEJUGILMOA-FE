@@ -79,7 +79,9 @@ export function DetailsStep({
         onOpenChange={(open) => {
           if (!open) setActivePlaceId(null)
         }}
-        title="장소 메모"
+        minHeight={0.75}
+        initialHeight={0.75}
+        maxHeight={0.75}
       >
         {renderedPlace ? (
           <PlaceMemoSheet

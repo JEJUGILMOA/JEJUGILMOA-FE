@@ -9,7 +9,7 @@ export const segmentedRoot = style({
   alignItems: 'center',
   gap: vars.space[1],
   padding: vars.space[1],
-  backgroundColor: colors.surface[4],
+  backgroundColor: colors.surface[3],
   borderRadius: vars.radius.md,
 })
 

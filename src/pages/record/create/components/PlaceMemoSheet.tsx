@@ -28,6 +28,7 @@ export function PlaceMemoSheet({ placeName, initialMemo, onSave }: PlaceMemoShee
       <PhotoGrid
         photos={photos}
         addLabel="사진 첨부"
+        compact
         onAdd={(files) => setPhotos((prev) => [...prev, ...files])}
         onRemove={(index) => setPhotos((prev) => prev.filter((_, i) => i !== index))}
       />

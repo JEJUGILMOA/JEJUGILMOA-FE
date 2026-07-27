@@ -34,6 +34,49 @@ export const addTileStyle = style([
   },
 ])
 
+export const compactWrapStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+})
+
+export const addRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: vars.space[2],
+  width: '100%',
+  height: '44px',
+  borderRadius: vars.radius.md,
+  border: `1px dashed ${colors.border[1]}`,
+  backgroundColor: colors.surface[2],
+  color: colors.secondary[500],
+  fontFamily: vars.fontFamily.sans,
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.medium,
+  cursor: 'pointer',
+  selectors: {
+    '&:hover': {
+      borderColor: colors.secondary[300],
+      backgroundColor: colors.secondary[100],
+    },
+  },
+})
+
+export const compactPhotoRowStyle = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: vars.space[2],
+})
+
+export const compactPhotoTileStyle = style([
+  tileBase,
+  {
+    width: '64px',
+    backgroundColor: colors.surface[4],
+  },
+])
+
 export const hiddenInput = style({
   position: 'absolute',
   width: '1px',
