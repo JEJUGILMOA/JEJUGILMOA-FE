@@ -9,13 +9,7 @@ import { useMyRecordsQuery } from '@/features/records/hooks'
 import { ExploreView } from './components/ExploreView'
 import { FloatingActionButton } from './components/FloatingActionButton'
 import { RecordCard } from './components/RecordCard'
-import {
-  descriptionStyle,
-  headerStyle,
-  listStyle,
-  pageStyle,
-  titleStyle,
-} from './RecordPage.css.ts'
+import { headerStyle, listStyle, pageStyle } from './RecordPage.css.ts'
 
 type RecordTab = 'mine' | 'explore'
 
@@ -34,8 +28,6 @@ export function RecordPage() {
   return (
     <div className={pageStyle}>
       <div className={headerStyle}>
-        <h2 className={titleStyle}>기록</h2>
-        <p className={descriptionStyle}>여행의 추억을 기록하고 관리하세요.</p>
         <SegmentedControl
           items={TABS}
           value={tab}
