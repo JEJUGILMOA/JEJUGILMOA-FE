@@ -15,5 +15,6 @@ export const pageStyle = style({
 export const listStyle = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: vars.space[3],
+  gap: vars.space[4],
+  paddingBottom: vars.space[2],
 })
