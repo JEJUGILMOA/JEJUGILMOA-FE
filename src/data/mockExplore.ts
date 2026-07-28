@@ -19,12 +19,20 @@ export type MockPlace = {
   fee?: string
   description?: string
   badges?: PlaceBadge[]
+  /** 목록 카드용 썸네일 (최대 3장) */
+  imageUrls?: string[]
 }
 
 export type MockCourseStep = {
   placeId: string
   title: string
   travelLabel?: string
+}
+
+
+export type CourseImageTag = {
+  label: string
+  tone: 'blue' | 'pink' | 'green'
 }
 
 export type MockCourse = {
@@ -37,6 +45,13 @@ export type MockCourse = {
   badges: PlaceBadge[]
   tags?: string[]
   steps: MockCourseStep[]
+  imageUrl: string
+  imageTags: CourseImageTag[]
+  locationLabel: string
+  duration: string
+  transport: string
+  distanceFromMe: string
+  thumbnailUrls: string[]
 }
 
 export type MockReview = {
@@ -273,11 +288,10 @@ export const MOCK_PLACES: MockPlace[] = [
 export const MOCK_COURSES: MockCourse[] = [
   {
     id: 'hyeopjae',
-    title: '협재 해수욕장 코스',
+    title: '애월 감성 드라이브 코스',
     summary: '협재해수욕장 · 카페 · 올레길',
     meta: '제주 한림읍 · 총 4개 장소 · 예상 3시간',
-    description:
-      '에메랄드빛 바다와 하얀 모래사장을 따라 걸으며, 카페와 공원을 여유롭게 둘러보는 한림 해안 코스입니다.',
+    description: '바다와 카페를 따라 여유롭게 즐기는 반나절 드라이브 코스',
     rating: 4.8,
     badges: [
       { label: '무료' },
@@ -285,16 +299,34 @@ export const MOCK_COURSES: MockCourse[] = [
       { label: '도보 위주', status: 'info' },
     ],
     tags: ['무료', '★ 4.8', '도보 위주'],
+    imageUrl:
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80',
+    imageTags: [
+      { label: '바다', tone: 'blue' },
+      { label: '데이트', tone: 'pink' },
+    ],
+    locationLabel: '애월 · 한림',
+    duration: '약 4시간',
+    transport: '자동차',
+    distanceFromMe: '12km',
+    thumbnailUrls: [
+      'https://images.unsplash.com/photo-1612977512598-3b8d6a498bbb?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=120&q=80',
+    ],
     steps: [
-      { placeId: 'hyeopjae-beach', title: '협재 해수욕장', travelLabel: '도보 10분' },
-      { placeId: 'hallim-cafe', title: '한림 해안 카페', travelLabel: '도보 6분' },
-      { placeId: 'hallim-park', title: '한림공원', travelLabel: '도보 15분' },
+      { placeId: 'hyeopjae-beach', title: '한담해변', travelLabel: '도보 10분' },
       { placeId: 'aewol-cafe', title: '애월 카페거리', travelLabel: '도보 8분' },
+      { placeId: 'hallim-park', title: '곽지해수욕장', travelLabel: '도보 15분' },
+      { placeId: 'hallim-cafe', title: '한림 해안 카페', travelLabel: '도보 6분' },
+      { placeId: 'olle-trail', title: '올레길 14코스', travelLabel: '도보 15분' },
     ],
   },
   {
     id: 'seongsan',
-    title: '성산일출봉 코스',
+    title: '성산 일출 트레킹 코스',
     summary: '성산일출봉 · 섭지코지 · 카페',
     meta: '제주 성산읍 · 총 3개 장소 · 예상 4시간',
     description: '성산일출봉을 중심으로 섭지코지와 항구 시장을 도는 동쪽 대표 코스입니다.',
@@ -305,6 +337,22 @@ export const MOCK_COURSES: MockCourse[] = [
       { label: '일출', status: 'info' },
     ],
     tags: ['유료', '★ 4.9', '일출'],
+    imageUrl:
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=400&q=80',
+    imageTags: [
+      { label: '일출', tone: 'blue' },
+      { label: '트레킹', tone: 'green' },
+    ],
+    locationLabel: '성산 · 섭지코지',
+    duration: '약 5시간',
+    transport: '도보 + 자동차',
+    distanceFromMe: '28km',
+    thumbnailUrls: [
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1612977512598-3b8d6a498bbb?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=120&q=80',
+    ],
     steps: [
       { placeId: 'seongsan-ilchulbong', title: '성산일출봉', travelLabel: '차량 15분' },
       { placeId: 'seopjikoji-cafe', title: '섭지코지 카페', travelLabel: '도보 10분' },
@@ -313,7 +361,7 @@ export const MOCK_COURSES: MockCourse[] = [
   },
   {
     id: 'udo',
-    title: '우도 하루 코스',
+    title: '우도 감성 여행',
     summary: '우도 · 해변 · 땅콩아이스크림',
     meta: '제주 우도면 · 총 3개 장소 · 예상 5시간',
     description: '페리로 건너가 해변과 카페, 땅콩 아이스크림까지 즐기는 우도 하루 코스입니다.',
@@ -324,6 +372,24 @@ export const MOCK_COURSES: MockCourse[] = [
       { label: '섬여행', status: 'info' },
     ],
     tags: ['유료', '★ 4.7', '섬여행'],
+    imageUrl:
+      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80',
+    imageTags: [
+      { label: '섬여행', tone: 'blue' },
+      { label: '감성', tone: 'pink' },
+    ],
+    locationLabel: '우도 · 성산',
+    duration: '약 6시간',
+    transport: '자동차',
+    distanceFromMe: '35km',
+    thumbnailUrls: [
+      'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1612977512598-3b8d6a498bbb?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=120&q=80',
+    ],
     steps: [
       { placeId: 'udo-geommeolle', title: '우도 검멀레해변', travelLabel: '전동바이크 10분' },
       { placeId: 'udo-cafe', title: '우도 카페', travelLabel: '도보 8분' },
@@ -332,7 +398,7 @@ export const MOCK_COURSES: MockCourse[] = [
   },
   {
     id: 'hallasan',
-    title: '한라산 가볍게 코스',
+    title: '한라산 실내 탐방',
     summary: '한라산 · 어리목 · 카페',
     meta: '제주 제주시 · 총 3개 장소 · 예상 6시간',
     description: '어리목 탐방로를 가볍게 걷고 산속 카페와 동문시장으로 마무리하는 코스입니다.',
@@ -343,6 +409,22 @@ export const MOCK_COURSES: MockCourse[] = [
       { label: '자연', status: 'info' },
     ],
     tags: ['무료', '★ 4.8', '자연'],
+    imageUrl:
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80',
+    imageTags: [
+      { label: '실내', tone: 'blue' },
+      { label: '휴식', tone: 'green' },
+    ],
+    locationLabel: '제주시 · 한라산',
+    duration: '약 3시간',
+    transport: '도보 + 자동차',
+    distanceFromMe: '18km',
+    thumbnailUrls: [
+      'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1612977512598-3b8d6a498bbb?auto=format&fit=crop&w=120&q=80',
+    ],
     steps: [
       { placeId: 'eorimok-trail', title: '어리목 탐방로', travelLabel: '도보 30분' },
       { placeId: 'san-cafe', title: '산속 카페', travelLabel: '차량 20분' },
@@ -379,8 +461,44 @@ export function getCourseById(courseId: string) {
   return MOCK_COURSES.find((course) => course.id === courseId)
 }
 
+export function getCoursePreviewSteps(course: MockCourse) {
+  return course.steps.map((step, index) => ({
+    title: step.title,
+    thumbnailUrl: course.thumbnailUrls[index] ?? course.imageUrl,
+  }))
+}
+
 export function getPlaceById(placeId: string) {
   return MOCK_PLACES.find((place) => place.id === placeId)
+}
+
+const PLACE_PHOTO_POOL = [
+  'https://images.unsplash.com/photo-1612977512598-3b8d6a498bbb?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80',
+]
+
+/** 인기 관광지 카드용 썸네일 3장 (place.imageUrls 우선) */
+export function getPlaceImageUrls(place: MockPlace, count = 3) {
+  if (place.imageUrls && place.imageUrls.length > 0) {
+    return place.imageUrls.slice(0, count)
+  }
+
+  let hash = 0
+  for (let i = 0; i < place.id.length; i += 1) {
+    hash = (hash * 31 + place.id.charCodeAt(i)) >>> 0
+  }
+  const start = hash % PLACE_PHOTO_POOL.length
+
+  return Array.from({ length: count }, (_, index) => {
+    return PLACE_PHOTO_POOL[(start + index) % PLACE_PHOTO_POOL.length]
+  })
 }
 
 export type TravelPickTheme = {
