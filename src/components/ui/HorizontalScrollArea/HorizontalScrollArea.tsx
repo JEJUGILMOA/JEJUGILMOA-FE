@@ -27,10 +27,11 @@ type HorizontalScrollAreaProps = {
   as?: 'div' | 'ul'
   /**
    * 끝 그라데이션 설정.
+   * - false: 페이드 숨김
    * - color: 페이지 배경색에 맞출 hex (기본 #FDFEFE)
    * - width: 페이드 너비 px (기본 32)
    */
-  fade?: {
+  fade?: false | {
     color?: string
     width?: number
   }
@@ -72,18 +73,21 @@ export function HorizontalScrollArea({
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
-  const fadeColor = fade?.color ?? '#FDFEFE'
-  const fadeWidth = fade?.width ?? 32
+  const showFade = fade !== false
+  const fadeColor = (fade === false ? undefined : fade)?.color ?? '#FDFEFE'
+  const fadeWidth = (fade === false ? undefined : fade)?.width ?? 32
 
   const syncEdges = useCallback(() => {
+    if (!showFade) return
     const element = scrollRef.current
     if (!element) return
     const next = readEdges(element)
     setCanScrollLeft(next.canScrollLeft)
     setCanScrollRight(next.canScrollRight)
-  }, [])
+  }, [showFade])
 
   useEffect(() => {
+    if (!showFade) return
     const element = scrollRef.current
     if (!element) return
 
@@ -104,9 +108,10 @@ export function HorizontalScrollArea({
       mutationObserver.disconnect()
       window.removeEventListener('resize', sync)
     }
-  }, [syncEdges])
+  }, [showFade, syncEdges])
 
   const handleScroll = (event: UIEvent<HTMLElement>) => {
+    if (!showFade) return
     const next = readEdges(event.currentTarget)
     setCanScrollLeft(next.canScrollLeft)
     setCanScrollRight(next.canScrollRight)
@@ -123,14 +128,16 @@ export function HorizontalScrollArea({
 
   return (
     <div className={cn(wrapperStyle, wrapperClassName)} style={wrapperVars}>
-      <div
-        className={fadeLeftStyle}
-        data-visible={canScrollLeft ? 'true' : 'false'}
-        aria-hidden
-        style={{
-          background: `linear-gradient(90deg, ${fadeColor} 0%, ${toRgba(fadeColor, 0)} 100%)`,
-        }}
-      />
+      {showFade ? (
+        <div
+          className={fadeLeftStyle}
+          data-visible={canScrollLeft ? 'true' : 'false'}
+          aria-hidden
+          style={{
+            background: `linear-gradient(90deg, ${fadeColor} 0%, ${toRgba(fadeColor, 0)} 100%)`,
+          }}
+        />
+      ) : null}
 
       {as === 'ul' ? (
         <ul
@@ -154,14 +161,16 @@ export function HorizontalScrollArea({
         </div>
       )}
 
-      <div
-        className={fadeRightStyle}
-        data-visible={canScrollRight ? 'true' : 'false'}
-        aria-hidden
-        style={{
-          background: `linear-gradient(270deg, ${fadeColor} 0%, ${toRgba(fadeColor, 0)} 100%)`,
-        }}
-      />
+      {showFade ? (
+        <div
+          className={fadeRightStyle}
+          data-visible={canScrollRight ? 'true' : 'false'}
+          aria-hidden
+          style={{
+            background: `linear-gradient(270deg, ${fadeColor} 0%, ${toRgba(fadeColor, 0)} 100%)`,
+          }}
+        />
+      ) : null}
     </div>
   )
 }
