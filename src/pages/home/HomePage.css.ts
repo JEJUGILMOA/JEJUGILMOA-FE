@@ -1,5 +1,4 @@
 import { globalStyle, style } from '@vanilla-extract/css'
-import { recipe } from '@vanilla-extract/recipes'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
@@ -198,68 +197,14 @@ export const categoryLabelStyle = style({
   whiteSpace: 'nowrap',
 })
 
-export const courseCarouselStyle = style({
+export const courseRowStyle = style({
   display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
   gap: vars.space[3],
   width: '100%',
-})
-
-export const courseViewportStyle = style({
-  width: '100%',
-  overflow: 'hidden',
-  touchAction: 'pan-y',
-  cursor: 'grab',
-  selectors: {
-    '&:active': {
-      cursor: 'grabbing',
-    },
-  },
-})
-
-export const courseTrackStyle = style({
-  display: 'flex',
-  width: '100%',
-  willChange: 'transform',
-})
-
-export const courseSlideStyle = style({
-  flex: '0 0 100%',
-  width: '100%',
-  minWidth: '100%',
-  boxSizing: 'border-box',
-})
-
-export const dotsStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: vars.space[2],
-})
-
-export const dotRecipe = recipe({
-  base: {
-    width: '6px',
-    height: '6px',
-    padding: 0,
-    border: 'none',
-    borderRadius: vars.radius.full,
-    cursor: 'pointer',
-  },
-  variants: {
-    active: {
-      true: {
-        backgroundColor: colors.text[3],
-      },
-      false: {
-        backgroundColor: colors.surface[5],
-      },
-    },
-  },
-  defaultVariants: {
-    active: false,
-  },
+  minWidth: 0,
+  paddingTop: vars.space[1],
+  paddingBottom: vars.space[3],
+  scrollSnapType: 'x mandatory',
 })
 
 export const popularListStyle = style({
@@ -278,23 +223,4 @@ export const popularListStyle = style({
       display: 'none',
     },
   },
-})
-
-export const popularCardStyle = style({
-  flexShrink: 0,
-})
-
-globalStyle(`${popularCardStyle} > div:first-of-type`, {
-  aspectRatio: '148 / 75',
-  height: '75px',
-})
-
-globalStyle(`${popularCardStyle} > div:last-of-type`, {
-  padding: vars.space[3],
-  gap: vars.space[1],
-})
-
-globalStyle(`${popularCardStyle} h3`, {
-  fontSize: vars.fontSize.sm,
-  letterSpacing: '-0.025em',
 })

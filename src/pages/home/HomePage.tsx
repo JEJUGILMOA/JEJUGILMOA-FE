@@ -1,31 +1,18 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type PointerEvent,
-  type TransitionEvent,
-} from 'react'
 import { useNavigate } from 'react-router'
 import homeHeroImage from '@/assets/images/home-hero.png'
 import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
-import { PlaceCard } from '@/components/ui/PlaceCard/PlaceCard'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { TravelPickCard } from './components/TravelPickCard/TravelPickCard'
+import { CourseRecommendCard } from './components/CourseRecommendCard/CourseRecommendCard'
+import { PopularPlaceCard } from './components/PopularPlaceCard/PopularPlaceCard'
 import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
-import { MOCK_COURSES, MOCK_PLACES, MOCK_TRAVEL_PICKS } from '@/data/mockExplore'
+import { MOCK_COURSES, MOCK_PLACES, MOCK_TRAVEL_PICKS, getCoursePreviewSteps, getPlaceImageUrls } from '@/data/mockExplore'
 import {
   categoryIconStyle,
   categoryItemStyle,
   categoryLabelStyle,
   categoryListStyle,
-  courseCarouselStyle,
-  courseSlideStyle,
-  courseTrackStyle,
-  courseViewportStyle,
-  dotRecipe,
-  dotsStyle,
+  courseRowStyle,
   heroCopyStyle,
   heroBlockStyle,
   heroImageStyle,
@@ -33,7 +20,6 @@ import {
   heroSubtitleStyle,
   heroTitleStyle,
   pageStyle,
-  popularCardStyle,
   popularListStyle,
   searchBarElevatedStyle,
   searchWrapStyle,
@@ -44,25 +30,6 @@ import {
   travelPickRowStyle,
 } from './HomePage.css.ts'
 
-const COURSE_AUTO_MS = 3500
-const COURSE_TRANSITION_MS = 420
-const SWIPE_THRESHOLD_PX = 48
-const SWIPE_AXIS_LOCK_PX = 8
-
-type DragState = {
-  pointerId: number
-  startX: number
-  startY: number
-  deltaX: number
-  axis: 'undecided' | 'x' | 'y'
-}
-
-const COURSE_COUNT = MOCK_COURSES.length
-const COURSE_SLIDES = [
-  MOCK_COURSES[COURSE_COUNT - 1],
-  ...MOCK_COURSES,
-  MOCK_COURSES[0],
-]
 const HOME_POPULAR_PLACES = MOCK_PLACES.slice(0, 4)
 
 function SectionHeader({
@@ -90,168 +57,6 @@ function SectionHeader({
 
 export function HomePage() {
   const navigate = useNavigate()
-  /** 실슬라이드: 1..COURSE_COUNT, 0=마지막 복제, COURSE_COUNT+1=첫 복제 */
-  const [index, setIndex] = useState(1)
-  const [animate, setAnimate] = useState(true)
-  const [isPaused, setIsPaused] = useState(false)
-  const [dragOffset, setDragOffset] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-
-  const trackRef = useRef<HTMLDivElement>(null)
-  const indexRef = useRef(1)
-  const dragRef = useRef<DragState | null>(null)
-  const reduceMotionRef = useRef(false)
-
-  indexRef.current = index
-
-  const activeDotIndex = ((index - 1) % COURSE_COUNT + COURSE_COUNT) % COURSE_COUNT
-
-  // 복제→실슬라이드 점프 직후 transition 재활성 (DOM 반영 후)
-  useLayoutEffect(() => {
-    if (animate) return
-    void trackRef.current?.offsetHeight
-    setAnimate(true)
-  }, [animate, index])
-
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    reduceMotionRef.current = media.matches
-    const onChange = () => {
-      reduceMotionRef.current = media.matches
-    }
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
-  }, [])
-
-  const goNext = useCallback(() => {
-    if (dragRef.current) return
-    setAnimate(true)
-    setIndex((prev) => prev + 1)
-  }, [])
-
-  const goToSlide = useCallback((realIndex: number) => {
-    if (dragRef.current) return
-    setDragOffset(0)
-    setIsDragging(false)
-    setAnimate(true)
-    setIndex((((realIndex % COURSE_COUNT) + COURSE_COUNT) % COURSE_COUNT) + 1)
-  }, [])
-
-  useEffect(() => {
-    if (isPaused || isDragging || reduceMotionRef.current || COURSE_COUNT <= 1) return
-    if (index === 0 || index === COURSE_COUNT + 1) return
-    const timer = window.setInterval(goNext, COURSE_AUTO_MS)
-    return () => window.clearInterval(timer)
-  }, [goNext, index, isDragging, isPaused])
-
-  const snapFromClone = useCallback(() => {
-    const current = indexRef.current
-    if (current === COURSE_COUNT + 1) {
-      setAnimate(false)
-      setIndex(1)
-      return
-    }
-    if (current === 0) {
-      setAnimate(false)
-      setIndex(COURSE_COUNT)
-    }
-  }, [])
-
-  // transitionend 누락 대비
-  useEffect(() => {
-    if (isDragging) return
-    if (index !== 0 && index !== COURSE_COUNT + 1) return
-    const timer = window.setTimeout(snapFromClone, COURSE_TRANSITION_MS + 50)
-    return () => window.clearTimeout(timer)
-  }, [index, isDragging, snapFromClone])
-
-  const handleTrackTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
-    if (event.target !== event.currentTarget) return
-    if (event.propertyName !== 'transform') return
-    snapFromClone()
-  }
-
-  const finishDrag = useCallback((deltaX: number) => {
-    dragRef.current = null
-    setIsDragging(false)
-    setDragOffset(0)
-    setAnimate(true)
-
-    if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) {
-      setIndex((prev) => (deltaX < 0 ? prev + 1 : prev - 1))
-    }
-
-    setIsPaused(false)
-  }, [])
-
-  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (COURSE_COUNT <= 1) return
-    if (event.pointerType === 'mouse' && event.button !== 0) return
-
-    const current = indexRef.current
-    if (current === 0 || current === COURSE_COUNT + 1) return
-
-    dragRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      deltaX: 0,
-      axis: 'undecided',
-    }
-    setIsPaused(true)
-  }
-
-  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== event.pointerId) return
-
-    const dx = event.clientX - drag.startX
-    const dy = event.clientY - drag.startY
-
-    if (drag.axis === 'undecided') {
-      if (Math.abs(dx) < SWIPE_AXIS_LOCK_PX && Math.abs(dy) < SWIPE_AXIS_LOCK_PX) return
-      drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
-      if (drag.axis === 'y') {
-        dragRef.current = null
-        setIsPaused(false)
-        return
-      }
-      event.currentTarget.setPointerCapture(event.pointerId)
-    }
-
-    if (drag.axis !== 'x') return
-
-    drag.deltaX = dx
-    setIsDragging(true)
-    setDragOffset(dx)
-  }
-
-  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== event.pointerId) return
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-
-    if (drag.axis !== 'x') {
-      dragRef.current = null
-      setIsPaused(false)
-      return
-    }
-
-    finishDrag(drag.deltaX)
-  }
-
-  const handlePointerCancel = (event: PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current
-    if (!drag || drag.pointerId !== event.pointerId) return
-    dragRef.current = null
-    setIsDragging(false)
-    setDragOffset(0)
-    setAnimate(true)
-    setIsPaused(false)
-  }
 
   return (
     <div className={pageStyle}>
@@ -287,7 +92,8 @@ export function HomePage() {
           onAction={() => navigate(ROUTES.placesPopular)}
         />
         <HorizontalScrollArea
-          as="ul" className={categoryListStyle}
+          as="ul"
+          className={categoryListStyle}
           aria-label="카테고리 목록"
         >
           {PLACE_CATEGORIES.map((category) => {
@@ -360,66 +166,26 @@ export function HomePage() {
           actionLabel="더보기 >"
           onAction={() => navigate(ROUTES.courses)}
         />
-        <div
-          className={courseCarouselStyle}
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => {
-            if (!dragRef.current) setIsPaused(false)
-          }}
+        <HorizontalScrollArea
+          className={courseRowStyle}
+          aria-label="오늘의 추천 코스 목록"
+          fade={false}
         >
-          <div
-            className={courseViewportStyle}
-            aria-roledescription="carousel"
-            aria-live="polite"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerCancel}
-          >
-            <div
-              ref={trackRef}
-              className={courseTrackStyle}
-              style={{
-                transform: `translateX(calc(-${index * 100}% + ${dragOffset}px))`,
-                transition:
-                  animate && !isDragging
-                    ? `transform ${COURSE_TRANSITION_MS}ms ease`
-                    : 'none',
-              }}
-              onTransitionEnd={handleTrackTransitionEnd}
-            >
-              {COURSE_SLIDES.map((course, slideIndex) => (
-                <div
-                  key={`${course.id}-${slideIndex}`}
-                  className={courseSlideStyle}
-                  aria-hidden={slideIndex !== index}
-                >
-                  <PlaceCard
-                    variant="horizontal"
-                    width="100%"
-                    title={course.title}
-                    meta={course.meta}
-                    badges={course.badges}
-                    onClick={() => navigate(coursePath(course.id))}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className={dotsStyle} role="tablist" aria-label="추천 코스 페이지">
-            {MOCK_COURSES.map((course, courseIndex) => (
-              <button
-                key={course.id}
-                type="button"
-                className={dotRecipe({ active: courseIndex === activeDotIndex })}
-                role="tab"
-                aria-selected={courseIndex === activeDotIndex}
-                aria-label={`${courseIndex + 1}번째 추천 코스`}
-                onClick={() => goToSlide(courseIndex)}
-              />
-            ))}
-          </div>
-        </div>
+          {MOCK_COURSES.map((course) => (
+            <CourseRecommendCard
+              key={course.id}
+              title={course.title}
+              description={course.description}
+              imageUrl={course.imageUrl}
+              imageTags={course.imageTags}
+              locationLabel={course.locationLabel}
+              duration={course.duration}
+              placeCount={course.steps.length}
+              previewSteps={getCoursePreviewSteps(course)}
+              onClick={() => navigate(coursePath(course.id))}
+            />
+          ))}
+        </HorizontalScrollArea>
       </section>
 
       <section className={sectionStyle} aria-labelledby="home-popular-title">
@@ -431,13 +197,11 @@ export function HomePage() {
         />
         <div className={popularListStyle}>
           {HOME_POPULAR_PLACES.map((place) => (
-            <PlaceCard
+            <PopularPlaceCard
               key={place.id}
-              className={popularCardStyle}
-              variant="vertical"
-              width={148}
               title={place.title}
               rating={place.rating}
+              imageUrl={getPlaceImageUrls(place, 1)[0]}
               onClick={() => navigate(placePath(place.id))}
             />
           ))}
