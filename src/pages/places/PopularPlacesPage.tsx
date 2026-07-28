@@ -4,10 +4,10 @@ import { Chip } from '@/components/ui/Chip/Chip'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
-import { PlaceCard } from '@/components/ui/PlaceCard/PlaceCard'
 import { PLACE_CATEGORY_LABELS, placePath, type PlaceCategoryLabel } from '@/constants'
-import { MOCK_PLACES } from '@/data/mockExplore'
-import { cardStyle, chipRowStyle, gridStyle, pageStyle } from './PopularPlacesPage.css.ts'
+import { MOCK_PLACES, getPlaceImageUrls } from '@/data/mockExplore'
+import { PopularPlaceListCard } from './components/PopularPlaceListCard/PopularPlaceListCard'
+import { chipRowStyle, listStyle, pageStyle } from './PopularPlacesPage.css.ts'
 
 const FILTERS = ['전체', ...PLACE_CATEGORY_LABELS] as const
 type PlaceFilter = (typeof FILTERS)[number]
@@ -53,16 +53,15 @@ export function PopularPlacesPage() {
       </HorizontalScrollArea>
 
       {places.length > 0 ? (
-        <div className={gridStyle}>
+        <div className={listStyle} role="list" aria-label="인기 관광지 목록">
           {places.map((place) => (
-            <PlaceCard
+            <PopularPlaceListCard
               key={place.id}
-              className={cardStyle}
-              variant="vertical"
-              width="100%"
               title={place.title}
-              meta={place.location}
-              rating={place.rating}
+              category={place.categoryLabel ?? place.category}
+              distance={place.distance}
+              address={place.location}
+              imageUrls={getPlaceImageUrls(place)}
               onClick={() => navigate(placePath(place.id))}
             />
           ))}

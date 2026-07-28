@@ -21,17 +21,9 @@ globalStyle(`${chipRowStyle} > *`, {
   flexShrink: 0,
 })
 
-export const gridStyle = style({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-  gap: vars.space[3],
-})
-
-export const cardStyle = style({
+export const listStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 0,
   width: '100%',
-})
-
-globalStyle(`${cardStyle} > div:first-of-type`, {
-  aspectRatio: '4 / 3',
-  height: 'auto',
 })
