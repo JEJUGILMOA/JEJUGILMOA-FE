@@ -8,11 +8,11 @@ import {
   contentStyle,
   descStyle,
   eyebrowStyle,
-  footerStyle,
+  heroGradientStyle,
   heroImageStyle,
+  heroRatingStyle,
+  heroRatingValueStyle,
   heroStyle,
-  ratingStyle,
-  ratingValueStyle,
   regionStyle,
   tagStyle,
   tagsStyle,
@@ -89,7 +89,13 @@ export function TravelPickCard({
     >
       <div className={heroStyle}>
         <img src={imageUrl} alt="" className={heroImageStyle} />
+        <div className={heroGradientStyle} />
         <span className={badgeStyle}>{badge}</span>
+        <div className={heroRatingStyle}>
+          <Star size={14} fill={starColor} strokeWidth={0} />
+          <b className={heroRatingValueStyle}>{rating.toFixed(1)}</b>
+          <span>· {duration}</span>
+        </div>
         <button
           type="button"
           className={bookmarkStyle}
@@ -131,13 +137,6 @@ export function TravelPickCard({
               #{tag}
             </span>
           ))}
-        </div>
-        <div className={footerStyle}>
-          <div className={ratingStyle}>
-            <Star size={14} fill={starColor} strokeWidth={0} />
-            <b className={ratingValueStyle}>{rating.toFixed(1)}</b>
-            <span>· {duration}</span>
-          </div>
         </div>
       </div>
     </article>

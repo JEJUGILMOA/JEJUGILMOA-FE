@@ -419,7 +419,7 @@ export const MOCK_TRAVEL_PICKS: MockTravelPick[] = [
     duration: '반나절',
     badge: '여행자 추천',
     imageUrl:
-      'https://images.unsplash.com/photo-1590523277543-a94d2e4eb500?auto=format&fit=crop&w=640&q=80',
+      'https://images.unsplash.com/photo-1612977512598-3b8d6a498bbb?auto=format&fit=crop&w=640&q=80',
     theme: {
       cream: '#FBF6EC',
       accent: '#2F8F8A',

@@ -15,11 +15,10 @@ export const pageStyle = style({
 export const chipRowStyle = style({
   display: 'flex',
   gap: vars.space[2],
-  selectors: {
-    '& > *': {
-      flexShrink: 0,
-    },
-  },
+})
+
+globalStyle(`${chipRowStyle} > *`, {
+  flexShrink: 0,
 })
 
 export const gridStyle = style({

@@ -103,7 +103,7 @@ export const regionStyle = style({
 })
 
 export const descStyle = style({
-  margin: `${vars.space[2]} 0 ${vars.space[3]}`,
+  margin: `${vars.space[1]} 0 ${vars.space[2]}`,
   fontSize: vars.fontSize.sm,
   lineHeight: vars.lineHeight.relaxed,
   color: colors.text[2],
@@ -117,7 +117,7 @@ export const tagsStyle = style({
   display: 'flex',
   flexWrap: 'wrap',
   gap: vars.space[2],
-  marginBottom: vars.space[4],
+  marginBottom: 0,
 })
 
 export const tagStyle = style({
@@ -127,25 +127,31 @@ export const tagStyle = style({
   borderRadius: vars.radius.full,
   border: '1px solid',
 })
-
-export const footerStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  paddingTop: vars.space[3],
-  borderTop: `1px solid ${colors.border[1]}`,
+export const heroGradientStyle = style({
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  right: 0,
+  height: '50%',
+  background: 'linear-gradient(to top, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0) 100%)',
+  pointerEvents: 'none',
+  zIndex: 2,
 })
 
-export const ratingStyle = style({
+export const heroRatingStyle = style({
+  position: 'absolute',
+  bottom: '10px',
+  left: '12px',
+  zIndex: 3,
   display: 'flex',
   alignItems: 'center',
   gap: vars.space[1],
   fontSize: vars.fontSize.sm,
-  color: colors.text[3],
+  color: 'rgba(255,255,255,0.92)',
 })
 
-export const ratingValueStyle = style({
+export const heroRatingValueStyle = style({
   fontSize: vars.fontSize.md,
   fontWeight: vars.fontWeight.bold,
-  color: colors.text[1],
+  color: '#fff',
 })
