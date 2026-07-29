@@ -9,6 +9,8 @@ export const ROUTES = {
   record: '/record',
   recordCreate: '/record/new',
   recordDetail: (id: string) => `/record/${id}`,
+  recordPlan: (id: string) => `/record/${id}/plan`,
+  recordEdit: (id: string) => `/record/${id}/edit`,
   my: '/my',
   test: ['/test/jinsung', '/test/suji'],
 } as const

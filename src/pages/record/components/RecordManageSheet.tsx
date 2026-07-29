@@ -1,15 +1,14 @@
 import { useState } from 'react'
 import { MoreVertical } from 'lucide-react'
-import { Button } from '@/components/ui/Button/Button'
+import { useNavigate } from 'react-router'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { Popover } from '@/components/ui/Popover/Popover'
-import { TextField } from '@/components/ui/TextField/TextField'
 import { toast } from '@/components/ui/Toast/Toast'
+import { ROUTES } from '@/constants'
 import { SelectableOption } from '@/pages/record/create/components/SelectableOption'
 import { useDeleteRecordMutation, useUpdateRecordMutation } from '@/features/records/hooks'
 import type { RecordVisibility, SavedRecord } from '@/features/records/types'
 import {
-  fieldGroupStyle,
   manageButtonStyle,
   menuItemDangerStyle,
   menuItemStyle,
@@ -18,7 +17,7 @@ import {
   triggerWrapStyle,
 } from './RecordManageSheet.css.ts'
 
-type ModalView = 'edit' | 'visibility' | 'delete' | null
+type ModalView = 'visibility' | 'delete' | null
 
 export type RecordManageSheetProps = {
   record: SavedRecord
@@ -30,33 +29,23 @@ export type RecordManageSheetProps = {
 
 /** STEP 07: 내 기록 관리 (케밥 팝오버 메뉴 → 수정 · 공개 범위 설정 · 삭제) */
 export function RecordManageSheet({ record, inline = false, onDeleted }: RecordManageSheetProps) {
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [modalView, setModalView] = useState<ModalView>(null)
-  const [title, setTitle] = useState(record.title)
-  const [summary, setSummary] = useState(record.summary)
 
   const updateMutation = useUpdateRecordMutation()
   const deleteMutation = useDeleteRecordMutation()
 
   const openModal = (view: Exclude<ModalView, null>) => {
     setMenuOpen(false)
-    setTitle(record.title)
-    setSummary(record.summary)
     setModalView(view)
   }
 
   const closeModal = () => setModalView(null)
 
-  const handleSaveEdit = () => {
-    updateMutation.mutate(
-      { id: record.id, patch: { title, summary } },
-      {
-        onSuccess: () => {
-          toast.success('기록을 수정했어요')
-          closeModal()
-        },
-      },
-    )
+  const handleEdit = () => {
+    setMenuOpen(false)
+    navigate(ROUTES.recordEdit(record.id))
   }
 
   const handleSetVisibility = (visibility: RecordVisibility) => {
@@ -101,12 +90,7 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
       }
     >
       <div className={menuListStyle}>
-        <button
-          type="button"
-          role="menuitem"
-          className={menuItemStyle}
-          onClick={() => openModal('edit')}
-        >
+        <button type="button" role="menuitem" className={menuItemStyle} onClick={handleEdit}>
           기록 수정
         </button>
         <button
@@ -138,22 +122,6 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
           {popover}
         </div>
       )}
-
-      <Modal open={modalView === 'edit'} title="기록 수정" onClose={closeModal} actions={[]}>
-        <div className={fieldGroupStyle}>
-          <TextField label="기록 제목" value={title} onChange={setTitle} maxLength={30} showCount />
-          <TextField
-            label="한줄 소개"
-            value={summary}
-            onChange={setSummary}
-            maxLength={50}
-            showCount
-          />
-          <Button fullWidth onClick={handleSaveEdit} isLoading={updateMutation.isPending}>
-            저장
-          </Button>
-        </div>
-      </Modal>
 
       <Modal
         open={modalView === 'visibility'}

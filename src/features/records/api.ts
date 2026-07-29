@@ -2,13 +2,20 @@ import { mockCompletedTrips } from './mockCompletedTrips'
 import { mockExploreRecords } from './mockExploreRecords'
 import type { CompletedTrip, ExploreRecord, ReactionType, RecordDraft, SavedRecord } from './types'
 
+/** 새로 첨부한 File은 blob URL로, 기록 수정에서 프리필된 기존 URL 문자열은 그대로 반환 */
+function photoToUrl(photo: File | string): string {
+  return typeof photo === 'string' ? photo : URL.createObjectURL(photo)
+}
+
 function collectUniquePhotos(draft: RecordDraft): File[] {
   const seen = new Set<File>()
   const photos: File[] = []
-  const add = (file: File) => {
-    if (seen.has(file)) return
-    seen.add(file)
-    photos.push(file)
+  const add = (photo: File | string) => {
+    // 생성 플로우의 draft는 항상 새로 첨부한 File만 다룬다 (기존 URL 문자열은 기록 수정에서만 등장).
+    if (typeof photo === 'string') return
+    if (seen.has(photo)) return
+    seen.add(photo)
+    photos.push(photo)
   }
   Object.values(draft.placeMemos).forEach((memo) => memo.photos.forEach(add))
   draft.extraPhotos.forEach(add)
@@ -36,12 +43,13 @@ function toSavedRecord(draft: RecordDraft): SavedRecord {
       placeId: place.id,
       placeName: place.name,
       note: memo?.note ?? '',
-      photoUrls: (memo?.photos ?? []).map((file) => URL.createObjectURL(file)),
+      photoUrls: (memo?.photos ?? []).map(photoToUrl),
     }
   })
 
   return {
     id: `record-${Date.now()}`,
+    tripId: draft.tripId,
     title: draft.title,
     summary: draft.summary,
     thumbnailUrl: draft.coverPhoto ? URL.createObjectURL(draft.coverPhoto) : null,
@@ -76,7 +84,12 @@ export async function fetchMyRecords(): Promise<SavedRecord[]> {
 /** TODO: 기록 수정 API가 준비되면 apiClient.patch(`/records/${id}`, patch)로 교체 */
 export async function updateRecord(
   id: string,
-  patch: Partial<Pick<SavedRecord, 'title' | 'summary' | 'visibility'>>,
+  patch: Partial<
+    Pick<
+      SavedRecord,
+      'title' | 'summary' | 'visibility' | 'visitedPlaces' | 'photoUrls' | 'photoCount'
+    >
+  >,
 ): Promise<SavedRecord> {
   const index = myRecords.findIndex((record) => record.id === id)
   if (index === -1) throw new Error('Record not found')

@@ -51,12 +51,6 @@ export const menuItemDangerStyle = style([
   },
 ])
 
-export const fieldGroupStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[4],
-})
-
 export const optionListStyle = style({
   display: 'flex',
   flexDirection: 'column',

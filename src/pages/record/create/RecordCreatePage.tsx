@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
+import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
@@ -13,20 +14,31 @@ import { pageStyle, stepIndicatorStyle } from './RecordCreatePage.css.ts'
 
 const TOTAL_STEPS = 4
 
-const initialDraft: RecordDraft = {
-  tripId: null,
-  title: '',
-  summary: '',
-  placeMemos: {},
-  extraPhotos: [],
-  coverPhoto: null,
-  visibility: 'public',
+function buildInitialDraft(preselectedTripId: string | null, preselectedTripTitle: string | null): RecordDraft {
+  return {
+    tripId: preselectedTripId,
+    title: preselectedTripTitle ?? '',
+    summary: '',
+    placeMemos: {},
+    extraPhotos: [],
+    coverPhoto: null,
+    visibility: 'public',
+  }
 }
 
 export function RecordCreatePage() {
   const navigate = useNavigate()
-  const [step, setStep] = useState(1)
-  const [draft, setDraft] = useState<RecordDraft>(initialDraft)
+  const location = useLocation()
+  // STEP 09 '이 계획으로 새 기록 남기기'에서 넘어온 경우 여행이 미리 선택된 채 STEP 02부터 시작한다.
+  // 제목도 함께 넘겨받아 이 페이지의 여행 목록 로딩을 기다리지 않고 바로 채운다.
+  const preselectedState = location.state as { tripId?: string; tripTitle?: string } | null
+  const preselectedTripId = preselectedState?.tripId ?? null
+  const preselectedTripTitle = preselectedState?.tripTitle ?? null
+
+  const [step, setStep] = useState(preselectedTripId ? 2 : 1)
+  const [draft, setDraft] = useState<RecordDraft>(() =>
+    buildInitialDraft(preselectedTripId, preselectedTripTitle),
+  )
 
   const { data: trips = [], isLoading: isTripsLoading } = useCompletedTripsQuery()
   const createRecordMutation = useCreateRecordMutation()
@@ -93,6 +105,10 @@ export function RecordCreatePage() {
             onSelect={handleSelectTrip}
             onNext={goNext}
           />
+        ) : null}
+
+        {step === 2 && !selectedTrip && isTripsLoading ? (
+          <Loading label="여행 정보를 불러오는 중…" />
         ) : null}
 
         {step === 2 && selectedTrip ? (

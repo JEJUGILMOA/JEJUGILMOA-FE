@@ -60,6 +60,8 @@ type DetailViewModel = {
   authorName: string
   visibilityLabel: string
   linkedPlanLabel: string | null
+  /** 이 기록이 기반한 여행 계획 id. 있으면 STEP 09 여행 계획 보기로 이동 가능 */
+  tripId: string | null
   isOwn: boolean
 }
 
@@ -79,6 +81,7 @@ function fromOwnRecord(record: SavedRecord, nickname: string): DetailViewModel {
     authorName: nickname,
     visibilityLabel: record.visibility === 'public' ? '전체 공개' : '비공개',
     linkedPlanLabel: record.tripDateRangeLabel ? `${record.title} 계획 보기` : null,
+    tripId: record.tripId,
     isOwn: true,
   }
 }
@@ -99,6 +102,8 @@ function fromExploreRecord(record: ExploreRecord): DetailViewModel {
     authorName: record.authorName,
     visibilityLabel: '전체 공개',
     linkedPlanLabel: record.linkedPlanTitle ? `${record.linkedPlanTitle} 계획 보기` : null,
+    // 둘러보기 기록은 다른 사용자의 계획이라 실제 상세 데이터가 없어 계획 목록으로만 안내한다
+    tripId: null,
     isOwn: false,
   }
 }
@@ -219,7 +224,9 @@ export function RecordDetailPage() {
               variant="ghost"
               size="sm"
               className={linkedPlanButtonStyle}
-              onClick={() => navigate(ROUTES.plan)}
+              onClick={() =>
+                navigate(view.tripId ? ROUTES.recordPlan(view.id) : ROUTES.plan)
+              }
             >
               {view.linkedPlanLabel} <ChevronRight size={14} aria-hidden />
             </Button>

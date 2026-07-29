@@ -3,16 +3,29 @@ export type TripPlace = {
   name: string
 }
 
+export type TripItineraryItem = {
+  time: string
+  activity: string
+}
+
+export type TripDayPlan = {
+  day: number
+  dateLabel: string
+  items: TripItineraryItem[]
+}
+
 export type CompletedTrip = {
   id: string
   title: string
   dateRangeLabel: string
   places: TripPlace[]
+  itinerary: TripDayPlan[]
 }
 
 export type PlaceMemo = {
   note: string
-  photos: File[]
+  /** 문자열은 이미 저장된 사진의 URL(기록 수정에서 기존 사진을 프리필할 때 사용), File은 새로 첨부한 사진 */
+  photos: (File | string)[]
 }
 
 export type RecordVisibility = 'public' | 'private'
@@ -40,6 +53,8 @@ export type ReactionType = 'like' | 'dislike'
 
 export type SavedRecord = {
   id: string
+  /** 이 기록이 기반한 여행 계획의 id. CompletedTrip.id를 참조 (STEP 09 여행 계획 보기용) */
+  tripId: string | null
   title: string
   summary: string
   thumbnailUrl: string | null

@@ -55,7 +55,12 @@ export function useUpdateRecordMutation() {
       patch,
     }: {
       id: string
-      patch: Partial<Pick<SavedRecord, 'title' | 'summary' | 'visibility'>>
+      patch: Partial<
+        Pick<
+          SavedRecord,
+          'title' | 'summary' | 'visibility' | 'visitedPlaces' | 'photoUrls' | 'photoCount'
+        >
+      >
     }) => updateRecord(id, patch),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })

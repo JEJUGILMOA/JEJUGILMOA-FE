@@ -44,11 +44,14 @@ export function CoverPhotoPicker({
 
   const candidates = useMemo<Candidate[]>(() => {
     const placePhotos = trip.places.flatMap((place) =>
-      (placeMemos[place.id]?.photos ?? []).map((file, index) => ({
-        key: `${place.id}-${index}`,
-        file,
-        removable: false,
-      })),
+      (placeMemos[place.id]?.photos ?? [])
+        // 대표 사진 후보는 새로 첨부한 File만 다룬다 (기존 URL 문자열은 기록 수정 전용 데이터)
+        .filter((photo): photo is File => photo instanceof File)
+        .map((file, index) => ({
+          key: `${place.id}-${index}`,
+          file,
+          removable: false,
+        })),
     )
     const uploaded = extraPhotos.map((file, index) => ({
       key: `extra-${index}`,

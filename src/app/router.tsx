@@ -7,6 +7,8 @@ import { PlanPage } from '@/pages/plan/PlanPage'
 import { RecordPage } from '@/pages/record/RecordPage'
 import { RecordCreatePage } from '@/pages/record/create/RecordCreatePage'
 import { RecordDetailPage } from '@/pages/record/detail/RecordDetailPage'
+import { RecordEditPage } from '@/pages/record/edit/RecordEditPage'
+import { RecordPlanPage } from '@/pages/record/plan/RecordPlanPage'
 import { MyPage } from '@/pages/my/MyPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { TestPageJinsung } from '@/pages/test/TestPageJinsung'
@@ -56,6 +58,16 @@ export const router = createBrowserRouter([
         path: 'record/:recordId',
         Component: RecordDetailPage,
         handle: { title: '기록 상세' } satisfies RouteHandle,
+      },
+      {
+        path: 'record/:recordId/plan',
+        Component: RecordPlanPage,
+        handle: { title: '여행 계획' } satisfies RouteHandle,
+      },
+      {
+        path: 'record/:recordId/edit',
+        Component: RecordEditPage,
+        handle: { title: '기록 수정' } satisfies RouteHandle,
       },
       {
         path: ROUTES.my.slice(1),
