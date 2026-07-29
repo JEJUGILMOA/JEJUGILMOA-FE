@@ -9,6 +9,7 @@ export const cardStyle = style({
   border: `1px solid ${colors.border[1]}`,
   borderRadius: vars.radius.lg,
   boxShadow: vars.shadow.sm,
+  cursor: 'pointer',
 })
 
 export const thumbnailWrapStyle = style({

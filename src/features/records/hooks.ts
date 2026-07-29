@@ -8,6 +8,7 @@ import {
   fetchMyRecords,
   reactToExploreRecord,
   reactToRecord,
+  toggleExploreRecordBookmark,
   toggleRecordBookmark,
   updateRecord,
 } from './api'
@@ -102,6 +103,17 @@ export function useReactToExploreRecordMutation() {
   return useMutation({
     mutationFn: ({ id, reaction }: { id: string; reaction: ReactionType }) =>
       reactToExploreRecord(id, reaction),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exploreRecords })
+    },
+  })
+}
+
+export function useToggleExploreRecordBookmarkMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => toggleExploreRecordBookmark(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exploreRecords })
     },

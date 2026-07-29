@@ -70,6 +70,11 @@ export type ExploreRecord = {
   authorName: string
   linkedPlanTitle: string | null
   path: PathPoint[]
+  photoUrls: string[]
+  tripDateRangeLabel: string
+  visitedPlaces: VisitedPlaceRecord[]
+  createdAt: string
+  isBookmarked: boolean
   likeCount: number
   dislikeCount: number
   myReaction: ReactionType | null

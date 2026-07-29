@@ -158,3 +158,16 @@ export async function reactToExploreRecord(
   mockExploreRecords[index] = next
   return next
 }
+
+/** TODO: 북마크 API가 준비되면 apiClient.post(`/records/${id}/bookmark`, ...)로 교체 */
+export async function toggleExploreRecordBookmark(id: string): Promise<ExploreRecord> {
+  const index = mockExploreRecords.findIndex((record) => record.id === id)
+  if (index === -1) throw new Error('Record not found')
+
+  const updated = {
+    ...mockExploreRecords[index],
+    isBookmarked: !mockExploreRecords[index].isBookmarked,
+  }
+  mockExploreRecords[index] = updated
+  return updated
+}
