@@ -19,6 +19,10 @@ export const ROUTES = {
   course: '/courses/:courseId',
   plan: '/plan',
   record: '/record',
+  recordCreate: '/record/new',
+  recordDetail: (id: string) => `/record/${id}`,
+  recordPlan: (id: string) => `/record/${id}/plan`,
+  recordEdit: (id: string) => `/record/${id}/edit`,
   my: '/my',
   test: ['/test/jinsung', '/test/suji'],
 } as const
@@ -36,4 +40,7 @@ export const QUERY_KEYS = {
   place: (id: string) => ['places', id] as const,
   plans: ['plans'] as const,
   reviews: (placeId: string) => ['reviews', placeId] as const,
+  completedTrips: ['records', 'completedTrips'] as const,
+  myRecords: ['records', 'my'] as const,
+  exploreRecords: ['records', 'explore'] as const,
 } as const

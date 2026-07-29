@@ -9,8 +9,13 @@ export const segmentedRoot = style({
   alignItems: 'center',
   gap: vars.space[1],
   padding: vars.space[1],
-  backgroundColor: colors.surface[4],
-  borderRadius: vars.radius.sm,
+  backgroundColor: colors.surface[3],
+  borderRadius: vars.radius.md,
+})
+
+export const segmentedRootFullWidth = style({
+  display: 'flex',
+  width: '100%',
 })
 
 export const indicatorStyle = style({
@@ -19,7 +24,7 @@ export const indicatorStyle = style({
   left: 0,
   zIndex: 0,
   height: `calc(100% - ${vars.space[1]} * 2)`,
-  borderRadius: vars.radius.sm,
+  borderRadius: vars.radius.md,
   backgroundColor: colors.surface[1],
   boxShadow: vars.shadow.sm,
   pointerEvents: 'none',
@@ -36,7 +41,7 @@ export const segmentRecipe = recipe({
     position: 'relative',
     zIndex: 1,
     border: 'none',
-    borderRadius: vars.radius.sm,
+    borderRadius: vars.radius.md,
     padding: `${vars.space[2]} ${vars.space[4]}`,
     backgroundColor: 'transparent',
     fontFamily: vars.fontFamily.sans,
@@ -61,8 +66,16 @@ export const segmentRecipe = recipe({
       },
       false: {},
     },
+    fullWidth: {
+      true: {
+        flex: 1,
+        textAlign: 'center',
+      },
+      false: {},
+    },
   },
   defaultVariants: {
     active: false,
+    fullWidth: false,
   },
 })

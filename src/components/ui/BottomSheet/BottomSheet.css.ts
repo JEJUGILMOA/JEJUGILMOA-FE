@@ -1,4 +1,4 @@
-import { style } from '@vanilla-extract/css'
+import { globalStyle, style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
@@ -6,7 +6,13 @@ export const overlayStyle = style({
   position: 'fixed',
   inset: 0,
   zIndex: vars.zIndex.overlay,
-  backgroundColor: 'transparent',
+  backgroundColor: vars.overlay,
+})
+
+// vaul은 snapPoints 사용 시 마지막 스냅포인트가 아니면 오버레이 opacity를 0으로 강제한다.
+// 어느 스냅포인트에서든 배경을 항상 어둡게 유지하려면 !important로 덮어써야 한다.
+globalStyle(`${overlayStyle}[data-vaul-overlay]`, {
+  opacity: '1 !important',
 })
 
 export const contentStyle = style({

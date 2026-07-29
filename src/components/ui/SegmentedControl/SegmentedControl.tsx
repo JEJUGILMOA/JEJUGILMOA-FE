@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { cn } from '@/utils/cn'
-import { indicatorStyle, segmentRecipe, segmentedRoot } from './SegmentedControl.css.ts'
+import { indicatorStyle, segmentRecipe, segmentedRoot, segmentedRootFullWidth } from './SegmentedControl.css.ts'
 
 export type SegmentedControlItem = {
   /** 세그먼트 고유 값 */
@@ -19,6 +19,8 @@ export type SegmentedControlProps = {
   className?: string
   /** radiogroup 접근성 라벨. 기본값 "옵션 선택" */
   'aria-label'?: string
+  /** true면 컨테이너 전체 폭을 채우고 세그먼트를 균등 분할 */
+  fullWidth?: boolean
 }
 
 type IndicatorRect = {
@@ -38,6 +40,7 @@ export function SegmentedControl({
   onChange,
   className,
   'aria-label': ariaLabel = '옵션 선택',
+  fullWidth = false,
 }: SegmentedControlProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
@@ -112,7 +115,7 @@ export function SegmentedControl({
   return (
     <div
       ref={rootRef}
-      className={cn(segmentedRoot, className)}
+      className={cn(segmentedRoot, fullWidth && segmentedRootFullWidth, className)}
       role="radiogroup"
       aria-label={ariaLabel}
       onKeyDown={handleKeyDown}
@@ -138,7 +141,7 @@ export function SegmentedControl({
             role="radio"
             aria-checked={isActive}
             tabIndex={isActive ? 0 : -1}
-            className={segmentRecipe({ active: isActive })}
+            className={segmentRecipe({ active: isActive, fullWidth })}
             ref={(node) => {
               if (node) buttonRefs.current.set(item.value, node)
               else buttonRefs.current.delete(item.value)
