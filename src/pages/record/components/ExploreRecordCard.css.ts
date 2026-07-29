@@ -18,8 +18,15 @@ export const thumbnailWrapStyle = style({
   aspectRatio: '6 / 3',
   alignItems: 'center',
   justifyContent: 'center',
+  overflow: 'hidden',
   backgroundColor: colors.surface[4],
   color: colors.text[4],
+})
+
+export const thumbnailImageStyle = style({
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
 })
 
 export const bodyStyle = style({

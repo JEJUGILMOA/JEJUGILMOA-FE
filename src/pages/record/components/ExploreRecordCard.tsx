@@ -14,6 +14,7 @@ import {
   reactionButtonRecipe,
   reactionRowStyle,
   summaryStyle,
+  thumbnailImageStyle,
   thumbnailWrapStyle,
   titleStyle,
 } from './ExploreRecordCard.css.ts'
@@ -46,7 +47,11 @@ export function ExploreRecordCard({ record }: ExploreRecordCardProps) {
       }}
     >
       <div className={thumbnailWrapStyle}>
-        <Image size={24} aria-hidden />
+        {record.photoUrls[0] ? (
+          <img className={thumbnailImageStyle} src={record.photoUrls[0]} alt="" />
+        ) : (
+          <Image size={24} aria-hidden />
+        )}
       </div>
 
       <div className={bodyStyle}>

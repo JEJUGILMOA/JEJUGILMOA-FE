@@ -74,7 +74,8 @@ export function RecordPlanPage() {
         }
       : null
 
-  const goBack = () => navigate(recordId ? ROUTES.recordDetail(recordId) : ROUTES.record)
+  // 내 기록 상세/둘러보기 목록 등 진입 경로가 여러 곳이라 뒤로가기는 실제 이전 화면으로 돌아간다
+  const goBack = () => navigate(-1)
 
   const header = <PageHeader title="여행 계획" showBack onBack={goBack} />
 
