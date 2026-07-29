@@ -1,14 +1,11 @@
-import { useState } from 'react'
-import { Image, MoreVertical } from 'lucide-react'
+import { Image } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge/Badge'
-import { BottomSheet } from '@/components/ui/BottomSheet/BottomSheet'
 import type { SavedRecord } from '@/features/records/types'
 import { RecordManageSheet } from './RecordManageSheet'
 import {
   badgeWrapStyle,
   bodyStyle,
   cardStyle,
-  manageButtonStyle,
   metaStyle,
   reactionStyle,
   summaryStyle,
@@ -24,8 +21,6 @@ export type RecordCardProps = {
 
 /** STEP 05: 내 기록 목록의 카드 한 장 */
 export function RecordCard({ record }: RecordCardProps) {
-  const [manageOpen, setManageOpen] = useState(false)
-
   return (
     <article className={cardStyle}>
       <div className={thumbnailWrapStyle}>
@@ -41,14 +36,7 @@ export function RecordCard({ record }: RecordCardProps) {
             {record.visibility === 'public' ? '전체공개' : '비공개'}
           </Badge>
         </span>
-        <button
-          type="button"
-          className={manageButtonStyle}
-          aria-label="기록 관리"
-          onClick={() => setManageOpen(true)}
-        >
-          <MoreVertical size={16} aria-hidden />
-        </button>
+        <RecordManageSheet record={record} />
       </div>
 
       <div className={bodyStyle}>
@@ -61,10 +49,6 @@ export function RecordCard({ record }: RecordCardProps) {
           좋아요 {record.likeCount} · 싫어요 {record.dislikeCount}
         </p>
       </div>
-
-      <BottomSheet open={manageOpen} onOpenChange={setManageOpen} title="기록 관리">
-        <RecordManageSheet record={record} open={manageOpen} onClose={() => setManageOpen(false)} />
-      </BottomSheet>
     </article>
   )
 }
