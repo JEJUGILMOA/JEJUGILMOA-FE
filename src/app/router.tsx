@@ -6,6 +6,7 @@ import { PlacePage } from '@/pages/place/PlacePage'
 import { PlanPage } from '@/pages/plan/PlanPage'
 import { RecordPage } from '@/pages/record/RecordPage'
 import { RecordCreatePage } from '@/pages/record/create/RecordCreatePage'
+import { RecordDetailPage } from '@/pages/record/detail/RecordDetailPage'
 import { MyPage } from '@/pages/my/MyPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { TestPageJinsung } from '@/pages/test/TestPageJinsung'
@@ -50,6 +51,11 @@ export const router = createBrowserRouter([
         path: ROUTES.recordCreate.slice(1),
         Component: RecordCreatePage,
         handle: { title: '기록 작성' } satisfies RouteHandle,
+      },
+      {
+        path: 'record/:recordId',
+        Component: RecordDetailPage,
+        handle: { title: '기록 상세' } satisfies RouteHandle,
       },
       {
         path: ROUTES.my.slice(1),

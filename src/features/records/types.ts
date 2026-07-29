@@ -29,16 +29,32 @@ export type RecordDraft = {
   visibility: RecordVisibility
 }
 
+export type VisitedPlaceRecord = {
+  placeId: string
+  placeName: string
+  note: string
+  photoUrls: string[]
+}
+
+export type ReactionType = 'like' | 'dislike'
+
 export type SavedRecord = {
   id: string
   title: string
   summary: string
   thumbnailUrl: string | null
+  /** STEP 03 대표 사진 + 장소별 사진을 합친 전체 사진 (캐러셀용) */
+  photoUrls: string[]
+  /** 이 기록이 기반한 여행의 일정 라벨 (예: "2026.05.02 - 05.05 · 3박4일") */
+  tripDateRangeLabel: string
+  visitedPlaces: VisitedPlaceRecord[]
   visitedPlaceCount: number
   photoCount: number
   visibility: RecordVisibility
   likeCount: number
   dislikeCount: number
+  myReaction: ReactionType | null
+  isBookmarked: boolean
   createdAt: string
 }
 
@@ -46,8 +62,6 @@ export type PathPoint = {
   x: number
   y: number
 }
-
-export type ReactionType = 'like' | 'dislike'
 
 export type ExploreRecord = {
   id: string

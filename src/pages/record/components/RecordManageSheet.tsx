@@ -22,10 +22,14 @@ type ModalView = 'edit' | 'visibility' | 'delete' | null
 
 export type RecordManageSheetProps = {
   record: SavedRecord
+  /** true면 카드 썸네일 위 오버레이가 아니라 부모 flex 흐름에 맞춰 인라인으로 렌더링 (상세 페이지 헤더용) */
+  inline?: boolean
+  /** 삭제 완료 후 호출. 상세 페이지처럼 삭제된 기록을 더 이상 보여줄 수 없는 화면에서 사용 */
+  onDeleted?: () => void
 }
 
 /** STEP 07: 내 기록 관리 (케밥 팝오버 메뉴 → 수정 · 공개 범위 설정 · 삭제) */
-export function RecordManageSheet({ record }: RecordManageSheetProps) {
+export function RecordManageSheet({ record, inline = false, onDeleted }: RecordManageSheetProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [modalView, setModalView] = useState<ModalView>(null)
   const [title, setTitle] = useState(record.title)
@@ -72,59 +76,68 @@ export function RecordManageSheet({ record }: RecordManageSheetProps) {
       onSuccess: () => {
         toast.success('기록을 삭제했어요')
         closeModal()
+        onDeleted?.()
       },
     })
   }
 
+  const popover = (
+    <Popover
+      open={menuOpen}
+      onOpenChange={setMenuOpen}
+      align="end"
+      ariaLabel="기록 관리 메뉴"
+      trigger={
+        <button
+          type="button"
+          className={manageButtonStyle}
+          aria-label="기록 관리"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((prev) => !prev)}
+        >
+          <MoreVertical size={16} aria-hidden />
+        </button>
+      }
+    >
+      <div className={menuListStyle}>
+        <button
+          type="button"
+          role="menuitem"
+          className={menuItemStyle}
+          onClick={() => openModal('edit')}
+        >
+          기록 수정
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className={menuItemStyle}
+          onClick={() => openModal('visibility')}
+        >
+          공개 범위 설정
+        </button>
+        <button
+          type="button"
+          role="menuitem"
+          className={menuItemDangerStyle}
+          onClick={() => openModal('delete')}
+        >
+          기록 삭제
+        </button>
+      </div>
+    </Popover>
+  )
+
   return (
     <>
-      <div className={triggerWrapStyle}>
-        <Popover
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
-          align="end"
-          ariaLabel="기록 관리 메뉴"
-          trigger={
-            <button
-              type="button"
-              className={manageButtonStyle}
-              aria-label="기록 관리"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((prev) => !prev)}
-            >
-              <MoreVertical size={16} aria-hidden />
-            </button>
-          }
-        >
-          <div className={menuListStyle}>
-            <button
-              type="button"
-              role="menuitem"
-              className={menuItemStyle}
-              onClick={() => openModal('edit')}
-            >
-              기록 수정
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className={menuItemStyle}
-              onClick={() => openModal('visibility')}
-            >
-              공개 범위 설정
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className={menuItemDangerStyle}
-              onClick={() => openModal('delete')}
-            >
-              기록 삭제
-            </button>
-          </div>
-        </Popover>
-      </div>
+      {inline ? (
+        popover
+      ) : (
+        <div className={triggerWrapStyle} onClick={(event) => event.stopPropagation()}>
+          {popover}
+        </div>
+      )}
 
       <Modal open={modalView === 'edit'} title="기록 수정" onClose={closeModal} actions={[]}>
         <div className={fieldGroupStyle}>

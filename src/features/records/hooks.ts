@@ -7,6 +7,8 @@ import {
   fetchExploreRecords,
   fetchMyRecords,
   reactToExploreRecord,
+  reactToRecord,
+  toggleRecordBookmark,
   updateRecord,
 } from './api'
 import type { ReactionType, SavedRecord } from './types'
@@ -65,6 +67,29 @@ export function useDeleteRecordMutation() {
 
   return useMutation({
     mutationFn: (id: string) => deleteRecord(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
+    },
+  })
+}
+
+export function useToggleRecordBookmarkMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => toggleRecordBookmark(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
+    },
+  })
+}
+
+export function useReactToRecordMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, reaction }: { id: string; reaction: ReactionType }) =>
+      reactToRecord(id, reaction),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
     },

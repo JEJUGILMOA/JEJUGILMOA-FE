@@ -2,6 +2,19 @@ import { mockCompletedTrips } from './mockCompletedTrips'
 import { mockExploreRecords } from './mockExploreRecords'
 import type { CompletedTrip, ExploreRecord, ReactionType, RecordDraft, SavedRecord } from './types'
 
+function collectUniquePhotos(draft: RecordDraft): File[] {
+  const seen = new Set<File>()
+  const photos: File[] = []
+  const add = (file: File) => {
+    if (seen.has(file)) return
+    seen.add(file)
+    photos.push(file)
+  }
+  Object.values(draft.placeMemos).forEach((memo) => memo.photos.forEach(add))
+  draft.extraPhotos.forEach(add)
+  return photos
+}
+
 /** TODO: 백엔드 API 연동 전까지 목데이터를 사용하는 스텁 */
 export async function fetchCompletedTrips(): Promise<CompletedTrip[]> {
   return mockCompletedTrips
@@ -15,22 +28,33 @@ function toSavedRecord(draft: RecordDraft): SavedRecord {
 
   // 장소별 사진과 STEP 03 추가 업로드 사진을 합쳐 중복 없이 센다.
   // 대표 사진은 이 풀에서 고른 것이라 별도로 더하면 중복 집계된다.
-  const uniquePhotos = new Set<File>()
-  Object.values(draft.placeMemos).forEach((memo) => {
-    memo.photos.forEach((photo) => uniquePhotos.add(photo))
+  const uniquePhotos = collectUniquePhotos(draft)
+
+  const visitedPlaces = (trip?.places ?? []).map((place) => {
+    const memo = draft.placeMemos[place.id]
+    return {
+      placeId: place.id,
+      placeName: place.name,
+      note: memo?.note ?? '',
+      photoUrls: (memo?.photos ?? []).map((file) => URL.createObjectURL(file)),
+    }
   })
-  draft.extraPhotos.forEach((photo) => uniquePhotos.add(photo))
 
   return {
     id: `record-${Date.now()}`,
     title: draft.title,
     summary: draft.summary,
     thumbnailUrl: draft.coverPhoto ? URL.createObjectURL(draft.coverPhoto) : null,
+    photoUrls: uniquePhotos.map((file) => URL.createObjectURL(file)),
+    tripDateRangeLabel: trip?.dateRangeLabel ?? '',
+    visitedPlaces,
     visitedPlaceCount: trip?.places.length ?? 0,
-    photoCount: uniquePhotos.size,
+    photoCount: uniquePhotos.length,
     visibility: draft.visibility,
     likeCount: 0,
     dislikeCount: 0,
+    myReaction: null,
+    isBookmarked: false,
     createdAt: new Date().toISOString(),
   }
 }
@@ -66,6 +90,40 @@ export async function updateRecord(
 export async function deleteRecord(id: string): Promise<void> {
   const index = myRecords.findIndex((record) => record.id === id)
   if (index !== -1) myRecords.splice(index, 1)
+}
+
+/** TODO: 북마크 API가 준비되면 apiClient.post(`/records/${id}/bookmark`, ...)로 교체 */
+export async function toggleRecordBookmark(id: string): Promise<SavedRecord> {
+  const index = myRecords.findIndex((record) => record.id === id)
+  if (index === -1) throw new Error('Record not found')
+
+  const updated = { ...myRecords[index], isBookmarked: !myRecords[index].isBookmarked }
+  myRecords[index] = updated
+  return updated
+}
+
+/** TODO: 반응 API가 준비되면 apiClient.post(`/records/${id}/reactions`, ...)로 교체 */
+export async function reactToRecord(id: string, reaction: ReactionType): Promise<SavedRecord> {
+  const index = myRecords.findIndex((record) => record.id === id)
+  if (index === -1) throw new Error('Record not found')
+
+  const current = myRecords[index]
+  const next = { ...current }
+
+  if (next.myReaction === reaction) {
+    if (reaction === 'like') next.likeCount -= 1
+    else next.dislikeCount -= 1
+    next.myReaction = null
+  } else {
+    if (next.myReaction === 'like') next.likeCount -= 1
+    if (next.myReaction === 'dislike') next.dislikeCount -= 1
+    if (reaction === 'like') next.likeCount += 1
+    else next.dislikeCount += 1
+    next.myReaction = reaction
+  }
+
+  myRecords[index] = next
+  return next
 }
 
 /** TODO: 둘러보기 API가 준비되면 apiClient.get('/records/explore')로 교체 */

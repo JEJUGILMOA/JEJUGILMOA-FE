@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, type ChangeEvent } from 'react'
+import { useEffect, useId, useState, type ChangeEvent } from 'react'
 import { Plus, X } from 'lucide-react'
 import {
   addRowStyle,
@@ -13,14 +13,20 @@ import {
   removeButtonStyle,
 } from './PhotoGrid.css.ts'
 
+// blob URL 생성과 해제를 같은 effect 안에서 짝지어야 한다. 생성을 useMemo로,
+// 해제를 별도 useEffect로 나누면 StrictMode의 마운트 시 setup→cleanup→setup
+// 재실행에서 cleanup이 방금 만든 URL을 즉시 revoke해버려 이미지가 깨진다.
 function usePhotoPreviewUrls(photos: File[]) {
-  const urls = useMemo(() => photos.map((file) => URL.createObjectURL(file)), [photos])
+  const [urls, setUrls] = useState<string[]>([])
 
   useEffect(() => {
+    const nextUrls = photos.map((file) => URL.createObjectURL(file))
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- blob URL은 렌더 중 순수하게 파생시킬 수 없는 외부 리소스라, 생성 직후 이 effect 안에서 커밋해야 한다
+    setUrls(nextUrls)
     return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url))
+      nextUrls.forEach((url) => URL.revokeObjectURL(url))
     }
-  }, [urls])
+  }, [photos])
 
   return urls
 }

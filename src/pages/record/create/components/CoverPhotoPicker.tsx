@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, type ChangeEvent } from 'react'
+import { useEffect, useId, useMemo, useState, type ChangeEvent } from 'react'
 import { Check, Plus, X } from 'lucide-react'
 import type { CompletedTrip, PlaceMemo } from '@/features/records/types'
 import {
@@ -58,19 +58,24 @@ export function CoverPhotoPicker({
     return [...placePhotos, ...uploaded]
   }, [trip.places, placeMemos, extraPhotos])
 
-  const previewUrls = useMemo(() => {
+  // blob URL 생성과 해제를 같은 effect 안에서 짝지어야 한다. 생성을 useMemo로,
+  // 해제를 별도 useEffect로 나누면 StrictMode의 마운트 시 setup→cleanup→setup
+  // 재실행에서 cleanup이 방금 만든 URL을 즉시 revoke해버려 이미지가 깨진다.
+  // (blob URL은 브라우저의 외부 리소스 레지스트리와 동기화하는 것이라 useMemo로
+  // 순수하게 파생시킬 수 없다 — effect가 맞는 위치다.)
+  const [previewUrls, setPreviewUrls] = useState<Map<File, string>>(new Map())
+
+  useEffect(() => {
     const map = new Map<File, string>()
     candidates.forEach((candidate) => {
       if (!map.has(candidate.file)) map.set(candidate.file, URL.createObjectURL(candidate.file))
     })
-    return map
-  }, [candidates])
-
-  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- blob URL은 렌더 중 순수하게 파생시킬 수 없는 외부 리소스라, 생성 직후 이 effect 안에서 커밋해야 한다
+    setPreviewUrls(map)
     return () => {
-      previewUrls.forEach((url) => URL.revokeObjectURL(url))
+      map.forEach((url) => URL.revokeObjectURL(url))
     }
-  }, [previewUrls])
+  }, [candidates])
 
   const handleAdd = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files ? Array.from(event.target.files) : []
