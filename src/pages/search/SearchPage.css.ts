@@ -131,8 +131,16 @@ export const removeButtonStyle = style({
 
 export const chipWrapStyle = style({
   display: 'flex',
-  flexWrap: 'wrap',
   gap: vars.space[2],
+  overflowX: 'auto',
+  WebkitOverflowScrolling: 'touch',
+  scrollbarWidth: 'none',
+  msOverflowStyle: 'none',
+  selectors: {
+    '&::-webkit-scrollbar': {
+      display: 'none',
+    },
+  },
 })
 
 export const resultListStyle = style({

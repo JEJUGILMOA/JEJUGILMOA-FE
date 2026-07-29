@@ -219,6 +219,25 @@ export function SearchPage() {
           )
         ) : (
           <>
+            <section className={sectionStyle} aria-labelledby="search-popular-title">
+              <h2 id="search-popular-title" className={sectionTitleStyle}>
+                인기 검색어
+              </h2>
+              <div className={chipWrapStyle}>
+                {POPULAR_KEYWORDS.map((keyword) => (
+                  <Chip
+                    key={keyword}
+                    size="md"
+                    colorScheme="neutral"
+                    isSelected
+                    onClick={() => handleSelectKeyword(keyword)}
+                  >
+                    {keyword}
+                  </Chip>
+                ))}
+              </div>
+            </section>
+
             {recentSearches.length > 0 ? (
               <section className={sectionStyle} aria-labelledby="search-recent-title">
                 <h2 id="search-recent-title" className={sectionTitleStyle}>
@@ -250,25 +269,6 @@ export function SearchPage() {
                 </ul>
               </section>
             ) : null}
-
-            <section className={sectionStyle} aria-labelledby="search-popular-title">
-              <h2 id="search-popular-title" className={sectionTitleStyle}>
-                인기 검색어
-              </h2>
-              <div className={chipWrapStyle}>
-                {POPULAR_KEYWORDS.map((keyword) => (
-                  <Chip
-                    key={keyword}
-                    size="md"
-                    colorScheme="neutral"
-                    isSelected
-                    onClick={() => handleSelectKeyword(keyword)}
-                  >
-                    {keyword}
-                  </Chip>
-                ))}
-              </div>
-            </section>
           </>
         )}
       </div>
