@@ -8,6 +8,7 @@ export const pageStyle = style({
   flexDirection: 'column',
   flex: 1,
   gap: vars.space[4],
+  marginInline: `calc(-1 * ${vars.space[3]})`,
   padding: vars.space[4],
   backgroundColor: colors.surface[1],
 })
