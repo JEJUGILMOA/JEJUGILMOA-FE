@@ -2,7 +2,8 @@ import { Outlet, useMatches } from 'react-router'
 import { BottomNavigation } from '@/components/layout/BottomNavigation/BottomNavigation'
 import { useNativeMessage } from '@/bridge/useNativeMessage'
 import { useAppBootstrap } from '@/hooks/useAppBootstrap'
-import { layoutStyle, contentStyle, contentFlushStyle } from './AppLayout.css.ts'
+import { cn } from '@/utils/cn'
+import { layoutStyle, contentStyle, contentFlushStyle, contentFullBleedStyle } from './AppLayout.css.ts'
 
 export type RouteHandle = {
   title?: string
@@ -22,9 +23,13 @@ export function AppLayout() {
   const hideNav = handles.some((handle) => handle?.hideNav)
   const flush = handles.some((handle) => handle?.flush)
 
+  const mainClassName = flush
+    ? contentFlushStyle
+    : cn(contentStyle, hideNav && contentFullBleedStyle)
+
   return (
     <div className={layoutStyle}>
-      <main className={flush ? contentFlushStyle : contentStyle}>
+      <main className={mainClassName}>
         <Outlet />
       </main>
       {!hideNav ? <BottomNavigation /> : null}
