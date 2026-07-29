@@ -1,6 +1,53 @@
+import { authStore } from '@/stores/authStore'
 import { mockCompletedTrips } from './mockCompletedTrips'
 import { mockExploreRecords } from './mockExploreRecords'
 import type { CompletedTrip, ExploreRecord, ReactionType, RecordDraft, SavedRecord } from './types'
+
+function currentNickname(): string {
+  return authStore.getState().user?.nickname ?? '나'
+}
+
+/** 좋아요/싫어요 배타 토글 로직 (내 기록·둘러보기 기록 공용) */
+function applyReaction<T extends { myReaction: ReactionType | null; likeCount: number; dislikeCount: number }>(
+  record: T,
+  reaction: ReactionType,
+): T {
+  const next = { ...record }
+  if (next.myReaction === reaction) {
+    if (reaction === 'like') next.likeCount -= 1
+    else next.dislikeCount -= 1
+    next.myReaction = null
+  } else {
+    if (next.myReaction === 'like') next.likeCount -= 1
+    if (next.myReaction === 'dislike') next.dislikeCount -= 1
+    if (reaction === 'like') next.likeCount += 1
+    else next.dislikeCount += 1
+    next.myReaction = reaction
+  }
+  return next
+}
+
+/** 전체공개로 설정한 내 기록을 둘러보기 목록에도 노출하기 위한 변환 */
+function toExploreRecord(record: SavedRecord, authorName: string): ExploreRecord {
+  const trip = mockCompletedTrips.find((item) => item.id === record.tripId)
+  return {
+    id: record.id,
+    title: record.title,
+    summary: record.summary,
+    authorName,
+    linkedPlanTitle: trip?.title ?? null,
+    linkedPlanItinerary: trip?.itinerary ?? null,
+    path: [],
+    photoUrls: record.photoUrls,
+    tripDateRangeLabel: record.tripDateRangeLabel,
+    visitedPlaces: record.visitedPlaces,
+    createdAt: record.createdAt,
+    isBookmarked: record.isBookmarked,
+    likeCount: record.likeCount,
+    dislikeCount: record.dislikeCount,
+    myReaction: record.myReaction,
+  }
+}
 
 /** 새로 첨부한 File은 blob URL로, 기록 수정에서 프리필된 기존 URL 문자열은 그대로 반환 */
 function photoToUrl(photo: File | string): string {
@@ -120,29 +167,22 @@ export async function reactToRecord(id: string, reaction: ReactionType): Promise
   const index = myRecords.findIndex((record) => record.id === id)
   if (index === -1) throw new Error('Record not found')
 
-  const current = myRecords[index]
-  const next = { ...current }
-
-  if (next.myReaction === reaction) {
-    if (reaction === 'like') next.likeCount -= 1
-    else next.dislikeCount -= 1
-    next.myReaction = null
-  } else {
-    if (next.myReaction === 'like') next.likeCount -= 1
-    if (next.myReaction === 'dislike') next.dislikeCount -= 1
-    if (reaction === 'like') next.likeCount += 1
-    else next.dislikeCount += 1
-    next.myReaction = reaction
-  }
-
+  const next = applyReaction(myRecords[index], reaction)
   myRecords[index] = next
   return next
 }
 
 /** TODO: 둘러보기 API가 준비되면 apiClient.get('/records/explore')로 교체 */
 export async function fetchExploreRecords(): Promise<ExploreRecord[]> {
+  // 전체공개로 설정한 내 기록도 다른 사용자 기록과 함께 노출한다.
   // 매 호출마다 새 배열을 반환 (fetchMyRecords와 같은 이유)
-  return [...mockExploreRecords]
+  const ownPublicRecords = myRecords
+    .filter((record) => record.visibility === 'public')
+    .map((record) => toExploreRecord(record, currentNickname()))
+
+  return [...ownPublicRecords, ...mockExploreRecords].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  )
 }
 
 /** TODO: 반응 API가 준비되면 apiClient.post(`/records/${id}/reactions`, ...)로 교체 */
@@ -150,30 +190,31 @@ export async function reactToExploreRecord(
   id: string,
   reaction: ReactionType,
 ): Promise<ExploreRecord> {
+  // 둘러보기에 노출된 게 내 기록일 수도 있으니 내 기록 저장소에서 먼저 찾는다
+  const ownIndex = myRecords.findIndex((record) => record.id === id)
+  if (ownIndex !== -1) {
+    const updated = applyReaction(myRecords[ownIndex], reaction)
+    myRecords[ownIndex] = updated
+    return toExploreRecord(updated, currentNickname())
+  }
+
   const index = mockExploreRecords.findIndex((record) => record.id === id)
   if (index === -1) throw new Error('Record not found')
 
-  const current = mockExploreRecords[index]
-  const next = { ...current }
-
-  if (next.myReaction === reaction) {
-    if (reaction === 'like') next.likeCount -= 1
-    else next.dislikeCount -= 1
-    next.myReaction = null
-  } else {
-    if (next.myReaction === 'like') next.likeCount -= 1
-    if (next.myReaction === 'dislike') next.dislikeCount -= 1
-    if (reaction === 'like') next.likeCount += 1
-    else next.dislikeCount += 1
-    next.myReaction = reaction
-  }
-
+  const next = applyReaction(mockExploreRecords[index], reaction)
   mockExploreRecords[index] = next
   return next
 }
 
 /** TODO: 북마크 API가 준비되면 apiClient.post(`/records/${id}/bookmark`, ...)로 교체 */
 export async function toggleExploreRecordBookmark(id: string): Promise<ExploreRecord> {
+  const ownIndex = myRecords.findIndex((record) => record.id === id)
+  if (ownIndex !== -1) {
+    const updated = { ...myRecords[ownIndex], isBookmarked: !myRecords[ownIndex].isBookmarked }
+    myRecords[ownIndex] = updated
+    return toExploreRecord(updated, currentNickname())
+  }
+
   const index = mockExploreRecords.findIndex((record) => record.id === id)
   if (index === -1) throw new Error('Record not found')
 
