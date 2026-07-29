@@ -22,7 +22,10 @@ export type RecordDraft = {
   title: string
   summary: string
   placeMemos: Record<string, PlaceMemo>
-  photos: File[]
+  /** 장소 사진만으로 대표 사진이 부족할 때 STEP 03에서 추가로 업로드한 사진 */
+  extraPhotos: File[]
+  /** STEP 03에서 고른 대표(썸네일) 사진. 장소별 사진 또는 extraPhotos 중 하나 */
+  coverPhoto: File | null
   visibility: RecordVisibility
 }
 

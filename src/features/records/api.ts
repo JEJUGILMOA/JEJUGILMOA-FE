@@ -12,18 +12,22 @@ const myRecords: SavedRecord[] = []
 
 function toSavedRecord(draft: RecordDraft): SavedRecord {
   const trip = mockCompletedTrips.find((item) => item.id === draft.tripId)
-  const memoPhotoCount = Object.values(draft.placeMemos).reduce(
-    (sum, memo) => sum + memo.photos.length,
-    0,
-  )
+
+  // 장소별 사진과 STEP 03 추가 업로드 사진을 합쳐 중복 없이 센다.
+  // 대표 사진은 이 풀에서 고른 것이라 별도로 더하면 중복 집계된다.
+  const uniquePhotos = new Set<File>()
+  Object.values(draft.placeMemos).forEach((memo) => {
+    memo.photos.forEach((photo) => uniquePhotos.add(photo))
+  })
+  draft.extraPhotos.forEach((photo) => uniquePhotos.add(photo))
 
   return {
     id: `record-${Date.now()}`,
     title: draft.title,
     summary: draft.summary,
-    thumbnailUrl: draft.photos[0] ? URL.createObjectURL(draft.photos[0]) : null,
+    thumbnailUrl: draft.coverPhoto ? URL.createObjectURL(draft.coverPhoto) : null,
     visitedPlaceCount: trip?.places.length ?? 0,
-    photoCount: draft.photos.length + memoPhotoCount,
+    photoCount: uniquePhotos.size,
     visibility: draft.visibility,
     likeCount: 0,
     dislikeCount: 0,

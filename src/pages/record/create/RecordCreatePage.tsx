@@ -18,7 +18,8 @@ const initialDraft: RecordDraft = {
   title: '',
   summary: '',
   placeMemos: {},
-  photos: [],
+  extraPhotos: [],
+  coverPhoto: null,
   visibility: 'public',
 }
 
@@ -107,18 +108,22 @@ export function RecordCreatePage() {
           />
         ) : null}
 
-        {step === 3 ? (
+        {step === 3 && selectedTrip ? (
           <PhotosStep
-            photos={draft.photos}
-            onAdd={(files) =>
-              setDraft((prev) => ({ ...prev, photos: [...prev.photos, ...files] }))
+            trip={selectedTrip}
+            placeMemos={draft.placeMemos}
+            extraPhotos={draft.extraPhotos}
+            coverPhoto={draft.coverPhoto}
+            onAddExtraPhotos={(files) =>
+              setDraft((prev) => ({ ...prev, extraPhotos: [...prev.extraPhotos, ...files] }))
             }
-            onRemove={(index) =>
+            onRemoveExtraPhoto={(file) =>
               setDraft((prev) => ({
                 ...prev,
-                photos: prev.photos.filter((_, i) => i !== index),
+                extraPhotos: prev.extraPhotos.filter((photo) => photo !== file),
               }))
             }
+            onSelectCover={(file) => setDraft((prev) => ({ ...prev, coverPhoto: file }))}
             onNext={goNext}
           />
         ) : null}
