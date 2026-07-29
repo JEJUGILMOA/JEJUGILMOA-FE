@@ -6,7 +6,12 @@ import { Empty } from '@/components/ui/Empty/Empty'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES } from '@/constants'
-import { useCompletedTripsQuery, useMyRecordsQuery } from '@/features/records/hooks'
+import {
+  useCompletedTripsQuery,
+  useExploreRecordsQuery,
+  useMyRecordsQuery,
+} from '@/features/records/hooks'
+import type { TripDayPlan } from '@/features/records/types'
 import { TripItinerary } from './components/TripItinerary'
 import {
   coverPlaceholderStyle,
@@ -19,23 +24,57 @@ import {
   titleStyle,
 } from './RecordPlanPage.css.ts'
 
-/** STEP 09: 연결된 여행 계획 보기 — 기록 상세의 'OO 계획 보기' 클릭 시 진입 */
+type PlanView = {
+  badgeLabel: string
+  title: string
+  dateRangeLabel: string
+  itinerary: TripDayPlan[]
+  /** 이 계획을 기반으로 새 기록을 남길 수 있는 경우에만 채워짐 (본인 완료 여행일 때) */
+  createCta: { tripId: string; tripTitle: string } | null
+}
+
+/** STEP 09: 연결된 여행 계획 보기 — 내 기록의 'OO 계획 보기' 또는 둘러보기의 '연결된 계획 보기' 클릭 시 진입 */
 export function RecordPlanPage() {
   const { recordId } = useParams<{ recordId: string }>()
   const navigate = useNavigate()
 
   const myRecordsQuery = useMyRecordsQuery()
+  const exploreRecordsQuery = useExploreRecordsQuery()
   const tripsQuery = useCompletedTripsQuery()
 
-  const record = myRecordsQuery.data?.find((item) => item.id === recordId) ?? null
-  const trip = record?.tripId
-    ? (tripsQuery.data?.find((item) => item.id === record.tripId) ?? null)
+  const ownRecord = myRecordsQuery.data?.find((item) => item.id === recordId) ?? null
+  const exploreRecord = ownRecord
+    ? null
+    : (exploreRecordsQuery.data?.find((item) => item.id === recordId) ?? null)
+
+  const ownTrip = ownRecord?.tripId
+    ? (tripsQuery.data?.find((item) => item.id === ownRecord.tripId) ?? null)
     : null
 
-  const isLoading = myRecordsQuery.isLoading || tripsQuery.isLoading
+  const isLoading =
+    myRecordsQuery.isLoading ||
+    (!ownRecord && exploreRecordsQuery.isLoading) ||
+    (Boolean(ownRecord?.tripId) && tripsQuery.isLoading)
 
-  const goBack = () =>
-    navigate(recordId ? ROUTES.recordDetail(recordId) : ROUTES.record)
+  const view: PlanView | null = ownTrip
+    ? {
+        badgeLabel: '나의 계획',
+        title: ownTrip.title,
+        dateRangeLabel: ownTrip.dateRangeLabel,
+        itinerary: ownTrip.itinerary,
+        createCta: { tripId: ownTrip.id, tripTitle: ownTrip.title },
+      }
+    : exploreRecord?.linkedPlanItinerary
+      ? {
+          badgeLabel: `${exploreRecord.authorName}님의 계획`,
+          title: exploreRecord.linkedPlanTitle ?? exploreRecord.title,
+          dateRangeLabel: exploreRecord.tripDateRangeLabel,
+          itinerary: exploreRecord.linkedPlanItinerary,
+          createCta: null,
+        }
+      : null
+
+  const goBack = () => navigate(recordId ? ROUTES.recordDetail(recordId) : ROUTES.record)
 
   const header = <PageHeader title="여행 계획" showBack onBack={goBack} />
 
@@ -48,7 +87,7 @@ export function RecordPlanPage() {
     )
   }
 
-  if (!record || !trip) {
+  if (!view) {
     return (
       <div>
         {header}
@@ -59,6 +98,8 @@ export function RecordPlanPage() {
       </div>
     )
   }
+
+  const { createCta } = view
 
   return (
     <div>
@@ -71,10 +112,10 @@ export function RecordPlanPage() {
         </div>
 
         <div className={infoStyle}>
-          <Badge status="info">나의 계획</Badge>
+          <Badge status="info">{view.badgeLabel}</Badge>
           <div className={titleGroupStyle}>
-            <h1 className={titleStyle}>{trip.title}</h1>
-            <p className={dateRangeStyle}>{trip.dateRangeLabel}</p>
+            <h1 className={titleStyle}>{view.title}</h1>
+            <p className={dateRangeStyle}>{view.dateRangeLabel}</p>
           </div>
         </div>
 
@@ -82,18 +123,22 @@ export function RecordPlanPage() {
 
         <section>
           <h2 className={sectionTitleStyle}>일자별 일정</h2>
-          <TripItinerary itinerary={trip.itinerary} />
+          <TripItinerary itinerary={view.itinerary} />
         </section>
 
-        <Button
-          fullWidth
-          size="lg"
-          onClick={() =>
-            navigate(ROUTES.recordCreate, { state: { tripId: trip.id, tripTitle: trip.title } })
-          }
-        >
-          이 계획으로 새 기록 남기기
-        </Button>
+        {createCta ? (
+          <Button
+            fullWidth
+            size="lg"
+            onClick={() =>
+              navigate(ROUTES.recordCreate, {
+                state: { tripId: createCta.tripId, tripTitle: createCta.tripTitle },
+              })
+            }
+          >
+            이 계획으로 새 기록 남기기
+          </Button>
+        ) : null}
       </div>
     </div>
   )

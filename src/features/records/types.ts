@@ -84,6 +84,8 @@ export type ExploreRecord = {
   summary: string
   authorName: string
   linkedPlanTitle: string | null
+  /** linkedPlanTitle이 있을 때의 일자별 일정. 작성자 본인 계획이 아니라 상세 데이터가 없으면 null */
+  linkedPlanItinerary: TripDayPlan[] | null
   path: PathPoint[]
   photoUrls: string[]
   tripDateRangeLabel: string

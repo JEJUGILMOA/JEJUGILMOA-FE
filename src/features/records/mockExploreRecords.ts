@@ -8,6 +8,34 @@ export const mockExploreRecords: ExploreRecord[] = [
     summary: '골목마다 벚꽃이 흩날렸다',
     authorName: 'minji_travel',
     linkedPlanTitle: '교토 벚꽃 여행',
+    linkedPlanItinerary: [
+      {
+        day: 1,
+        dateLabel: '04.05',
+        items: [
+          { time: '10:00', activity: '간사이공항 도착' },
+          { time: '14:00', activity: '기요미즈데라 관람' },
+          { time: '19:00', activity: '기온 거리 산책' },
+        ],
+      },
+      {
+        day: 2,
+        dateLabel: '04.06',
+        items: [
+          { time: '07:00', activity: '아라시야마 대나무숲' },
+          { time: '13:00', activity: '후시미이나리 신사' },
+          { time: '18:00', activity: '가모가와 강변 저녁' },
+        ],
+      },
+      {
+        day: 3,
+        dateLabel: '04.07',
+        items: [
+          { time: '10:00', activity: '기념품 쇼핑' },
+          { time: '15:00', activity: '간사이공항 이동' },
+        ],
+      },
+    ],
     path: [
       { x: 0.1, y: 0.75 },
       { x: 0.35, y: 0.35 },
@@ -54,6 +82,7 @@ export const mockExploreRecords: ExploreRecord[] = [
     summary: '광안대교 불빛이 바다에 번졌다',
     authorName: 'seaside_hoon',
     linkedPlanTitle: null,
+    linkedPlanItinerary: null,
     path: [
       { x: 0.15, y: 0.2 },
       { x: 0.4, y: 0.6 },

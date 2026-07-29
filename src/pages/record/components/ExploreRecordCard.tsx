@@ -64,7 +64,7 @@ export function ExploreRecordCard({ record }: ExploreRecordCardProps) {
               className={linkedPlanButtonStyle}
               onClick={(event) => {
                 event.stopPropagation()
-                navigate(ROUTES.plan)
+                navigate(ROUTES.recordPlan(record.id))
               }}
             >
               연결된 계획 보기 <ChevronRight size={14} aria-hidden />
