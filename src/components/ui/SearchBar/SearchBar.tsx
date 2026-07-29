@@ -39,6 +39,10 @@ export type SearchBarProps = {
   onSelectSuggestion?: (suggestion: SearchSuggestion) => void
   /** 제안 항목 삭제 (삭제 버튼 표시) */
   onRemoveSuggestion?: (suggestion: SearchSuggestion) => void
+  /** 마운트 시 입력 포커스 */
+  autoFocus?: boolean
+  /** 입력 포커스 콜백 */
+  onFocus?: () => void
   className?: string
 }
 
@@ -56,6 +60,8 @@ export function SearchBar({
   suggestions,
   onSelectSuggestion,
   onRemoveSuggestion,
+  autoFocus = false,
+  onFocus,
   className,
 }: SearchBarProps) {
   const listboxId = useId()
@@ -71,6 +77,11 @@ export function SearchBar({
   const handleClear = () => {
     onClear?.()
     onChange('')
+  }
+
+  const handleFocus = () => {
+    setIsFocused(true)
+    onFocus?.()
   }
 
   const handleBlur = (event: FocusEvent) => {
@@ -95,8 +106,9 @@ export function SearchBar({
           className={fieldInputReset}
           value={value}
           onChange={handleChange}
-          onFocus={() => setIsFocused(true)}
+          onFocus={handleFocus}
           placeholder={placeholder}
+          autoFocus={autoFocus}
         />
         {value ? (
           <button

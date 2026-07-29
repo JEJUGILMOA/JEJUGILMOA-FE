@@ -77,9 +77,9 @@ export const imageRecipe = recipe({
         borderRadius: `${vars.radius.lg} ${vars.radius.lg} 0 0`,
       },
       horizontal: {
-        width: '30%',
-        aspectRatio: '10 / 10',
-        borderRadius: vars.radius.md,
+        width: '88px',
+        height: '88px',
+        borderRadius: vars.radius.buttonLg,
       },
       compact: {
         width: '56px',
@@ -117,10 +117,10 @@ export const contentRecipe = recipe({
       },
       horizontal: {
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
         alignItems: 'flex-start',
         alignSelf: 'stretch',
-        gap: vars.space[1],
+        gap: '6px',
         minHeight: '88px',
       },
       compact: {
@@ -174,10 +174,11 @@ export const titleRecipe = recipe({
 })
 
 export const metaText = style({
-  fontSize: vars.fontSize.sm,
+  fontSize: '11px',
   fontWeight: vars.fontWeight.regular,
   lineHeight: vars.lineHeight.normal,
-  color: colors.text[3],
+  letterSpacing: '-0.005em',
+  color: colors.text[2],
 })
 
 export const badgeStyle = style({
@@ -193,6 +194,12 @@ export const badgeStyle = style({
   whiteSpace: 'nowrap',
 })
 
+export const badgesRow = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  gap: vars.space[2],
+})
 export const ratingStyle = style({
   display: 'inline-flex',
   flexShrink: 0,
@@ -223,7 +230,7 @@ export const infoColumn = style({
   flex: 1,
   flexDirection: 'column',
   alignItems: 'flex-start',
-  gap: vars.space[1],
+  gap: '6px',
 })
 
 export const trailingColumn = style({
