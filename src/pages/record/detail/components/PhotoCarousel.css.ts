@@ -2,10 +2,12 @@ import { style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
-/** 상단 헤더 바로 아래에 화면 끝까지 이어붙임 (RecordCreatePage의 subHeaderStyle와 동일한 기법) */
+/**
+ * 좌우로 화면 끝까지 이어붙임. 위쪽 여백은 이미 RecordDetailPage의 subHeaderStyle이
+ * 취소해뒀으므로 여기서 또 marginTop을 걸면 헤더 쪽으로 파고들어 겹친다.
+ */
 export const wrapStyle = style({
   position: 'relative',
-  marginTop: `calc(-1 * ${vars.space[4]})`,
   marginInline: `calc(-1 * ${vars.space[4]})`,
   aspectRatio: '1 / 1',
   overflow: 'hidden',
