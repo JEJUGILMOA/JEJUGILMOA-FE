@@ -41,7 +41,6 @@ export const router = createBrowserRouter([
         Component: SearchPage,
         handle: {
           title: '검색',
-          hideHeader: true,
           hideNav: true,
           flush: true,
         } satisfies RouteHandle,
@@ -51,7 +50,6 @@ export const router = createBrowserRouter([
         Component: PlacePage,
         handle: {
           title: '장소',
-          hideHeader: true,
           hideNav: true,
           flush: true,
         } satisfies RouteHandle,
@@ -61,7 +59,6 @@ export const router = createBrowserRouter([
         Component: PopularPlacesPage,
         handle: {
           title: '인기 관광지',
-          hideHeader: true,
           hideNav: true,
           flush: true,
         } satisfies RouteHandle,
@@ -71,7 +68,6 @@ export const router = createBrowserRouter([
         Component: CourseListPage,
         handle: {
           title: '오늘의 추천 코스',
-          hideHeader: true,
           hideNav: true,
           flush: true,
         } satisfies RouteHandle,
@@ -81,7 +77,6 @@ export const router = createBrowserRouter([
         Component: CourseDetailPage,
         handle: {
           title: '코스 상세',
-          hideHeader: true,
           hideNav: true,
           flush: true,
         } satisfies RouteHandle,

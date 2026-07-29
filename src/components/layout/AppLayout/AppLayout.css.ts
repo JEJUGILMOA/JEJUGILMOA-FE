@@ -14,7 +14,7 @@ export const layoutStyle = style({
     },
   },
   overflow: 'hidden',
-  backgroundColor: colors.background[2],
+  backgroundColor: colors.background[1],
   paddingBottom: 'calc(var(--keyboard-inset, 0px))',
 })
 
