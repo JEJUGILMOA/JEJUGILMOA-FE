@@ -8,6 +8,7 @@ import { CourseListPage } from '@/pages/courses/CourseListPage'
 import { CourseDetailPage } from '@/pages/courses/CourseDetailPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { PlanPage } from '@/pages/plan/PlanPage'
+import { PlanCreatePage } from '@/pages/plan/create/PlanCreatePage'
 import { RecordPage } from '@/pages/record/RecordPage'
 import { RecordCreatePage } from '@/pages/record/create/RecordCreatePage'
 import { RecordDetailPage } from '@/pages/record/detail/RecordDetailPage'
@@ -105,6 +106,11 @@ export const router = createBrowserRouter([
         path: ROUTES.plan.slice(1),
         Component: PlanPage,
         handle: { title: '계획' } satisfies RouteHandle,
+      },
+      {
+        path: ROUTES.planCreate.slice(1),
+        Component: PlanCreatePage,
+        handle: { title: '여행 계획 만들기' } satisfies RouteHandle,
       },
       {
         path: ROUTES.record.slice(1),

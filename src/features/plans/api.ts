@@ -1,0 +1,50 @@
+import { differenceInCalendarDays, parse } from 'date-fns'
+import { mockPlans } from './mockPlans'
+import type { PlanDraft, TravelPlan } from './types'
+
+const DESTINATION = '제주도'
+const DATE_FORMAT = 'yyyy.MM.dd'
+
+function buildTitle(startDate: string, endDate: string): string {
+  const start = parse(startDate, DATE_FORMAT, new Date())
+  const end = parse(endDate, DATE_FORMAT, new Date())
+  const nights = Math.max(differenceInCalendarDays(end, start), 0)
+  return `${DESTINATION} ${nights}박 ${nights + 1}일`
+}
+
+function toTravelPlan(draft: PlanDraft): TravelPlan {
+  if (!draft.startDate || !draft.endDate) {
+    throw new Error('여행 날짜를 선택해 주세요.')
+  }
+  if (!draft.companionType) {
+    throw new Error('동행 유형을 선택해 주세요.')
+  }
+
+  return {
+    id: `plan-${Date.now()}`,
+    title: buildTitle(draft.startDate, draft.endDate),
+    destination: DESTINATION,
+    startDate: draft.startDate,
+    endDate: draft.endDate,
+    departureCity: draft.departureCity,
+    companionType: draft.companionType,
+    travelerCount: draft.companionType === 'solo' ? 1 : draft.travelerCount,
+    budgetTier: draft.budgetTier,
+    interests: draft.interests,
+    createdAt: new Date().toISOString(),
+  }
+}
+
+/** TODO: 백엔드 API가 준비되면 apiClient.get('/plans')로 교체 */
+export async function fetchPlans(): Promise<TravelPlan[]> {
+  // 매 호출마다 새 배열을 반환 — 같은 참조를 반환하면 구조적 공유 최적화로 인해
+  // React Query가 "데이터 변경 없음"으로 판단해 리렌더를 건너뛴다.
+  return [...mockPlans]
+}
+
+/** TODO: 계획 생성 API가 준비되면 apiClient.post('/plans', ...)로 교체 */
+export async function createPlan(draft: PlanDraft): Promise<TravelPlan> {
+  const plan = toTravelPlan(draft)
+  mockPlans.unshift(plan)
+  return plan
+}

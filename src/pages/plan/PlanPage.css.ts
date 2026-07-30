@@ -3,4 +3,13 @@ import { vars } from '@/styles/vars.css.ts'
 
 export const pageStyle = style({
   padding: vars.space[4],
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[4],
+})
+
+export const listStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[3],
 })

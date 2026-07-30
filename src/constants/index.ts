@@ -18,6 +18,7 @@ export const ROUTES = {
   courses: '/courses',
   course: '/courses/:courseId',
   plan: '/plan',
+  planCreate: '/plan/new',
   record: '/record',
   recordCreate: '/record/new',
   recordDetail: (id: string) => `/record/${id}`,
