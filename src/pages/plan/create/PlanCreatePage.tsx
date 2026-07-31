@@ -114,9 +114,9 @@ export function PlanCreatePage() {
 
   const handleComplete = () => {
     createPlanMutation.mutate(draft, {
-      onSuccess: () => {
+      onSuccess: (plan) => {
         toast.success('여행 계획을 만들었어요')
-        navigate(ROUTES.plan)
+        navigate(ROUTES.planWaypoints(plan.id))
       },
       onError: () => {
         toast.error('계획 생성에 실패했어요. 다시 시도해 주세요.')

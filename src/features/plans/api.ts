@@ -32,6 +32,7 @@ function toTravelPlan(draft: PlanDraft): TravelPlan {
     budgetTier: draft.budgetTier,
     interests: draft.interests,
     createdAt: new Date().toISOString(),
+    waypointPlaceIds: [],
   }
 }
 
@@ -46,5 +47,23 @@ export async function fetchPlans(): Promise<TravelPlan[]> {
 export async function createPlan(draft: PlanDraft): Promise<TravelPlan> {
   const plan = toTravelPlan(draft)
   mockPlans.unshift(plan)
+  return plan
+}
+
+/** TODO: 백엔드 API가 준비되면 apiClient.get(`/plans/${id}`)로 교체 */
+export async function fetchPlanById(planId: string): Promise<TravelPlan | undefined> {
+  return mockPlans.find((plan) => plan.id === planId)
+}
+
+/** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/waypoints`, ...)로 교체 */
+export async function updatePlanWaypoints(
+  planId: string,
+  waypointPlaceIds: string[],
+): Promise<TravelPlan> {
+  const plan = mockPlans.find((item) => item.id === planId)
+  if (!plan) {
+    throw new Error('계획을 찾을 수 없어요.')
+  }
+  plan.waypointPlaceIds = waypointPlaceIds
   return plan
 }

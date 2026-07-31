@@ -9,6 +9,7 @@ import { CourseDetailPage } from '@/pages/courses/CourseDetailPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { PlanPage } from '@/pages/plan/PlanPage'
 import { PlanCreatePage } from '@/pages/plan/create/PlanCreatePage'
+import { PlanWaypointsPage } from '@/pages/plan/waypoints/PlanWaypointsPage'
 import { RecordPage } from '@/pages/record/RecordPage'
 import { RecordCreatePage } from '@/pages/record/create/RecordCreatePage'
 import { RecordDetailPage } from '@/pages/record/detail/RecordDetailPage'
@@ -111,6 +112,11 @@ export const router = createBrowserRouter([
         path: ROUTES.planCreate.slice(1),
         Component: PlanCreatePage,
         handle: { title: '여행 계획 만들기' } satisfies RouteHandle,
+      },
+      {
+        path: 'plan/:planId/waypoints',
+        Component: PlanWaypointsPage,
+        handle: { title: '경유지 추천' } satisfies RouteHandle,
       },
       {
         path: ROUTES.record.slice(1),

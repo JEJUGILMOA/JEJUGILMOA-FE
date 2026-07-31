@@ -1,0 +1,44 @@
+import { style } from '@vanilla-extract/css'
+import { colors } from '@/styles/colors.css.ts'
+import { vars } from '@/styles/vars.css.ts'
+
+export const rowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[3],
+  padding: `${vars.space[3]} 0`,
+})
+
+export const thumbnailStyle = style({
+  flexShrink: 0,
+  width: '48px',
+  height: '48px',
+  borderRadius: vars.radius.sm,
+  backgroundColor: colors.surface[4],
+})
+
+export const infoColumnStyle = style({
+  flex: 1,
+  minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[1],
+})
+
+export const titleStyle = style({
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.bold,
+  color: colors.text[1],
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+})
+
+export const categoryStyle = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})
+
+export const toggleButtonStyle = style({
+  flexShrink: 0,
+})
