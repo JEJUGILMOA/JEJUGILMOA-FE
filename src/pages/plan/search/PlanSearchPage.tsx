@@ -56,7 +56,7 @@ export function PlanSearchPage() {
   }
 
   const goBack = () => navigate(-1)
-  const goDone = () => navigate(ROUTES.plan)
+  const goDone = () => navigate(ROUTES.planMapAdd(planId))
 
   return (
     <div>

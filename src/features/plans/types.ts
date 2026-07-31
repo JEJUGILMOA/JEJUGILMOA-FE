@@ -28,6 +28,8 @@ export type TravelPlan = {
   createdAt: string
   /** STEP 02 경유지 추천에서 담은 장소 id 목록 */
   waypointPlaceIds: string[]
+  /** STEP 04 지도추가에서 배정한 Day별 장소 id 목록 (1부터 시작) */
+  itinerary: Record<number, string[]>
 }
 
 /** STEP 01 정보입력 마법사에서 사용하는 draft 상태 */

@@ -33,6 +33,7 @@ function toTravelPlan(draft: PlanDraft): TravelPlan {
     interests: draft.interests,
     createdAt: new Date().toISOString(),
     waypointPlaceIds: [],
+    itinerary: {},
   }
 }
 
@@ -60,10 +61,27 @@ export async function updatePlanWaypoints(
   planId: string,
   waypointPlaceIds: string[],
 ): Promise<TravelPlan> {
-  const plan = mockPlans.find((item) => item.id === planId)
-  if (!plan) {
+  const index = mockPlans.findIndex((item) => item.id === planId)
+  if (index === -1) {
     throw new Error('계획을 찾을 수 없어요.')
   }
-  plan.waypointPlaceIds = waypointPlaceIds
-  return plan
+  // 기존 객체를 그대로 mutate하면 React Query가 참조 비교로 "변경 없음"이라 판단해
+  // 리렌더를 건너뛴다 — 항상 새 객체로 교체한다.
+  const updated: TravelPlan = { ...mockPlans[index], waypointPlaceIds }
+  mockPlans[index] = updated
+  return updated
+}
+
+/** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/itinerary`, ...)로 교체 */
+export async function updatePlanItinerary(
+  planId: string,
+  itinerary: Record<number, string[]>,
+): Promise<TravelPlan> {
+  const index = mockPlans.findIndex((item) => item.id === planId)
+  if (index === -1) {
+    throw new Error('계획을 찾을 수 없어요.')
+  }
+  const updated: TravelPlan = { ...mockPlans[index], itinerary }
+  mockPlans[index] = updated
+  return updated
 }

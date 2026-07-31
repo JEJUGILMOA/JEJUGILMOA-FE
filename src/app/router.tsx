@@ -11,6 +11,7 @@ import { PlanPage } from '@/pages/plan/PlanPage'
 import { PlanCreatePage } from '@/pages/plan/create/PlanCreatePage'
 import { PlanWaypointsPage } from '@/pages/plan/waypoints/PlanWaypointsPage'
 import { PlanSearchPage } from '@/pages/plan/search/PlanSearchPage'
+import { PlanMapAddPage } from '@/pages/plan/map-add/PlanMapAddPage'
 import { RecordPage } from '@/pages/record/RecordPage'
 import { RecordCreatePage } from '@/pages/record/create/RecordCreatePage'
 import { RecordDetailPage } from '@/pages/record/detail/RecordDetailPage'
@@ -123,6 +124,11 @@ export const router = createBrowserRouter([
         path: 'plan/:planId/search',
         Component: PlanSearchPage,
         handle: { title: '장소 검색' } satisfies RouteHandle,
+      },
+      {
+        path: 'plan/:planId/map-add',
+        Component: PlanMapAddPage,
+        handle: { title: '지도추가' } satisfies RouteHandle,
       },
       {
         path: ROUTES.record.slice(1),
