@@ -54,7 +54,7 @@ export function PlanMapAddPage() {
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null)
 
   const goBack = () => navigate(-1)
-  const goDone = () => navigate(ROUTES.plan)
+  const goDone = () => navigate(ROUTES.planItinerary(planId))
 
   if (isLoading || !plan) {
     return (
