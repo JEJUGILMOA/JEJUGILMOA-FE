@@ -10,6 +10,23 @@ export const pageStyle = style({
   paddingBottom: vars.space[8],
 })
 
+export const descriptionStyle = style({
+  fontSize: vars.fontSize.sm,
+  color: colors.text[4],
+})
+
+export const doneLinkStyle = style({
+  flexShrink: 0,
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.primary[500],
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+})
+
 export const mapAreaStyle = style({
   position: 'relative',
   width: '100%',
@@ -30,41 +47,73 @@ export const pinButtonRecipe = recipe({
     padding: 0,
     border: 'none',
     borderRadius: '50%',
-    backgroundColor: colors.primary[200],
     transform: 'translate(-50%, -50%)',
     cursor: 'pointer',
   },
   variants: {
-    selected: {
-      true: { backgroundColor: colors.primary[300] },
+    collected: {
+      true: { backgroundColor: colors.text[6] },
+      false: { backgroundColor: colors.primary[200] },
+    },
+    focused: {
+      true: { boxShadow: `0 0 0 2px ${colors.surface[1]}, 0 0 0 4px ${colors.text[2]}` },
       false: {},
     },
   },
   defaultVariants: {
-    selected: false,
+    collected: false,
+    focused: false,
   },
 })
 
-export const pinDotStyle = style({
-  width: '10px',
-  height: '10px',
-  borderRadius: '50%',
-  backgroundColor: colors.primary[500],
+export const pinDotRecipe = recipe({
+  base: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+  },
+  variants: {
+    collected: {
+      true: { backgroundColor: colors.text[4] },
+      false: { backgroundColor: colors.primary[500] },
+    },
+  },
+  defaultVariants: {
+    collected: false,
+  },
 })
 
-export const emptyMapStateStyle = style({
+export const legendRowStyle = style({
+  display: 'flex',
+  gap: vars.space[4],
+})
+
+export const legendItemStyle = style({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
-  height: '100%',
-  fontSize: vars.fontSize.sm,
+  gap: vars.space[1],
+  fontSize: vars.fontSize.xs,
   color: colors.text[4],
+})
+
+export const legendDotStyle = recipe({
+  base: {
+    width: '8px',
+    height: '8px',
+    borderRadius: '50%',
+  },
+  variants: {
+    collected: {
+      true: { backgroundColor: colors.text[4] },
+      false: { backgroundColor: colors.primary[500] },
+    },
+  },
 })
 
 export const detailCardStyle = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: vars.space[3],
+  gap: vars.space[2],
   padding: vars.space[4],
   border: `1px solid ${colors.border[1]}`,
   borderRadius: vars.radius.md,
@@ -81,22 +130,19 @@ export const detailCategoryStyle = style({
   color: colors.text[4],
 })
 
-export const dayRowStyle = style({
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: vars.space[2],
+export const nearestInfoStyle = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[3],
+  paddingTop: vars.space[2],
+  borderTop: `1px solid ${colors.border[1]}`,
 })
 
-export const emptyStateStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: vars.space[3],
-  padding: `${vars.space[8]} 0`,
+export const collectedNoticeStyle = style({
+  width: '100%',
   textAlign: 'center',
-})
-
-export const emptyStateTextStyle = style({
+  padding: vars.space[3],
+  borderRadius: vars.radius.md,
+  backgroundColor: colors.surface[3],
   fontSize: vars.fontSize.sm,
   color: colors.text[4],
 })

@@ -1,85 +1,92 @@
-import { differenceInCalendarDays, parse } from 'date-fns'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
-import { Chip } from '@/components/ui/Chip/Chip'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
-import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
+import { usePlanQuery, useUpdatePlanWaypointsMutation } from '@/features/plans/hooks'
 import {
-  dayRowStyle,
+  collectedNoticeStyle,
+  descriptionStyle,
   detailCardStyle,
   detailCategoryStyle,
   detailTitleStyle,
-  emptyMapStateStyle,
-  emptyStateStyle,
-  emptyStateTextStyle,
+  doneLinkStyle,
+  legendDotStyle,
+  legendItemStyle,
+  legendRowStyle,
   mapAreaStyle,
+  nearestInfoStyle,
   pageStyle,
   pinButtonRecipe,
-  pinDotStyle,
+  pinDotRecipe,
 } from './PlanMapAddPage.css.ts'
 
-const DATE_FORMAT = 'yyyy.MM.dd'
+const TRAVEL_LABELS = ['도보 5분', '도보 8분', '도보 12분', '차량 8분', '차량 15분', '차량 25분']
+
+function hashString(value: string): number {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0
+  }
+  return hash
+}
 
 function pinPosition(placeId: string, salt: number) {
-  let hash = 0
-  for (let i = 0; i < placeId.length; i += 1) {
-    hash = (hash * 31 + placeId.charCodeAt(i) + salt) >>> 0
-  }
-  return 15 + (hash % 70)
+  return 15 + (hashString(`${placeId}-${salt}`) % 70)
+}
+
+/** 저장된 장소 중 candidateId와 가장 가까운 곳을 결정론적으로 골라 이동 정보를 붙여 반환 */
+function findNearestSavedPlace(candidateId: string, savedPlaceIds: string[]) {
+  const others = savedPlaceIds.filter((id) => id !== candidateId)
+  if (others.length === 0) return null
+
+  const nearestId = others[hashString(candidateId) % others.length]
+  const nearestPlace = MOCK_PLACES.find((place) => place.id === nearestId)
+  if (!nearestPlace) return null
+
+  const label = TRAVEL_LABELS[hashString(`${candidateId}:${nearestId}`) % TRAVEL_LABELS.length]
+  return { title: nearestPlace.title, label }
 }
 
 export function PlanMapAddPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
   const { data: plan, isLoading } = usePlanQuery(planId)
-  const updateItineraryMutation = useUpdatePlanItineraryMutation()
+  const updateWaypointsMutation = useUpdatePlanWaypointsMutation()
 
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null)
-  const [selectedDay, setSelectedDay] = useState(1)
-
-  const dayCount = useMemo(() => {
-    if (!plan) return 1
-    const start = parse(plan.startDate, DATE_FORMAT, new Date())
-    const end = parse(plan.endDate, DATE_FORMAT, new Date())
-    return Math.max(differenceInCalendarDays(end, start) + 1, 1)
-  }, [plan])
-
-  const unassignedPlaceIds = useMemo(() => {
-    if (!plan) return []
-    const assigned = new Set(Object.values(plan.itinerary).flat())
-    return plan.waypointPlaceIds.filter((placeId) => !assigned.has(placeId))
-  }, [plan])
-
-  const activeSelectedPlaceId =
-    selectedPlaceId && unassignedPlaceIds.includes(selectedPlaceId)
-      ? selectedPlaceId
-      : (unassignedPlaceIds[0] ?? null)
-
-  const selectedPlace = activeSelectedPlaceId
-    ? MOCK_PLACES.find((place) => place.id === activeSelectedPlaceId)
-    : undefined
 
   const goBack = () => navigate(-1)
   const goDone = () => navigate(ROUTES.plan)
 
-  const handleAdd = () => {
-    if (!plan || !selectedPlace) return
-    const nextItinerary: Record<number, string[]> = { ...plan.itinerary }
-    const dayPlaceIds = nextItinerary[selectedDay] ?? []
-    nextItinerary[selectedDay] = dayPlaceIds.includes(selectedPlace.id)
-      ? dayPlaceIds
-      : [...dayPlaceIds, selectedPlace.id]
+  if (isLoading || !plan) {
+    return (
+      <div>
+        <PageHeader title="지도추가" showBack onBack={goBack} />
+        <Loading label="여행 계획을 불러오는 중…" />
+      </div>
+    )
+  }
 
-    updateItineraryMutation.mutate(
-      { planId, itinerary: nextItinerary },
+  const isCollected = (placeId: string) => plan.waypointPlaceIds.includes(placeId)
+  const firstCandidate = MOCK_PLACES.find((place) => !isCollected(place.id))
+  const activeSelectedPlaceId = selectedPlaceId ?? firstCandidate?.id ?? MOCK_PLACES[0]?.id ?? null
+  const selectedPlace = activeSelectedPlaceId
+    ? MOCK_PLACES.find((place) => place.id === activeSelectedPlaceId)
+    : undefined
+  const selectedCollected = selectedPlace ? isCollected(selectedPlace.id) : false
+  const nearest = selectedPlace ? findNearestSavedPlace(selectedPlace.id, plan.waypointPlaceIds) : null
+
+  const handleCollect = () => {
+    if (!selectedPlace) return
+    updateWaypointsMutation.mutate(
+      { planId, waypointPlaceIds: [...plan.waypointPlaceIds, selectedPlace.id] },
       {
         onSuccess: () => {
-          toast.success(`${selectedPlace.title}를 Day ${selectedDay}에 추가했어요`)
+          toast.success(`${selectedPlace.title}를 담았어요`)
         },
         onError: () => {
           toast.error('장소 추가에 실패했어요. 다시 시도해 주세요.')
@@ -90,79 +97,81 @@ export function PlanMapAddPage() {
 
   return (
     <div>
-      <PageHeader title="지도추가" showBack onBack={goBack} />
+      <PageHeader
+        title="지도추가"
+        showBack
+        onBack={goBack}
+        rightSlot={
+          <button type="button" className={doneLinkStyle} onClick={goDone}>
+            완료
+          </button>
+        }
+      />
 
-      {isLoading || !plan ? (
-        <Loading label="여행 계획을 불러오는 중…" />
-      ) : (
-        <div className={pageStyle}>
-          <div className={mapAreaStyle}>
-            {unassignedPlaceIds.length === 0 ? (
-              <span className={emptyMapStateStyle}>배정할 장소가 없어요</span>
-            ) : (
-              unassignedPlaceIds.map((placeId) => {
-                const place = MOCK_PLACES.find((item) => item.id === placeId)
-                if (!place) return null
-                return (
-                  <button
-                    key={placeId}
-                    type="button"
-                    aria-label={place.title}
-                    className={pinButtonRecipe({ selected: placeId === activeSelectedPlaceId })}
-                    style={{
-                      left: `${pinPosition(placeId, 1)}%`,
-                      top: `${pinPosition(placeId, 2)}%`,
-                    }}
-                    onClick={() => setSelectedPlaceId(placeId)}
-                  >
-                    <span className={pinDotStyle} aria-hidden />
-                  </button>
-                )
-              })
-            )}
-          </div>
+      <div className={pageStyle}>
+        <p className={descriptionStyle}>지도에서 더 담고 싶은 장소를 찾아보세요.</p>
 
-          {selectedPlace ? (
-            <>
-              <div className={detailCardStyle}>
-                <span className={detailTitleStyle}>{selectedPlace.title}</span>
-                <span className={detailCategoryStyle}>
-                  {selectedPlace.categoryLabel ?? selectedPlace.category}
+        <div className={legendRowStyle}>
+          <span className={legendItemStyle}>
+            <span className={legendDotStyle({ collected: false })} aria-hidden />
+            아직 안 담은 장소
+          </span>
+          <span className={legendItemStyle}>
+            <span className={legendDotStyle({ collected: true })} aria-hidden />
+            이미 담은 장소
+          </span>
+        </div>
+
+        <div className={mapAreaStyle}>
+          {MOCK_PLACES.map((place) => {
+            const collected = isCollected(place.id)
+            return (
+              <button
+                key={place.id}
+                type="button"
+                aria-label={place.title}
+                className={pinButtonRecipe({ collected, focused: place.id === activeSelectedPlaceId })}
+                style={{
+                  left: `${pinPosition(place.id, 1)}%`,
+                  top: `${pinPosition(place.id, 2)}%`,
+                }}
+                onClick={() => setSelectedPlaceId(place.id)}
+              >
+                <span className={pinDotRecipe({ collected })} aria-hidden />
+              </button>
+            )
+          })}
+        </div>
+
+        {selectedPlace ? (
+          <>
+            <div className={detailCardStyle}>
+              <span className={detailTitleStyle}>{selectedPlace.title}</span>
+              <span className={detailCategoryStyle}>
+                {selectedPlace.categoryLabel ?? selectedPlace.category}
+              </span>
+              {nearest ? (
+                <span className={nearestInfoStyle}>
+                  가장 가까운 저장 장소: {nearest.title} ({nearest.label})
                 </span>
-              </div>
+              ) : null}
+            </div>
 
-              <div className={dayRowStyle}>
-                {Array.from({ length: dayCount }, (_, index) => index + 1).map((day) => (
-                  <Chip
-                    key={day}
-                    colorScheme="primary"
-                    isSelected={day === selectedDay}
-                    onClick={() => setSelectedDay(day)}
-                  >
-                    Day {day}
-                  </Chip>
-                ))}
-              </div>
-
+            {selectedCollected ? (
+              <p className={collectedNoticeStyle}>이미 담은 장소예요.</p>
+            ) : (
               <Button
                 fullWidth
                 size="lg"
-                isLoading={updateItineraryMutation.isPending}
-                onClick={handleAdd}
+                isLoading={updateWaypointsMutation.isPending}
+                onClick={handleCollect}
               >
-                이 장소 추가하기
+                담기
               </Button>
-            </>
-          ) : (
-            <div className={emptyStateStyle}>
-              <p className={emptyStateTextStyle}>모든 장소를 날짜에 배정했어요.</p>
-              <Button fullWidth size="lg" onClick={goDone}>
-                완료
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </>
+        ) : null}
+      </div>
     </div>
   )
 }
