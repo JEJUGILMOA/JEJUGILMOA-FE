@@ -20,6 +20,7 @@ export const ROUTES = {
   plan: '/plan',
   planCreate: '/plan/new',
   planWaypoints: (id: string) => `/plan/${id}/waypoints`,
+  planSearch: (id: string) => `/plan/${id}/search`,
   record: '/record',
   recordCreate: '/record/new',
   recordDetail: (id: string) => `/record/${id}`,

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Chip } from '@/components/ui/Chip/Chip'
 import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
@@ -37,6 +37,14 @@ export function PlanWaypointsPage() {
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY)
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([])
   const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
+  const hasSyncedRef = useRef(false)
+
+  useEffect(() => {
+    if (plan && !hasSyncedRef.current) {
+      setSelectedPlaceIds(plan.waypointPlaceIds)
+      hasSyncedRef.current = true
+    }
+  }, [plan])
 
   const filteredPlaces = useMemo(
     () =>
@@ -71,7 +79,7 @@ export function PlanWaypointsPage() {
       {
         onSuccess: () => {
           toast.success('경유지를 저장했어요')
-          navigate(ROUTES.plan)
+          navigate(ROUTES.planSearch(planId))
         },
         onError: () => {
           toast.error('경유지 저장에 실패했어요. 다시 시도해 주세요.')
