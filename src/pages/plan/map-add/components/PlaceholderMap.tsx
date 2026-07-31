@@ -138,7 +138,12 @@ export function PlaceholderMap({ pins, selectedId, onSelect }: PlaceholderMapPro
               type="button"
               aria-label={pin.label}
               className={pinButtonRecipe({ collected: pin.collected, focused: pin.id === selectedId })}
-              style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
+              style={{
+                left: `${pos.left}%`,
+                top: `${pos.top}%`,
+                // 지도(캔버스)가 scale(zoom)되므로, 핀 자체는 화면상 크기가 그대로 보이게 반대로 축소한다
+                transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+              }}
               onClick={() => onSelect(pin.id)}
             >
               <span className={pinDotRecipe({ collected: pin.collected })} aria-hidden />

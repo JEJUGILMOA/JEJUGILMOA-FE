@@ -34,7 +34,6 @@ export const pinButtonRecipe = recipe({
     padding: 0,
     border: 'none',
     borderRadius: '50%',
-    transform: 'translate(-50%, -50%)',
     cursor: 'pointer',
   },
   variants: {
@@ -43,7 +42,7 @@ export const pinButtonRecipe = recipe({
       false: { backgroundColor: colors.primary[200] },
     },
     focused: {
-      true: { boxShadow: `0 0 0 2px ${colors.surface[1]}, 0 0 0 4px ${colors.text[2]}` },
+      true: { boxShadow: ` 0 0 0 2px ${colors.text[2]}` },
       false: {},
     },
   },
