@@ -27,62 +27,6 @@ export const doneLinkStyle = style({
   whiteSpace: 'nowrap',
 })
 
-export const mapAreaStyle = style({
-  position: 'relative',
-  width: '100%',
-  height: '140px',
-  borderRadius: vars.radius.md,
-  backgroundColor: colors.surface[4],
-  overflow: 'hidden',
-})
-
-export const pinButtonRecipe = recipe({
-  base: {
-    position: 'absolute',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '24px',
-    height: '24px',
-    padding: 0,
-    border: 'none',
-    borderRadius: '50%',
-    transform: 'translate(-50%, -50%)',
-    cursor: 'pointer',
-  },
-  variants: {
-    collected: {
-      true: { backgroundColor: colors.text[6] },
-      false: { backgroundColor: colors.primary[200] },
-    },
-    focused: {
-      true: { boxShadow: `0 0 0 2px ${colors.surface[1]}, 0 0 0 4px ${colors.text[2]}` },
-      false: {},
-    },
-  },
-  defaultVariants: {
-    collected: false,
-    focused: false,
-  },
-})
-
-export const pinDotRecipe = recipe({
-  base: {
-    width: '10px',
-    height: '10px',
-    borderRadius: '50%',
-  },
-  variants: {
-    collected: {
-      true: { backgroundColor: colors.text[4] },
-      false: { backgroundColor: colors.primary[500] },
-    },
-  },
-  defaultVariants: {
-    collected: false,
-  },
-})
-
 export const legendRowStyle = style({
   display: 'flex',
   gap: vars.space[4],

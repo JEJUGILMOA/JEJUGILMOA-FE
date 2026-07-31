@@ -17,12 +17,10 @@ import {
   legendDotStyle,
   legendItemStyle,
   legendRowStyle,
-  mapAreaStyle,
   nearestInfoStyle,
   pageStyle,
-  pinButtonRecipe,
-  pinDotRecipe,
 } from './PlanMapAddPage.css.ts'
+import { PlaceholderMap } from './components/PlaceholderMap'
 
 const TRAVEL_LABELS = ['도보 5분', '도보 8분', '도보 12분', '차량 8분', '차량 15분', '차량 25분']
 
@@ -32,10 +30,6 @@ function hashString(value: string): number {
     hash = (hash * 31 + value.charCodeAt(i)) >>> 0
   }
   return hash
-}
-
-function pinPosition(placeId: string, salt: number) {
-  return 15 + (hashString(`${placeId}-${salt}`) % 70)
 }
 
 /** 저장된 장소 중 candidateId와 가장 가까운 곳을 결정론적으로 골라 이동 정보를 붙여 반환 */
@@ -122,26 +116,15 @@ export function PlanMapAddPage() {
           </span>
         </div>
 
-        <div className={mapAreaStyle}>
-          {MOCK_PLACES.map((place) => {
-            const collected = isCollected(place.id)
-            return (
-              <button
-                key={place.id}
-                type="button"
-                aria-label={place.title}
-                className={pinButtonRecipe({ collected, focused: place.id === activeSelectedPlaceId })}
-                style={{
-                  left: `${pinPosition(place.id, 1)}%`,
-                  top: `${pinPosition(place.id, 2)}%`,
-                }}
-                onClick={() => setSelectedPlaceId(place.id)}
-              >
-                <span className={pinDotRecipe({ collected })} aria-hidden />
-              </button>
-            )
-          })}
-        </div>
+        <PlaceholderMap
+          pins={MOCK_PLACES.map((place) => ({
+            id: place.id,
+            label: place.title,
+            collected: isCollected(place.id),
+          }))}
+          selectedId={activeSelectedPlaceId}
+          onSelect={setSelectedPlaceId}
+        />
 
         {selectedPlace ? (
           <>
