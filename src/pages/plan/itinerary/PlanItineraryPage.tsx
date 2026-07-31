@@ -1,18 +1,20 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Loading } from '@/components/ui/Loading/Loading'
-import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
 import {
   assignButtonStyle,
+  backButtonStyle,
+  dayPagerFloatStyle,
   emptyTextStyle,
-  pageStyle,
+  pageRootStyle,
   sectionHeaderStyle,
   sectionMetaStyle,
   sectionStyle,
@@ -23,6 +25,7 @@ import {
   unassignedTitleStyle,
 } from './PlanItineraryPage.css.ts'
 import { DayPager } from './components/DayPager'
+import { ItineraryBottomSheet } from './components/ItineraryBottomSheet'
 import { ItineraryDayMap } from './components/ItineraryDayMap'
 import { ScheduleList } from './components/ScheduleList'
 
@@ -51,8 +54,7 @@ export function PlanItineraryPage() {
 
   if (isLoading || !plan) {
     return (
-      <div>
-        <PageHeader title="일정편집" showBack onBack={goBack} />
+      <div className={pageRootStyle}>
         <Loading label="여행 계획을 불러오는 중…" />
       </div>
     )
@@ -111,10 +113,14 @@ export function PlanItineraryPage() {
   }
 
   return (
-    <div>
-      <PageHeader title="일정편집" showBack onBack={goBack} />
+    <div className={pageRootStyle}>
+      <ItineraryDayMap stops={stops} unassignedPlaceIds={unassignedPlaceIds} />
 
-      <div className={pageStyle}>
+      <button type="button" className={backButtonStyle} onClick={goBack} aria-label="뒤로 가기">
+        <ChevronLeft size={22} />
+      </button>
+
+      <div className={dayPagerFloatStyle}>
         <DayPager
           day={selectedDay}
           totalDays={dayCount}
@@ -122,14 +128,10 @@ export function PlanItineraryPage() {
           onPrev={() => setSelectedDay((day) => Math.max(day - 1, 1))}
           onNext={() => setSelectedDay((day) => Math.min(day + 1, dayCount))}
         />
+      </div>
 
-        <ItineraryDayMap stops={stops} unassignedPlaceIds={unassignedPlaceIds} />
-
+      <ItineraryBottomSheet title={`Day ${selectedDay} 일정 (${stops.length}곳)`}>
         <div className={sectionStyle}>
-          <div className={sectionHeaderStyle}>
-            <span className={sectionTitleStyle}>Day {selectedDay} 일정 ({stops.length}곳)</span>
-          </div>
-
           {scheduleItems.length === 0 ? (
             <p className={emptyTextStyle}>아직 배정된 장소가 없어요. 아래에서 담아보세요.</p>
           ) : (
@@ -157,11 +159,7 @@ export function PlanItineraryPage() {
                       {place.categoryLabel ?? place.category}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    className={assignButtonStyle}
-                    onClick={() => handleAssign(id)}
-                  >
+                  <button type="button" className={assignButtonStyle} onClick={() => handleAssign(id)}>
                     Day {selectedDay}에 담기
                   </button>
                 </div>
@@ -170,15 +168,10 @@ export function PlanItineraryPage() {
           )}
         </div>
 
-        <Button
-          fullWidth
-          size="lg"
-          isLoading={updateItineraryMutation.isPending}
-          onClick={handleNext}
-        >
+        <Button fullWidth size="lg" isLoading={updateItineraryMutation.isPending} onClick={handleNext}>
           다음
         </Button>
-      </div>
+      </ItineraryBottomSheet>
     </div>
   )
 }

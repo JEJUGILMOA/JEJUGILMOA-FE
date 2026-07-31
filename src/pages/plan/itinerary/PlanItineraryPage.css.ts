@@ -2,20 +2,44 @@ import { style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
-export const pageStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[4],
-  paddingBottom: vars.space[8],
+export const pageRootStyle = style({
+  position: 'relative',
+  height: '100%',
+  minHeight: '100%',
+  overflow: 'hidden',
+})
+
+export const backButtonStyle = style({
+  position: 'absolute',
+  top: vars.space[3],
+  left: vars.space[3],
+  zIndex: vars.zIndex.toast,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '40px',
+  height: '40px',
+  border: 'none',
+  borderRadius: vars.radius.full,
+  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  color: colors.text[1],
+  boxShadow: vars.shadow.sm,
+  cursor: 'pointer',
+})
+
+export const dayPagerFloatStyle = style({
+  position: 'absolute',
+  top: vars.space[3],
+  left: '64px',
+  right: vars.space[3],
+  zIndex: vars.zIndex.toast,
+  filter: 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.12))',
 })
 
 export const sectionStyle = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[2],
-  padding: vars.space[3],
-  border: `1px solid ${colors.border[1]}`,
-  borderRadius: vars.radius.md,
 })
 
 export const sectionHeaderStyle = style({

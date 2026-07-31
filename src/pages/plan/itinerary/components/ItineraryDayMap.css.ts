@@ -4,10 +4,8 @@ import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
 export const viewportStyle = style({
-  position: 'relative',
-  width: '100%',
-  height: '190px',
-  borderRadius: vars.radius.md,
+  position: 'absolute',
+  inset: 0,
   backgroundColor: colors.surface[4],
   overflow: 'hidden',
   touchAction: 'none',
@@ -61,8 +59,9 @@ export const unassignedPinStyle = style({
 
 export const zoomControlsStyle = style({
   position: 'absolute',
-  right: vars.space[2],
-  bottom: vars.space[2],
+  right: vars.space[3],
+  // Day 페이저 플로팅 pill(상단) 높이만큼 아래로 내려서 겹치지 않게 함
+  top: '64px',
   display: 'flex',
   flexDirection: 'column',
   borderRadius: vars.radius.sm,

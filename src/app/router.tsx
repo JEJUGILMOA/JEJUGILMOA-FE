@@ -134,7 +134,7 @@ export const router = createBrowserRouter([
       {
         path: 'plan/:planId/itinerary',
         Component: PlanItineraryPage,
-        handle: { title: '일정편집' } satisfies RouteHandle,
+        handle: { title: '일정편집', hideNav: true, flush: true } satisfies RouteHandle,
       },
       {
         path: ROUTES.record.slice(1),
