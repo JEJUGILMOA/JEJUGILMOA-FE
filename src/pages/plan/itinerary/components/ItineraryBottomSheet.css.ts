@@ -10,8 +10,6 @@ export const contentStyle = style({
   zIndex: vars.zIndex.modal,
   display: 'flex',
   flexDirection: 'column',
-  height: '100%',
-  maxHeight: '92dvh',
   outline: 'none',
   borderTopLeftRadius: vars.radius.xl,
   borderTopRightRadius: vars.radius.xl,
@@ -19,20 +17,31 @@ export const contentStyle = style({
   boxShadow: '0 -8px 24px rgba(0, 0, 0, 0.14)',
 })
 
+export const handleWrapStyle = style({
+  flexShrink: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: vars.space[2],
+  padding: `${vars.space[2]} ${vars.space[4]} ${vars.space[3]}`,
+  cursor: 'grab',
+  touchAction: 'none',
+  userSelect: 'none',
+  selectors: {
+    '&:active': { cursor: 'grabbing' },
+  },
+})
+
 export const handleStyle = style({
   width: '40px',
   height: '4px',
   flexShrink: 0,
-  marginTop: vars.space[3],
-  marginBottom: vars.space[2],
-  marginInline: 'auto',
   borderRadius: vars.radius.full,
   backgroundColor: colors.border[1],
 })
 
 export const titleStyle = style({
-  flexShrink: 0,
-  paddingInline: vars.space[4],
+  alignSelf: 'flex-start',
   fontSize: vars.fontSize.md,
   fontWeight: vars.fontWeight.bold,
   color: colors.text[1],
@@ -42,10 +51,11 @@ export const bodyStyle = style({
   flex: 1,
   minHeight: 0,
   overflowY: 'auto',
+  WebkitOverflowScrolling: 'touch',
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[4],
   padding: vars.space[4],
-  paddingTop: vars.space[3],
+  paddingTop: vars.space[2],
   paddingBottom: `calc(${vars.space[6]} + env(safe-area-inset-bottom))`,
 })
