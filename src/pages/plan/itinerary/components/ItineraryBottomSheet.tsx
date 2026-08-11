@@ -1,5 +1,17 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { bodyStyle, contentStyle, handleStyle, handleWrapStyle, titleStyle } from './ItineraryBottomSheet.css.ts'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react'
+import {
+  bodyStyle,
+  contentStyle,
+  handleStyle,
+  handleWrapStyle,
+  titleStyle,
+} from './ItineraryBottomSheet.css.ts'
 
 const SNAP_FRACTIONS = [0.28, 0.58, 0.92]
 
