@@ -4,6 +4,7 @@ const MIN_ZOOM = 1
 const MAX_ZOOM = 2.5
 const ZOOM_STEP = 0.5
 const PAN_RANGE_PER_ZOOM = 110
+const BASE_PAN_RANGE = 50
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
@@ -18,7 +19,7 @@ export function useZoomPan() {
   )
 
   const clampPan = (nextPan: { x: number; y: number }, zoomValue: number) => {
-    const maxOffset = (zoomValue - 1) * PAN_RANGE_PER_ZOOM
+    const maxOffset = BASE_PAN_RANGE + (zoomValue - 1) * PAN_RANGE_PER_ZOOM
     return {
       x: clamp(nextPan.x, -maxOffset, maxOffset),
       y: clamp(nextPan.y, -maxOffset, maxOffset),
@@ -34,7 +35,6 @@ export function useZoomPan() {
     })
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (zoom <= MIN_ZOOM) return
     event.currentTarget.setPointerCapture(event.pointerId)
     dragRef.current = { startX: event.clientX, startY: event.clientY, startPanX: pan.x, startPanY: pan.y }
   }

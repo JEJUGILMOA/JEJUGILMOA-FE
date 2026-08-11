@@ -49,6 +49,7 @@ export function PlanItineraryPage() {
   const updateItineraryMutation = useUpdatePlanItineraryMutation()
 
   const [selectedDay, setSelectedDay] = useState(1)
+  const [customTimes, setCustomTimes] = useState<Record<string, string>>({})
 
   const goBack = () => navigate(-1)
 
@@ -73,8 +74,9 @@ export function PlanItineraryPage() {
   const scheduleItems = stops.map((stop, index) => ({
     id: stop.id,
     title: stop.title,
-    time: formatStopTime(index),
+    time: customTimes[stop.id] ?? formatStopTime(index),
   }))
+  const unassignedPlaces = unassignedPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
 
   const persistItinerary = (nextDayPlaceIds: string[], onSuccessMessage?: string) => {
     const nextItinerary = { ...plan.itinerary, [selectedDay]: nextDayPlaceIds }
@@ -107,6 +109,23 @@ export function PlanItineraryPage() {
     persistItinerary([...currentDayPlaceIds, id], `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`)
   }
 
+  const handleTimeChange = (id: string, time: string) => {
+    // 이 Day의 모든 장소 시간을 먼저 확정(고정)한 뒤, 시간순으로 정렬해서 저장한다.
+    // 그래야 순서가 바뀌어도 아직 수정 안 한 장소들의 시간이 인덱스 기반으로 다시
+    // 계산되며 흔들리지 않는다.
+    const timesById: Record<string, string> = {}
+    currentDayPlaceIds.forEach((placeId, index) => {
+      timesById[placeId] = placeId === id ? time : (customTimes[placeId] ?? formatStopTime(index))
+    })
+
+    setCustomTimes((prev) => ({ ...prev, ...timesById }))
+
+    const sortedPlaceIds = [...currentDayPlaceIds].sort((a, b) =>
+      timesById[a].localeCompare(timesById[b]),
+    )
+    persistItinerary(sortedPlaceIds)
+  }
+
   const handleNext = () => {
     toast.success('일정을 저장했어요')
     navigate(ROUTES.plan)
@@ -114,7 +133,7 @@ export function PlanItineraryPage() {
 
   return (
     <div className={pageRootStyle}>
-      <ItineraryDayMap stops={stops} unassignedPlaceIds={unassignedPlaceIds} />
+      <ItineraryDayMap stops={stops} unassignedPlaces={unassignedPlaces} onAssignPlace={handleAssign} />
 
       <button type="button" className={backButtonStyle} onClick={goBack} aria-label="뒤로 가기">
         <ChevronLeft size={22} />
@@ -135,7 +154,12 @@ export function PlanItineraryPage() {
           {scheduleItems.length === 0 ? (
             <p className={emptyTextStyle}>아직 배정된 장소가 없어요. 아래에서 담아보세요.</p>
           ) : (
-            <ScheduleList items={scheduleItems} onReorder={handleReorder} onRemove={handleRemove} />
+            <ScheduleList
+              items={scheduleItems}
+              onReorder={handleReorder}
+              onRemove={handleRemove}
+              onTimeChange={handleTimeChange}
+            />
           )}
         </div>
 

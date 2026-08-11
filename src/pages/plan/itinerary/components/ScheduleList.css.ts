@@ -8,6 +8,7 @@ export const listStyle = style({
 })
 
 export const rowStyle = style({
+  position: 'relative',
   display: 'flex',
   alignItems: 'center',
   gap: vars.space[2],
@@ -15,7 +16,11 @@ export const rowStyle = style({
   borderBottom: `1px solid ${colors.border[1]}`,
   backgroundColor: colors.surface[1],
   selectors: {
-    '&[data-dragging="true"]': { opacity: 0.4 },
+    '&[data-dragging="true"]': {
+      zIndex: 1,
+      borderRadius: vars.radius.sm,
+      boxShadow: vars.shadow.sm,
+    },
   },
 })
 
@@ -28,16 +33,7 @@ export const dragHandleStyle = style({
   height: '20px',
   color: colors.text[6],
   cursor: 'grab',
-})
-
-export const timeBadgeStyle = style({
-  flexShrink: 0,
-  padding: `${vars.space[1]} ${vars.space[2]}`,
-  borderRadius: vars.radius.sm,
-  backgroundColor: colors.primary[100],
-  color: colors.primary[700],
-  fontSize: '11px',
-  fontWeight: vars.fontWeight.bold,
+  touchAction: 'none',
 })
 
 export const titleStyle = style({

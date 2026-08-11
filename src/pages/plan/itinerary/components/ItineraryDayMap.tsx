@@ -16,12 +16,14 @@ import {
 export type ItineraryDayMapProps = {
   /** 현재 Day에 배정된 장소 (방문 순서대로) */
   stops: { id: string; title: string }[]
-  /** 아직 어느 Day에도 배정되지 않은 장소 id */
-  unassignedPlaceIds: string[]
+  /** 아직 어느 Day에도 배정되지 않은 장소 */
+  unassignedPlaces: { id: string; title: string }[]
+  /** 미배정 장소 핀을 클릭했을 때 현재 Day에 담는다 */
+  onAssignPlace: (id: string) => void
 }
 
-/** STEP 05 Day별 지도: 번호 핀 + 점선 동선 + 미배정 장소 회색 핀 */
-export function ItineraryDayMap({ stops, unassignedPlaceIds }: ItineraryDayMapProps) {
+/** STEP 05 Day별 지도: 번호 핀 + 점선 동선 + 미배정 장소 회색 핀(클릭 시 담기) */
+export function ItineraryDayMap({ stops, unassignedPlaces, onAssignPlace }: ItineraryDayMapProps) {
   const {
     zoom,
     pan,
@@ -46,7 +48,7 @@ export function ItineraryDayMap({ stops, unassignedPlaceIds }: ItineraryDayMapPr
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        {stops.length === 0 && unassignedPlaceIds.length === 0 ? (
+        {stops.length === 0 && unassignedPlaces.length === 0 ? (
           <span className={emptyStateStyle}>이 Day에 배정된 장소가 없어요</span>
         ) : null}
 
@@ -63,18 +65,21 @@ export function ItineraryDayMap({ stops, unassignedPlaceIds }: ItineraryDayMapPr
           </svg>
         ) : null}
 
-        {unassignedPlaceIds.map((placeId) => {
-          const pos = getPinPosition(placeId)
+        {unassignedPlaces.map((place) => {
+          const pos = getPinPosition(place.id)
           return (
-            <span
-              key={placeId}
+            <button
+              key={place.id}
+              type="button"
               className={unassignedPinStyle}
               style={{
                 left: `${pos.left}%`,
                 top: `${pos.top}%`,
                 transform: `translate(-50%, -50%) scale(${1 / zoom})`,
               }}
-              aria-hidden
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => onAssignPlace(place.id)}
+              aria-label={`${place.title} 이 Day에 담기`}
             />
           )
         })}

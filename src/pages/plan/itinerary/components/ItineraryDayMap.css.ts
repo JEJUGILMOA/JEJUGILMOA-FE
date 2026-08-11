@@ -52,9 +52,17 @@ export const unassignedPinStyle = style({
   position: 'absolute',
   width: '16px',
   height: '16px',
+  padding: 0,
+  border: 'none',
   borderRadius: '50%',
   backgroundColor: colors.text[6],
   opacity: 0.7,
+  cursor: 'pointer',
+  transition: 'opacity 120ms ease, background-color 120ms ease',
+  selectors: {
+    '&:hover': { opacity: 1, backgroundColor: colors.primary[500] },
+    '&:active': { opacity: 1, backgroundColor: colors.primary[600] },
+  },
 })
 
 export const zoomControlsStyle = style({
