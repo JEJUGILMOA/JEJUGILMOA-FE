@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
@@ -62,8 +62,12 @@ function computeSuggestedTotal(budgetTier: BudgetTier, travelerCount: number): n
 export function PlanBudgetPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const { data: plan, isLoading } = usePlanQuery(planId)
   const updateBudgetMutation = useUpdatePlanBudgetMutation()
+
+  // 미리보기의 연필 아이콘으로 들어왔으면 버튼 라벨을 "다음"이 아니라 "저장하기"로 보여준다.
+  const fromPreview = Boolean((location.state as { fromPreview?: boolean } | null)?.fromPreview)
 
   const [amounts, setAmounts] = useState<Record<BudgetCategory, string>>(EMPTY_AMOUNTS)
   const [syncedPlanId, setSyncedPlanId] = useState<string | null>(null)
@@ -203,7 +207,7 @@ export function PlanBudgetPage() {
             isLoading={updateBudgetMutation.isPending}
             onClick={handleNext}
           >
-            다음
+            {fromPreview ? '저장하기' : '다음'}
           </Button>
         </div>
       )}

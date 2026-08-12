@@ -3,6 +3,13 @@ import { recipe } from '@vanilla-extract/recipes'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
+export const dayTabRowStyle = style({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: vars.space[2],
+  marginBottom: vars.space[3],
+})
+
 export const mapBoxStyle = style({
   position: 'relative',
   height: '200px',

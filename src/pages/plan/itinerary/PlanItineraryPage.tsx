@@ -2,7 +2,7 @@ import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { toast } from '@/components/ui/Toast/Toast'
@@ -45,11 +45,16 @@ function placeTitle(placeId: string) {
 export function PlanItineraryPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
   const { data: plan, isLoading } = usePlanQuery(planId)
   const updateItineraryMutation = useUpdatePlanItineraryMutation()
 
   const [selectedDay, setSelectedDay] = useState(1)
   const [customTimes, setCustomTimes] = useState<Record<string, string>>({})
+
+  // 미리보기의 연필 아이콘으로 들어왔으면 저장 후 다음 STEP(예산입력)으로 이어가지 않고
+  // 미리보기로 바로 돌아간다 — 이 화면만 고쳐달라고 들어온 거라 나머지 단계를 강제로 거칠 필요가 없다.
+  const fromPreview = Boolean((location.state as { fromPreview?: boolean } | null)?.fromPreview)
 
   const goBack = () => navigate(-1)
 
@@ -128,7 +133,7 @@ export function PlanItineraryPage() {
 
   const handleNext = () => {
     toast.success('일정을 저장했어요')
-    navigate(ROUTES.planBudget(planId))
+    navigate(fromPreview ? ROUTES.planPreview(planId) : ROUTES.planBudget(planId))
   }
 
   return (
@@ -193,7 +198,7 @@ export function PlanItineraryPage() {
         </div>
 
         <Button fullWidth size="lg" isLoading={updateItineraryMutation.isPending} onClick={handleNext}>
-          다음
+          {fromPreview ? '저장하기' : '다음'}
         </Button>
       </ItineraryBottomSheet>
     </div>

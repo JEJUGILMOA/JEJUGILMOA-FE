@@ -54,8 +54,9 @@ export function PlanPreviewPage() {
   const { data: plan, isLoading } = usePlanQuery(planId)
 
   const goBack = () => navigate(-1)
-  const goEditItinerary = () => navigate(ROUTES.planItinerary(planId))
-  const goEditBudget = () => navigate(ROUTES.planBudget(planId))
+  const goEditItinerary = () =>
+    navigate(ROUTES.planItinerary(planId), { state: { fromPreview: true } })
+  const goEditBudget = () => navigate(ROUTES.planBudget(planId), { state: { fromPreview: true } })
 
   const handleSave = () => {
     toast.success('계획을 저장했어요')
@@ -83,8 +84,6 @@ export function PlanPreviewPage() {
     return { day, places: placeIds.map((id) => ({ id, title: placeTitle(id) })) }
   })
 
-  const allStops = days.flatMap((entry) => entry.places)
-
   const budgetTotal = plan.budgetDetail
     ? BUDGET_CATEGORY_LABELS.reduce((sum, { key }) => sum + (plan.budgetDetail?.[key] ?? 0), 0)
     : 0
@@ -106,7 +105,7 @@ export function PlanPreviewPage() {
             <div className={sectionHeaderRowStyle}>
               <span className={sectionTitleStyle}>경로 지도</span>
             </div>
-            <PlanRouteMap stops={allStops} />
+            <PlanRouteMap days={days} />
           </Card>
 
           <Card as="section">
