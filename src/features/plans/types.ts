@@ -1,4 +1,4 @@
-export type DepartureCity = '서울' | '부산' | '대구' | '광주' | '대전' | '청주'
+export type TransportMode = '배' | '비행기'
 
 export type CompanionType = 'solo' | 'couple' | 'family' | 'friends' | 'colleague'
 
@@ -22,7 +22,11 @@ export type TravelPlan = {
   destination: string
   startDate: string
   endDate: string
-  departureCity: DepartureCity
+  transportMode: TransportMode
+  /** 제주 도착 시각 ("HH:mm"). Day 1 일정의 시작점으로 쓰인다 */
+  arrivalTime: string
+  /** 제주 출발 시각 ("HH:mm"). 마지막 Day 일정의 끝점으로 쓰인다 */
+  departureTime: string
   companionType: CompanionType
   travelerCount: number
   budgetTier: BudgetTier
@@ -38,7 +42,9 @@ export type TravelPlan = {
 
 /** STEP 01 정보입력 마법사에서 사용하는 draft 상태 */
 export type PlanDraft = {
-  departureCity: DepartureCity
+  transportMode: TransportMode
+  arrivalTime: string
+  departureTime: string
   /** `yyyy.MM.dd` 형식. 미선택 시 null */
   startDate: string | null
   endDate: string | null

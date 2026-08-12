@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, parse } from 'date-fns'
 import { Button } from '@/components/ui/Button/Button'
+import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
 import type { BudgetTier, CompanionType, PlanDraft } from '@/features/plans/types'
 import {
   checkCircleStyle,
@@ -57,7 +58,10 @@ export function SummaryStep({ draft, isSubmitting, onComplete, onReset }: Summar
     : '-'
 
   const rows = [
-    { label: '출발지', value: draft.departureCity },
+    {
+      label: '교통편',
+      value: `${draft.transportMode} · ${ARRIVAL_POINT_BY_TRANSPORT_MODE[draft.transportMode]} ${draft.arrivalTime} 도착 / ${draft.departureTime} 출발`,
+    },
     { label: '여행지', value: '제주도' },
     { label: '여행 날짜', value: dateLabel },
     { label: '동행', value: companionLabel },

@@ -43,7 +43,7 @@ export function PlanListItem({ plan }: PlanListItemProps) {
         {plan.startDate} - {plan.endDate}
       </p>
       <p className={metaStyle}>
-        {plan.departureCity} 출발 · {COMPANION_LABELS[plan.companionType]}
+        {plan.transportMode}로 출발 · {COMPANION_LABELS[plan.companionType]}
         {plan.companionType !== 'solo' ? ` · ${plan.travelerCount}명` : ''}
       </p>
     </Card>

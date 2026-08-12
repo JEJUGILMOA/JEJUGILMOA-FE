@@ -9,11 +9,16 @@ import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
+import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
+import { GATEWAY_ARRIVAL_ID, GATEWAY_DEPARTURE_ID } from '@/utils/mapPinPositions'
 import {
   assignButtonStyle,
   backButtonStyle,
   dayPagerFloatStyle,
   emptyTextStyle,
+  gatewayLabelStyle,
+  gatewayRowStyle,
+  gatewayTimeStyle,
   pageRootStyle,
   sectionHeaderStyle,
   sectionMetaStyle,
@@ -83,6 +88,18 @@ export function PlanItineraryPage() {
   }))
   const unassignedPlaces = unassignedPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
 
+  // 이 Day가 첫/마지막 Day면 공항·항구 도착·출발 지점을 지도 핀으로도 함께 보여준다.
+  // (실제 일정 데이터인 plan.itinerary에는 넣지 않고 화면 표시에만 끼워 넣는다 —
+  // 드래그·삭제·시간수정 대상이 아니라 위치만 고정된 앵커라서 별도 취급한다.)
+  const isFirstDay = selectedDay === 1
+  const isLastDay = selectedDay === dayCount
+  const gatewayLabel = ARRIVAL_POINT_BY_TRANSPORT_MODE[plan.transportMode]
+  const mapStops = [
+    ...(isFirstDay ? [{ id: GATEWAY_ARRIVAL_ID, title: `${gatewayLabel} 도착` }] : []),
+    ...stops,
+    ...(isLastDay ? [{ id: GATEWAY_DEPARTURE_ID, title: `${gatewayLabel} 출발` }] : []),
+  ]
+
   const persistItinerary = (nextDayPlaceIds: string[], onSuccessMessage?: string) => {
     const nextItinerary = { ...plan.itinerary, [selectedDay]: nextDayPlaceIds }
     updateItineraryMutation.mutate(
@@ -138,7 +155,7 @@ export function PlanItineraryPage() {
 
   return (
     <div className={pageRootStyle}>
-      <ItineraryDayMap stops={stops} unassignedPlaces={unassignedPlaces} onAssignPlace={handleAssign} />
+      <ItineraryDayMap stops={mapStops} unassignedPlaces={unassignedPlaces} onAssignPlace={handleAssign} />
 
       <button type="button" className={backButtonStyle} onClick={goBack} aria-label="뒤로 가기">
         <ChevronLeft size={22} />
@@ -156,6 +173,13 @@ export function PlanItineraryPage() {
 
       <ItineraryBottomSheet title={`Day ${selectedDay} 일정 (${stops.length}곳)`}>
         <div className={sectionStyle}>
+          {isFirstDay ? (
+            <div className={gatewayRowStyle}>
+              <span className={gatewayLabelStyle}>🛬 {gatewayLabel} 도착</span>
+              <span className={gatewayTimeStyle}>{plan.arrivalTime}</span>
+            </div>
+          ) : null}
+
           {scheduleItems.length === 0 ? (
             <p className={emptyTextStyle}>아직 배정된 장소가 없어요. 아래에서 담아보세요.</p>
           ) : (
@@ -166,6 +190,13 @@ export function PlanItineraryPage() {
               onTimeChange={handleTimeChange}
             />
           )}
+
+          {isLastDay ? (
+            <div className={gatewayRowStyle}>
+              <span className={gatewayLabelStyle}>🛫 {gatewayLabel} 출발</span>
+              <span className={gatewayTimeStyle}>{plan.departureTime}</span>
+            </div>
+          ) : null}
         </div>
 
         <div className={sectionStyle}>

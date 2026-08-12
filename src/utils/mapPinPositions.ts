@@ -47,11 +47,19 @@ function computePinPositions(placeIds: string[]) {
   return positions
 }
 
+/** 공항/항구 도착·출발 지점처럼 MOCK_PLACES에 없는 고정 지점용 id */
+export const GATEWAY_ARRIVAL_ID = 'gateway-arrival'
+export const GATEWAY_DEPARTURE_ID = 'gateway-departure'
+
 /**
  * 실제 좌표 없이 장소 id로 자리표시 지도용 좌표를 결정하는 전역 맵.
  * 모든 장소를 기준으로 한 번만 계산해서, 화면이 달라져도 같은 장소는 항상 같은 위치에 찍힌다.
  */
-export const PLACE_PIN_POSITIONS = computePinPositions(MOCK_PLACES.map((place) => place.id))
+export const PLACE_PIN_POSITIONS = computePinPositions([
+  ...MOCK_PLACES.map((place) => place.id),
+  GATEWAY_ARRIVAL_ID,
+  GATEWAY_DEPARTURE_ID,
+])
 
 export function getPinPosition(placeId: string) {
   return PLACE_PIN_POSITIONS.get(placeId) ?? { left: 50, top: 50 }

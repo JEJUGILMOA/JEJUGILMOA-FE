@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Chip } from '@/components/ui/Chip/Chip'
-import { getPinPosition } from '@/utils/mapPinPositions'
+import { GATEWAY_ARRIVAL_ID, GATEWAY_DEPARTURE_ID, getPinPosition } from '@/utils/mapPinPositions'
 import { colors } from '@/styles/colors.css.ts'
 import {
   dayTabRowStyle,
@@ -13,16 +13,27 @@ import {
 export type PlanRouteMapProps = {
   /** Day별로 배정된 장소 목록 (방문 순서대로) */
   days: { day: number; places: { id: string; title: string }[] }[]
+  /** 배/비행기 도착·출발 지점 라벨 (예: "제주국제공항") */
+  gatewayLabel: string
 }
 
 /** STEP 08 계획 미리보기: 전체/Day별로 전환해서 볼 수 있는 정적 경로 미니맵 (확대/축소 없음) */
-export function PlanRouteMap({ days }: PlanRouteMapProps) {
+export function PlanRouteMap({ days, gatewayLabel }: PlanRouteMapProps) {
   const [selectedDay, setSelectedDay] = useState<number | 'all'>('all')
+
+  const firstDay = days[0]?.day
+  const lastDay = days[days.length - 1]?.day
+  const arrivalStop = { id: GATEWAY_ARRIVAL_ID, title: `${gatewayLabel} 도착` }
+  const departureStop = { id: GATEWAY_DEPARTURE_ID, title: `${gatewayLabel} 출발` }
 
   const stops =
     selectedDay === 'all'
-      ? days.flatMap((entry) => entry.places)
-      : (days.find((entry) => entry.day === selectedDay)?.places ?? [])
+      ? [arrivalStop, ...days.flatMap((entry) => entry.places), departureStop]
+      : [
+          ...(selectedDay === firstDay ? [arrivalStop] : []),
+          ...(days.find((entry) => entry.day === selectedDay)?.places ?? []),
+          ...(selectedDay === lastDay ? [departureStop] : []),
+        ]
 
   const routePoints = stops.map((stop) => getPinPosition(stop.id))
 

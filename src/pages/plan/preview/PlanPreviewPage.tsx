@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
 import { usePlanQuery } from '@/features/plans/hooks'
+import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
 import type { BudgetCategory } from '@/features/plans/types'
 import {
   budgetRowLabelStyle,
@@ -78,6 +79,8 @@ export function PlanPreviewPage() {
   const nights = Math.max(dayCount - 1, 0)
   const durationLabel = dayCount <= 1 ? '당일치기' : `${nights}박 ${dayCount}일`
 
+  const gatewayLabel = ARRIVAL_POINT_BY_TRANSPORT_MODE[plan.transportMode]
+
   const days = Array.from({ length: dayCount }, (_, index) => {
     const day = index + 1
     const placeIds = plan.itinerary[day] ?? []
@@ -96,7 +99,8 @@ export function PlanPreviewPage() {
         <div className={tripHeaderStyle}>
           <h2 className={tripTitleStyle}>{plan.title}</h2>
           <p className={tripMetaStyle}>
-            {plan.startDate} - {plan.endDate} · {durationLabel}
+            {plan.startDate} - {plan.endDate} · {durationLabel} · {gatewayLabel} {plan.arrivalTime}{' '}
+            도착
           </p>
         </div>
 
@@ -105,7 +109,7 @@ export function PlanPreviewPage() {
             <div className={sectionHeaderRowStyle}>
               <span className={sectionTitleStyle}>경로 지도</span>
             </div>
-            <PlanRouteMap days={days} />
+            <PlanRouteMap days={days} gatewayLabel={gatewayLabel} />
           </Card>
 
           <Card as="section">
@@ -121,19 +125,22 @@ export function PlanPreviewPage() {
               </button>
             </div>
             <div className={dayListStyle}>
-              {days.map(({ day, places }) => (
-                <div key={day} className={dayRowStyle}>
-                  <div className={dayLabelRowStyle}>
-                    <span className={dayLabelStyle}>Day {day}</span>
-                    <span className={dayMetaStyle}>{places.length}곳</span>
+              {days.map(({ day, places }) => {
+                const labels = [
+                  ...(day === 1 ? [`${gatewayLabel} 도착`] : []),
+                  ...places.map((place) => place.title),
+                  ...(day === dayCount ? [`${gatewayLabel} 출발`] : []),
+                ]
+                return (
+                  <div key={day} className={dayRowStyle}>
+                    <div className={dayLabelRowStyle}>
+                      <span className={dayLabelStyle}>Day {day}</span>
+                      <span className={dayMetaStyle}>{places.length}곳</span>
+                    </div>
+                    <span className={dayPlacesStyle}>{labels.join(' → ')}</span>
                   </div>
-                  <span className={dayPlacesStyle}>
-                    {places.length === 0
-                      ? '배정된 장소가 없어요'
-                      : places.map((place) => place.title).join(' → ')}
-                  </span>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </Card>
 

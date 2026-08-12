@@ -98,6 +98,27 @@ export const unassignedCategoryStyle = style({
   color: colors.text[4],
 })
 
+export const gatewayRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: vars.space[3],
+  borderRadius: vars.radius.md,
+  backgroundColor: colors.surface[4],
+})
+
+export const gatewayLabelStyle = style({
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.text[2],
+})
+
+export const gatewayTimeStyle = style({
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.bold,
+  color: colors.primary[700],
+})
+
 export const assignButtonStyle = style({
   flexShrink: 0,
   border: 'none',

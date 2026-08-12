@@ -10,15 +10,15 @@ import { pageStyle, progressTrackStyle, skipLinkStyle, topBarStyle } from './Pla
 import { BudgetStep } from './steps/BudgetStep'
 import { CompanionStep } from './steps/CompanionStep'
 import { DatesStep } from './steps/DatesStep'
-import { DepartureStep } from './steps/DepartureStep'
 import { InterestsStep } from './steps/InterestsStep'
 import { SummaryStep } from './steps/SummaryStep'
+import { TransportStep } from './steps/TransportStep'
 import { TravelersStep } from './steps/TravelersStep'
 
-type WizardStepId = 'departure' | 'dates' | 'companion' | 'travelers' | 'budget' | 'interests' | 'summary'
+type WizardStepId = 'transport' | 'dates' | 'companion' | 'travelers' | 'budget' | 'interests' | 'summary'
 
 const STEP_PROGRESS_INDEX: Record<Exclude<WizardStepId, 'summary'>, number> = {
-  departure: 0,
+  transport: 0,
   dates: 1,
   companion: 2,
   travelers: 3,
@@ -28,7 +28,9 @@ const STEP_PROGRESS_INDEX: Record<Exclude<WizardStepId, 'summary'>, number> = {
 const TOTAL_PROGRESS_STEPS = 6
 
 const initialDraft: PlanDraft = {
-  departureCity: '서울',
+  transportMode: '비행기',
+  arrivalTime: '09:00',
+  departureTime: '18:00',
   startDate: null,
   endDate: null,
   companionType: null,
@@ -54,17 +56,17 @@ function defaultTravelerCount(companionType: CompanionType): number {
 
 export function PlanCreatePage() {
   const navigate = useNavigate()
-  const [step, setStep] = useState<WizardStepId>('departure')
+  const [step, setStep] = useState<WizardStepId>('transport')
   const [draft, setDraft] = useState<PlanDraft>(initialDraft)
   const createPlanMutation = useCreatePlanMutation()
 
   const goBack = () => {
     switch (step) {
-      case 'departure':
+      case 'transport':
         navigate(-1)
         return
       case 'dates':
-        setStep('departure')
+        setStep('transport')
         return
       case 'companion':
         setStep('dates')
@@ -85,7 +87,7 @@ export function PlanCreatePage() {
 
   const goNext = () => {
     switch (step) {
-      case 'departure':
+      case 'transport':
         setStep('dates')
         return
       case 'dates':
@@ -109,7 +111,7 @@ export function PlanCreatePage() {
 
   const handleReset = () => {
     setDraft(initialDraft)
-    setStep('departure')
+    setStep('transport')
   }
 
   const handleComplete = () => {
@@ -142,10 +144,14 @@ export function PlanCreatePage() {
           </div>
         ) : null}
 
-        {step === 'departure' ? (
-          <DepartureStep
-            departureCity={draft.departureCity}
-            onChange={(departureCity) => setDraft((prev) => ({ ...prev, departureCity }))}
+        {step === 'transport' ? (
+          <TransportStep
+            transportMode={draft.transportMode}
+            arrivalTime={draft.arrivalTime}
+            departureTime={draft.departureTime}
+            onChangeTransportMode={(transportMode) => setDraft((prev) => ({ ...prev, transportMode }))}
+            onChangeArrivalTime={(arrivalTime) => setDraft((prev) => ({ ...prev, arrivalTime }))}
+            onChangeDepartureTime={(departureTime) => setDraft((prev) => ({ ...prev, departureTime }))}
             onNext={goNext}
           />
         ) : null}
