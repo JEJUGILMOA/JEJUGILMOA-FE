@@ -128,7 +128,7 @@ export function PlanItineraryPage() {
 
   const handleNext = () => {
     toast.success('일정을 저장했어요')
-    navigate(ROUTES.plan)
+    navigate(ROUTES.planBudget(planId))
   }
 
   return (

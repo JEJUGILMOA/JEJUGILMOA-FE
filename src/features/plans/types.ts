@@ -4,6 +4,8 @@ export type CompanionType = 'solo' | 'couple' | 'family' | 'friends' | 'colleagu
 
 export type BudgetTier = 'low' | 'mid' | 'high' | 'premium'
 
+export type BudgetCategory = 'transport' | 'lodging' | 'food' | 'etc'
+
 export type InterestTheme =
   | '맛집 탐방'
   | '자연/힐링'
@@ -30,6 +32,8 @@ export type TravelPlan = {
   waypointPlaceIds: string[]
   /** STEP 04 지도추가에서 배정한 Day별 장소 id 목록 (1부터 시작) */
   itinerary: Record<number, string[]>
+  /** STEP 07 예산 입력에서 저장한 카테고리별 예산(원). 입력 전에는 null */
+  budgetDetail: Record<BudgetCategory, number> | null
 }
 
 /** STEP 01 정보입력 마법사에서 사용하는 draft 상태 */

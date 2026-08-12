@@ -1,6 +1,6 @@
 import { differenceInCalendarDays, parse } from 'date-fns'
 import { mockPlans } from './mockPlans'
-import type { PlanDraft, TravelPlan } from './types'
+import type { BudgetCategory, PlanDraft, TravelPlan } from './types'
 
 const DESTINATION = '제주도'
 const DATE_FORMAT = 'yyyy.MM.dd'
@@ -34,6 +34,7 @@ function toTravelPlan(draft: PlanDraft): TravelPlan {
     createdAt: new Date().toISOString(),
     waypointPlaceIds: [],
     itinerary: {},
+    budgetDetail: null,
   }
 }
 
@@ -82,6 +83,20 @@ export async function updatePlanItinerary(
     throw new Error('계획을 찾을 수 없어요.')
   }
   const updated: TravelPlan = { ...mockPlans[index], itinerary }
+  mockPlans[index] = updated
+  return updated
+}
+
+/** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/budget`, ...)로 교체 */
+export async function updatePlanBudget(
+  planId: string,
+  budgetDetail: Record<BudgetCategory, number> | null,
+): Promise<TravelPlan> {
+  const index = mockPlans.findIndex((item) => item.id === planId)
+  if (index === -1) {
+    throw new Error('계획을 찾을 수 없어요.')
+  }
+  const updated: TravelPlan = { ...mockPlans[index], budgetDetail }
   mockPlans[index] = updated
   return updated
 }

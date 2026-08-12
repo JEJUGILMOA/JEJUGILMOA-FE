@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants'
-import { createPlan, fetchPlanById, fetchPlans, updatePlanItinerary, updatePlanWaypoints } from './api'
+import {
+  createPlan,
+  fetchPlanById,
+  fetchPlans,
+  updatePlanBudget,
+  updatePlanItinerary,
+  updatePlanWaypoints,
+} from './api'
+import type { BudgetCategory } from './types'
 
 export function usePlansQuery() {
   return useQuery({
@@ -46,6 +54,24 @@ export function useUpdatePlanItineraryMutation() {
   return useMutation({
     mutationFn: ({ planId, itinerary }: { planId: string; itinerary: Record<number, string[]> }) =>
       updatePlanItinerary(planId, itinerary),
+    onSuccess: (plan) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
+    },
+  })
+}
+
+export function useUpdatePlanBudgetMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      planId,
+      budgetDetail,
+    }: {
+      planId: string
+      budgetDetail: Record<BudgetCategory, number> | null
+    }) => updatePlanBudget(planId, budgetDetail),
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
