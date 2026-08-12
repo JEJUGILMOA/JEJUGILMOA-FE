@@ -24,6 +24,7 @@ export const ROUTES = {
   planMapAdd: (id: string) => `/plan/${id}/map-add`,
   planItinerary: (id: string) => `/plan/${id}/itinerary`,
   planBudget: (id: string) => `/plan/${id}/budget`,
+  planPreview: (id: string) => `/plan/${id}/preview`,
   record: '/record',
   recordCreate: '/record/new',
   recordDetail: (id: string) => `/record/${id}`,

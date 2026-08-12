@@ -14,6 +14,7 @@ import { PlanSearchPage } from '@/pages/plan/search/PlanSearchPage'
 import { PlanMapAddPage } from '@/pages/plan/map-add/PlanMapAddPage'
 import { PlanItineraryPage } from '@/pages/plan/itinerary/PlanItineraryPage'
 import { PlanBudgetPage } from '@/pages/plan/budget/PlanBudgetPage'
+import { PlanPreviewPage } from '@/pages/plan/preview/PlanPreviewPage'
 import { RecordPage } from '@/pages/record/RecordPage'
 import { RecordCreatePage } from '@/pages/record/create/RecordCreatePage'
 import { RecordDetailPage } from '@/pages/record/detail/RecordDetailPage'
@@ -141,6 +142,11 @@ export const router = createBrowserRouter([
         path: 'plan/:planId/budget',
         Component: PlanBudgetPage,
         handle: { title: '예산 입력' } satisfies RouteHandle,
+      },
+      {
+        path: 'plan/:planId/preview',
+        Component: PlanPreviewPage,
+        handle: { title: '계획 미리보기' } satisfies RouteHandle,
       },
       {
         path: ROUTES.record.slice(1),

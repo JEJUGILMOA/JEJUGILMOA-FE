@@ -110,7 +110,7 @@ export function PlanBudgetPage() {
     WON_PER_MANWON
 
   const handleSkip = () => {
-    navigate(ROUTES.plan)
+    navigate(ROUTES.planPreview(planId))
   }
 
   const handleNext = () => {
@@ -126,7 +126,7 @@ export function PlanBudgetPage() {
       {
         onSuccess: () => {
           toast.success('예산을 저장했어요')
-          navigate(ROUTES.plan)
+          navigate(ROUTES.planPreview(planId))
         },
         onError: () => {
           toast.error('예산 저장에 실패했어요. 다시 시도해 주세요.')
