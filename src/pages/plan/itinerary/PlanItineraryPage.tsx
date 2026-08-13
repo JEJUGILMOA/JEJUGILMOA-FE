@@ -36,11 +36,57 @@ import { ScheduleList } from './components/ScheduleList'
 
 const DATE_FORMAT = 'yyyy.MM.dd'
 
-function formatStopTime(index: number) {
-  const totalMinutes = 9 * 60 + index * 90
-  const hours = Math.floor(totalMinutes / 60) % 24
-  const minutes = totalMinutes % 60
+const DAY_START_MINUTES = 9 * 60
+const STOP_INTERVAL_MINUTES = 90
+/** 도착 직후 바로 일정을 시작하지 않도록 두는 여유 시간(수하물 수령·이동 등) */
+const ARRIVAL_BUFFER_MINUTES = 60
+/** 출발 전 공항/항구에 도착해 있어야 하는 여유 시간 */
+const DEPARTURE_BUFFER_MINUTES = 90
+
+function parseTimeToMinutes(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+function formatMinutesToTime(totalMinutes: number) {
+  const dayMinutes = 24 * 60
+  const normalized = ((totalMinutes % dayMinutes) + dayMinutes) % dayMinutes
+  const hours = Math.floor(normalized / 60)
+  const minutes = normalized % 60
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+}
+
+/**
+ * Day 일정의 기본(자동) 방문 시각을 계산한다.
+ * 첫째 날은 도착 시각 이후로, 마지막 날은 출발 시각 전에 끝나도록(필요하면 방문
+ * 간격을 좁혀서) 맞춘다. 첫날이자 마지막 날(당일치기)이면 두 제약을 함께 적용한다.
+ */
+function computeScheduleTimes(
+  stopCount: number,
+  options: { isFirstDay: boolean; isLastDay: boolean; arrivalTime: string; departureTime: string },
+) {
+  if (stopCount === 0) return []
+
+  const { isFirstDay, isLastDay, arrivalTime, departureTime } = options
+
+  let dayStart = isFirstDay
+    ? Math.max(DAY_START_MINUTES, parseTimeToMinutes(arrivalTime) + ARRIVAL_BUFFER_MINUTES)
+    : DAY_START_MINUTES
+
+  let interval = STOP_INTERVAL_MINUTES
+
+  if (isLastDay) {
+    const dayEndLimit = parseTimeToMinutes(departureTime) - DEPARTURE_BUFFER_MINUTES
+
+    if (stopCount === 1) {
+      dayStart = Math.min(dayStart, dayEndLimit)
+    } else {
+      const span = dayEndLimit - dayStart
+      interval = Math.max(30, Math.min(STOP_INTERVAL_MINUTES, Math.floor(span / (stopCount - 1))))
+    }
+  }
+
+  return Array.from({ length: stopCount }, (_, index) => formatMinutesToTime(dayStart + index * interval))
 }
 
 function placeTitle(placeId: string) {
@@ -80,20 +126,27 @@ export function PlanItineraryPage() {
   const assignedPlaceIds = new Set(Object.values(plan.itinerary).flat())
   const unassignedPlaceIds = plan.waypointPlaceIds.filter((id) => !assignedPlaceIds.has(id))
 
-  const stops = currentDayPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
-  const scheduleItems = stops.map((stop, index) => ({
-    id: stop.id,
-    title: stop.title,
-    time: customTimes[stop.id] ?? formatStopTime(index),
-  }))
-  const unassignedPlaces = unassignedPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
-
   // 이 Day가 첫/마지막 Day면 공항·항구 도착·출발 지점을 지도 핀으로도 함께 보여준다.
   // (실제 일정 데이터인 plan.itinerary에는 넣지 않고 화면 표시에만 끼워 넣는다 —
   // 드래그·삭제·시간수정 대상이 아니라 위치만 고정된 앵커라서 별도 취급한다.)
   const isFirstDay = selectedDay === 1
   const isLastDay = selectedDay === dayCount
   const gatewayLabel = ARRIVAL_POINT_BY_TRANSPORT_MODE[plan.transportMode]
+
+  const stops = currentDayPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
+  const stopTimes = computeScheduleTimes(currentDayPlaceIds.length, {
+    isFirstDay,
+    isLastDay,
+    arrivalTime: plan.arrivalTime,
+    departureTime: plan.departureTime,
+  })
+  const scheduleItems = stops.map((stop, index) => ({
+    id: stop.id,
+    title: stop.title,
+    time: customTimes[stop.id] ?? stopTimes[index],
+  }))
+  const unassignedPlaces = unassignedPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
+
   const mapStops = [
     ...(isFirstDay ? [{ id: GATEWAY_ARRIVAL_ID, title: `${gatewayLabel} 도착` }] : []),
     ...stops,
@@ -137,7 +190,7 @@ export function PlanItineraryPage() {
     // 계산되며 흔들리지 않는다.
     const timesById: Record<string, string> = {}
     currentDayPlaceIds.forEach((placeId, index) => {
-      timesById[placeId] = placeId === id ? time : (customTimes[placeId] ?? formatStopTime(index))
+      timesById[placeId] = placeId === id ? time : (customTimes[placeId] ?? stopTimes[index])
     })
 
     setCustomTimes((prev) => ({ ...prev, ...timesById }))
