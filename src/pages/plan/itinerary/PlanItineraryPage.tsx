@@ -123,8 +123,8 @@ export function PlanItineraryPage() {
   const dayCount = Math.max(differenceInCalendarDays(endDate, startDate) + 1, 1)
   const dayDateLabel = format(addDays(startDate, selectedDay - 1), 'M.d(EEE)', { locale: ko })
 
-  const currentDayPlaceIds = plan.itinerary[selectedDay] ?? []
-  const assignedPlaceIds = new Set(Object.values(plan.itinerary).flat())
+  const currentDayPlaceIds = plan.itinerary[selectedDay]?.placeIds ?? []
+  const assignedPlaceIds = new Set(Object.values(plan.itinerary).flatMap((day) => day.placeIds))
   const unassignedPlaceIds = plan.waypointPlaceIds.filter((id) => !assignedPlaceIds.has(id))
 
   // 이 Day가 첫/마지막 Day면 공항·항구 도착·출발 지점을 지도 핀으로도 함께 보여준다.
@@ -155,7 +155,15 @@ export function PlanItineraryPage() {
   ]
 
   const persistItinerary = (nextDayPlaceIds: string[], onSuccessMessage?: string) => {
-    const nextItinerary = { ...plan.itinerary, [selectedDay]: nextDayPlaceIds }
+    const currentDayEntry = plan.itinerary[selectedDay]
+    const nextItinerary = {
+      ...plan.itinerary,
+      [selectedDay]: {
+        departurePlaceId: currentDayEntry?.departurePlaceId ?? null,
+        mustVisitPlaceId: currentDayEntry?.mustVisitPlaceId ?? null,
+        placeIds: nextDayPlaceIds,
+      },
+    }
     updateItineraryMutation.mutate(
       { planId, itinerary: nextItinerary },
       {

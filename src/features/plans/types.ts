@@ -16,6 +16,16 @@ export type InterestTheme =
   | '사진 명소'
   | '축제/이벤트'
 
+/** Day 하나의 일정. 출발 장소·필수 장소는 Day별 순차 작성 흐름에서 채워진다 (아직 입력 UI 없음, 기본 null) */
+export type DayItinerary = {
+  /** 이 Day의 출발 장소 id. 검색으로 입력 (아직 없으면 null) */
+  departurePlaceId: string | null
+  /** 이 Day에서 반드시 가야 할 장소(가장 가고 싶은 곳) id (아직 없으면 null) */
+  mustVisitPlaceId: string | null
+  /** 그 외 방문 장소 id 목록. 기존 순서·시간 배정 대상 */
+  placeIds: string[]
+}
+
 export type TravelPlan = {
   id: string
   title: string
@@ -34,8 +44,8 @@ export type TravelPlan = {
   createdAt: string
   /** STEP 02 경유지 추천에서 담은 장소 id 목록 */
   waypointPlaceIds: string[]
-  /** STEP 04 지도추가에서 배정한 Day별 장소 id 목록 (1부터 시작) */
-  itinerary: Record<number, string[]>
+  /** STEP 04 지도추가에서 배정한 Day별 일정 (1부터 시작) */
+  itinerary: Record<number, DayItinerary>
   /** STEP 07 예산 입력에서 저장한 카테고리별 예산(원). 입력 전에는 null */
   budgetDetail: Record<BudgetCategory, number> | null
 }

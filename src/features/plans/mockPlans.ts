@@ -27,9 +27,13 @@ const demoPlan: TravelPlan = {
     'dongmun',
   ],
   itinerary: {
-    1: ['hyeopjae-beach', 'hallim-cafe'],
-    2: ['seongsan-ilchulbong', 'seopjikoji-cafe'],
-    3: ['dongmun'],
+    1: { departurePlaceId: null, mustVisitPlaceId: null, placeIds: ['hyeopjae-beach', 'hallim-cafe'] },
+    2: {
+      departurePlaceId: null,
+      mustVisitPlaceId: null,
+      placeIds: ['seongsan-ilchulbong', 'seopjikoji-cafe'],
+    },
+    3: { departurePlaceId: null, mustVisitPlaceId: null, placeIds: ['dongmun'] },
   },
   budgetDetail: {
     transport: 150_000,

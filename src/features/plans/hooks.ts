@@ -10,7 +10,7 @@ import {
   updatePlanTitle,
   updatePlanWaypoints,
 } from './api'
-import type { BudgetCategory, PlanDraft } from './types'
+import type { BudgetCategory, DayItinerary, PlanDraft } from './types'
 
 export function usePlansQuery() {
   return useQuery({
@@ -78,7 +78,7 @@ export function useUpdatePlanItineraryMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ planId, itinerary }: { planId: string; itinerary: Record<number, string[]> }) =>
+    mutationFn: ({ planId, itinerary }: { planId: string; itinerary: Record<number, DayItinerary> }) =>
       updatePlanItinerary(planId, itinerary),
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })

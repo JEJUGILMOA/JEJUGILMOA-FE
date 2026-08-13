@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { mockPlans } from './mockPlans'
-import type { BudgetCategory, PlanDraft, TravelPlan } from './types'
+import type { BudgetCategory, DayItinerary, PlanDraft, TravelPlan } from './types'
 
 const DESTINATION = '제주도'
 const DATE_FORMAT = 'yyyy.MM.dd'
@@ -91,7 +91,7 @@ export async function updatePlanWaypoints(
 /** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/itinerary`, ...)로 교체 */
 export async function updatePlanItinerary(
   planId: string,
-  itinerary: Record<number, string[]>,
+  itinerary: Record<number, DayItinerary>,
 ): Promise<TravelPlan> {
   const index = mockPlans.findIndex((item) => item.id === planId)
   if (index === -1) {
