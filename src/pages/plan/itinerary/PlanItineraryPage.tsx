@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
@@ -228,8 +228,8 @@ export function PlanItineraryPage() {
         <ChevronLeft size={22} />
       </button>
 
-      <button type="button" className={nextButtonStyle} onClick={handleNext} aria-label={nextLabel}>
-        {isLastDay ? <Check size={20} /> : <ChevronRight size={22} />}
+      <button type="button" className={nextButtonStyle} onClick={handleNext}>
+        {nextLabel}
       </button>
 
       <div className={dayPagerFloatStyle}>

@@ -29,27 +29,30 @@ export const backButtonStyle = style({
 
 export const nextButtonStyle = style({
   position: 'absolute',
-  top: vars.space[3],
+  top: vars.space[4],
   right: vars.space[3],
   zIndex: vars.zIndex.toast,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '40px',
-  height: '40px',
+  height: '37px',
+  padding: `0 ${vars.space[4]}`,
   border: 'none',
   borderRadius: vars.radius.full,
-  backgroundColor: colors.primary[500],
-  color: colors.text[5],
+  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  color: colors.primary[600],
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.bold,
   boxShadow: vars.shadow.sm,
   cursor: 'pointer',
+  whiteSpace: 'nowrap',
 })
 
 export const dayPagerFloatStyle = style({
   position: 'absolute',
   top: vars.space[3],
   left: '64px',
-  right: '64px',
+  right: '84px',
   zIndex: vars.zIndex.toast,
   filter: 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.12))',
 })
