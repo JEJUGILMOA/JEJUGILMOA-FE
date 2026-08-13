@@ -7,6 +7,7 @@ import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanWaypointsMutation } from '@/features/plans/hooks'
+import { findNearestPlace } from '@/features/plans/nearbyPlaces'
 import {
   collectedNoticeStyle,
   descriptionStyle,
@@ -21,29 +22,6 @@ import {
   pageStyle,
 } from './PlanMapAddPage.css.ts'
 import { PlaceholderMap } from './components/PlaceholderMap'
-
-const TRAVEL_LABELS = ['도보 5분', '도보 8분', '도보 12분', '차량 8분', '차량 15분', '차량 25분']
-
-function hashString(value: string): number {
-  let hash = 0
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 31 + value.charCodeAt(i)) >>> 0
-  }
-  return hash
-}
-
-/** 저장된 장소 중 candidateId와 가장 가까운 곳을 결정론적으로 골라 이동 정보를 붙여 반환 */
-function findNearestSavedPlace(candidateId: string, savedPlaceIds: string[]) {
-  const others = savedPlaceIds.filter((id) => id !== candidateId)
-  if (others.length === 0) return null
-
-  const nearestId = others[hashString(candidateId) % others.length]
-  const nearestPlace = MOCK_PLACES.find((place) => place.id === nearestId)
-  if (!nearestPlace) return null
-
-  const label = TRAVEL_LABELS[hashString(`${candidateId}:${nearestId}`) % TRAVEL_LABELS.length]
-  return { title: nearestPlace.title, label }
-}
 
 export function PlanMapAddPage() {
   const { planId = '' } = useParams<{ planId: string }>()
@@ -72,7 +50,7 @@ export function PlanMapAddPage() {
     ? MOCK_PLACES.find((place) => place.id === activeSelectedPlaceId)
     : undefined
   const selectedCollected = selectedPlace ? isCollected(selectedPlace.id) : false
-  const nearest = selectedPlace ? findNearestSavedPlace(selectedPlace.id, plan.waypointPlaceIds) : null
+  const nearest = selectedPlace ? findNearestPlace(selectedPlace.id, plan.waypointPlaceIds) : null
 
   const handleCollect = () => {
     if (!selectedPlace) return
