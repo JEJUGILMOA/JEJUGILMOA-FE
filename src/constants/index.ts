@@ -19,6 +19,7 @@ export const ROUTES = {
   course: '/courses/:courseId',
   plan: '/plan',
   planCreate: '/plan/new',
+  planEdit: (id: string) => `/plan/${id}/edit`,
   planWaypoints: (id: string) => `/plan/${id}/waypoints`,
   planSearch: (id: string) => `/plan/${id}/search`,
   planMapAdd: (id: string) => `/plan/${id}/map-add`,

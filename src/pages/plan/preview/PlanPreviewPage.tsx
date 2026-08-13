@@ -30,6 +30,7 @@ import {
   sectionHeaderRowStyle,
   sectionListStyle,
   sectionTitleStyle,
+  tripHeaderRowStyle,
   tripHeaderStyle,
   tripMetaStyle,
   tripTitleStyle,
@@ -55,6 +56,7 @@ export function PlanPreviewPage() {
   const { data: plan, isLoading } = usePlanQuery(planId)
 
   const goBack = () => navigate(-1)
+  const goEditInfo = () => navigate(ROUTES.planEdit(planId))
   const goEditItinerary = () =>
     navigate(ROUTES.planItinerary(planId), { state: { fromPreview: true } })
   const goEditBudget = () => navigate(ROUTES.planBudget(planId), { state: { fromPreview: true } })
@@ -97,7 +99,17 @@ export function PlanPreviewPage() {
 
       <div className={pageStyle}>
         <div className={tripHeaderStyle}>
-          <h2 className={tripTitleStyle}>{plan.title}</h2>
+          <div className={tripHeaderRowStyle}>
+            <h2 className={tripTitleStyle}>{plan.title}</h2>
+            <button
+              type="button"
+              className={editButtonStyle}
+              onClick={goEditInfo}
+              aria-label="여행 정보 수정하러 가기"
+            >
+              <Pencil size={16} />
+            </button>
+          </div>
           <p className={tripMetaStyle}>
             {plan.startDate} - {plan.endDate} · {durationLabel} · {gatewayLabel} {plan.arrivalTime}{' '}
             도착

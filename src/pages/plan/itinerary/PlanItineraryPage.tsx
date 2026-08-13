@@ -19,6 +19,7 @@ import {
   gatewayLabelStyle,
   gatewayRowStyle,
   gatewayTimeStyle,
+  nextButtonStyle,
   pageRootStyle,
   sectionHeaderStyle,
   sectionMetaStyle,
@@ -201,10 +202,23 @@ export function PlanItineraryPage() {
     persistItinerary(sortedPlaceIds)
   }
 
-  const handleNext = () => {
+  const finishEditing = () => {
     toast.success('일정을 저장했어요')
     navigate(fromPreview ? ROUTES.planPreview(planId) : ROUTES.planBudget(planId))
   }
+
+  // 마지막 Day가 아니면 '다음'은 다음 Day로 이동만 하고, 마지막 Day에서 눌러야
+  // 이 화면을 마치고 다음 단계(또는 미리보기)로 넘어간다 — 그래야 각 Day를
+  // 다 훑어보고 나서 저장하게 된다.
+  const handleNext = () => {
+    if (!isLastDay) {
+      setSelectedDay((day) => Math.min(day + 1, dayCount))
+      return
+    }
+    finishEditing()
+  }
+
+  const nextLabel = isLastDay && fromPreview ? '저장하기' : '다음'
 
   return (
     <div className={pageRootStyle}>
@@ -212,6 +226,10 @@ export function PlanItineraryPage() {
 
       <button type="button" className={backButtonStyle} onClick={goBack} aria-label="뒤로 가기">
         <ChevronLeft size={22} />
+      </button>
+
+      <button type="button" className={nextButtonStyle} onClick={handleNext}>
+        {nextLabel}
       </button>
 
       <div className={dayPagerFloatStyle}>
@@ -282,7 +300,7 @@ export function PlanItineraryPage() {
         </div>
 
         <Button fullWidth size="lg" isLoading={updateItineraryMutation.isPending} onClick={handleNext}>
-          {fromPreview ? '저장하기' : '다음'}
+          {nextLabel}
         </Button>
       </ItineraryBottomSheet>
     </div>

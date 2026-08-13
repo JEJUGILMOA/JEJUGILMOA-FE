@@ -119,6 +119,11 @@ export const router = createBrowserRouter([
         handle: { title: '여행 계획 만들기' } satisfies RouteHandle,
       },
       {
+        path: 'plan/:planId/edit',
+        Component: PlanCreatePage,
+        handle: { title: '여행 정보 수정' } satisfies RouteHandle,
+      },
+      {
         path: 'plan/:planId/waypoints',
         Component: PlanWaypointsPage,
         handle: { title: '경유지 추천' } satisfies RouteHandle,

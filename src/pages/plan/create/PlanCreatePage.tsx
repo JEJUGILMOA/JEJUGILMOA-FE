@@ -1,9 +1,11 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { addDays, format } from 'date-fns'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
-import { useCreatePlanMutation } from '@/features/plans/hooks'
+import { useCreatePlanMutation, usePlanQuery, useUpdatePlanInfoMutation } from '@/features/plans/hooks'
 import type { CompanionType, PlanDraft } from '@/features/plans/types'
 import { StepProgress } from './components/StepProgress'
 import { pageStyle, progressTrackStyle, skipLinkStyle, topBarStyle } from './PlanCreatePage.css.ts'
@@ -27,20 +29,7 @@ const STEP_PROGRESS_INDEX: Record<Exclude<WizardStepId, 'summary'>, number> = {
 }
 const TOTAL_PROGRESS_STEPS = 6
 
-/** 값을 고르지 않으면 계획 생성이 실패하는 필수 단계라 건너뛰기를 막는다 */
-const SKIP_DISABLED_STEPS: WizardStepId[] = ['summary', 'dates', 'companion']
-
-const initialDraft: PlanDraft = {
-  transportMode: '비행기',
-  arrivalTime: '09:00',
-  departureTime: '18:00',
-  startDate: null,
-  endDate: null,
-  companionType: null,
-  travelerCount: 2,
-  budgetTier: 'mid',
-  interests: ['맛집 탐방', '자연/힐링'],
-}
+const DATE_FORMAT = 'yyyy.MM.dd'
 
 function defaultTravelerCount(companionType: CompanionType): number {
   switch (companionType) {
@@ -57,11 +46,48 @@ function defaultTravelerCount(companionType: CompanionType): number {
   }
 }
 
+// 모든 단계는 건너뛰어도 계획 생성이 실패하지 않도록 처음부터 유효한 기본값을 채워 둔다.
+const DEFAULT_COMPANION_TYPE: CompanionType = 'solo'
+const initialDraft: PlanDraft = {
+  transportMode: '비행기',
+  arrivalTime: '09:00',
+  departureTime: '18:00',
+  startDate: format(new Date(), DATE_FORMAT),
+  endDate: format(addDays(new Date(), 1), DATE_FORMAT),
+  companionType: DEFAULT_COMPANION_TYPE,
+  travelerCount: defaultTravelerCount(DEFAULT_COMPANION_TYPE),
+  budgetTier: 'mid',
+  interests: ['맛집 탐방', '자연/힐링'],
+}
+
 export function PlanCreatePage() {
   const navigate = useNavigate()
+  const { planId } = useParams<{ planId?: string }>()
+  const isEditMode = Boolean(planId)
+
   const [step, setStep] = useState<WizardStepId>('transport')
   const [draft, setDraft] = useState<PlanDraft>(initialDraft)
   const createPlanMutation = useCreatePlanMutation()
+  const updatePlanInfoMutation = useUpdatePlanInfoMutation()
+
+  const { data: existingPlan, isLoading: isExistingPlanLoading } = usePlanQuery(planId ?? '')
+  const hasSyncedEditDraftRef = useRef(false)
+
+  useEffect(() => {
+    if (!isEditMode || !existingPlan || hasSyncedEditDraftRef.current) return
+    setDraft({
+      transportMode: existingPlan.transportMode,
+      arrivalTime: existingPlan.arrivalTime,
+      departureTime: existingPlan.departureTime,
+      startDate: existingPlan.startDate,
+      endDate: existingPlan.endDate,
+      companionType: existingPlan.companionType,
+      travelerCount: existingPlan.travelerCount,
+      budgetTier: existingPlan.budgetTier,
+      interests: existingPlan.interests,
+    })
+    hasSyncedEditDraftRef.current = true
+  }, [isEditMode, existingPlan])
 
   const goBack = () => {
     switch (step) {
@@ -118,10 +144,30 @@ export function PlanCreatePage() {
   }
 
   const handleComplete = () => {
+    if (isEditMode && planId) {
+      updatePlanInfoMutation.mutate(
+        { planId, draft },
+        {
+          onSuccess: () => {
+            toast.success('여행 정보를 수정했어요')
+            // 완료된 수정 화면(/plan/:id/edit)도 히스토리에서 대체해 뒤로가기 시
+            // 다시 마운트되지 않고 그 이전(미리보기 전 화면)으로 나가게 한다.
+            navigate(ROUTES.planPreview(planId), { replace: true })
+          },
+          onError: () => {
+            toast.error('여행 정보 수정에 실패했어요. 다시 시도해 주세요.')
+          },
+        },
+      )
+      return
+    }
+
     createPlanMutation.mutate(draft, {
       onSuccess: (plan) => {
         toast.success('여행 계획을 만들었어요')
-        navigate(ROUTES.planWaypoints(plan.id))
+        // 완료된 마법사(/plan/new)는 히스토리에서 대체한다 — 뒤로가기를 눌렀을 때
+        // 이미 끝난 마법사가 처음부터 다시 마운트되는 대신, 그 이전 화면(계획 목록)으로 나가게 한다.
+        navigate(ROUTES.planWaypoints(plan.id), { replace: true })
       },
       onError: () => {
         toast.error('계획 생성에 실패했어요. 다시 시도해 주세요.')
@@ -129,14 +175,23 @@ export function PlanCreatePage() {
     })
   }
 
+  if (isEditMode && (isExistingPlanLoading || !existingPlan)) {
+    return (
+      <div>
+        <PageHeader title="여행 정보 수정" showBack onBack={() => navigate(-1)} />
+        <Loading label="여행 계획을 불러오는 중…" />
+      </div>
+    )
+  }
+
   return (
     <div>
       <PageHeader
-        title="여행 계획 만들기"
+        title={isEditMode ? '여행 정보 수정' : '여행 계획 만들기'}
         showBack
         onBack={goBack}
         rightSlot={
-          !SKIP_DISABLED_STEPS.includes(step) ? (
+          step !== 'summary' ? (
             <button type="button" className={skipLinkStyle} onClick={goNext}>
               건너뛰기
             </button>
@@ -222,9 +277,10 @@ export function PlanCreatePage() {
         {step === 'summary' ? (
           <SummaryStep
             draft={draft}
-            isSubmitting={createPlanMutation.isPending}
+            isSubmitting={isEditMode ? updatePlanInfoMutation.isPending : createPlanMutation.isPending}
             onComplete={handleComplete}
-            onReset={handleReset}
+            onReset={isEditMode ? () => navigate(-1) : handleReset}
+            mode={isEditMode ? 'edit' : 'create'}
           />
         ) : null}
       </div>

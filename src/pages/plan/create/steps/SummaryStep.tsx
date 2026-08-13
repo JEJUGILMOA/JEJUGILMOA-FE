@@ -37,10 +37,12 @@ export type SummaryStepProps = {
   isSubmitting: boolean
   onComplete: () => void
   onReset: () => void
+  /** 'edit'면 계획 미리보기에서 들어온 정보 수정 흐름 — 문구·보조 버튼 동작이 달라진다 */
+  mode?: 'create' | 'edit'
 }
 
-/** STEP 01-7: 입력 완료 요약 */
-export function SummaryStep({ draft, isSubmitting, onComplete, onReset }: SummaryStepProps) {
+/** STEP 01-7: 입력 완료 요약 (계획 미리보기에서의 정보 수정 흐름도 함께 담당) */
+export function SummaryStep({ draft, isSubmitting, onComplete, onReset, mode = 'create' }: SummaryStepProps) {
   const dateLabel =
     draft.startDate && draft.endDate
       ? (() => {
@@ -74,8 +76,14 @@ export function SummaryStep({ draft, isSubmitting, onComplete, onReset }: Summar
       <span className={checkCircleStyle} aria-hidden>
         ✓
       </span>
-      <h2 className={summaryTitleStyle}>여행 정보 입력이 끝났어요!</h2>
-      <p className={summaryDescStyle}>입력하신 내용으로 맞춤 일정을 추천해드릴게요.</p>
+      <h2 className={summaryTitleStyle}>
+        {mode === 'edit' ? '수정할 내용을 확인해주세요' : '여행 정보 입력이 끝났어요!'}
+      </h2>
+      <p className={summaryDescStyle}>
+        {mode === 'edit'
+          ? '아래 내용으로 여행 정보를 업데이트할게요.'
+          : '입력하신 내용으로 맞춤 일정을 추천해드릴게요.'}
+      </p>
 
       <div className={summaryCardStyle}>
         {rows.map((row) => (
@@ -88,10 +96,10 @@ export function SummaryStep({ draft, isSubmitting, onComplete, onReset }: Summar
 
       <div className={ctaGroupStyle}>
         <Button fullWidth size="lg" isLoading={isSubmitting} onClick={onComplete}>
-          이 조건으로 계획 만들기
+          {mode === 'edit' ? '이 조건으로 수정하기' : '이 조건으로 계획 만들기'}
         </Button>
         <button type="button" className={secondaryLinkButtonStyle} onClick={onReset} disabled={isSubmitting}>
-          처음부터 다시 계획하기
+          {mode === 'edit' ? '취소' : '처음부터 다시 계획하기'}
         </button>
       </div>
     </div>

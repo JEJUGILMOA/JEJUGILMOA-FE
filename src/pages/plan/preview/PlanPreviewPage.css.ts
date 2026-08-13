@@ -18,6 +18,13 @@ export const tripHeaderStyle = style({
   paddingTop: vars.space[1],
 })
 
+export const tripHeaderRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space[2],
+})
+
 export const tripTitleStyle = style({
   fontSize: vars.fontSize['2xl'],
   fontWeight: vars.fontWeight.bold,
