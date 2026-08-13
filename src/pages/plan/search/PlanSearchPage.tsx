@@ -1,5 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { Clock, MapPin, X } from 'lucide-react'
+import { Chip } from '@/components/ui/Chip/Chip'
+import { Empty } from '@/components/ui/Empty/Empty'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
@@ -10,17 +13,47 @@ import { usePlanQuery, useUpdatePlanWaypointsMutation } from '@/features/plans/h
 import {
   addedLinkStyle,
   addLinkStyle,
+  chipWrapStyle,
   doneLinkStyle,
-  emptyStateStyle,
   infoColumnStyle,
   listStyle,
+  matchStyle,
   pageStyle,
+  recentButtonStyle,
+  recentIconStyle,
+  recentItemStyle,
+  recentLabelStyle,
+  removeButtonStyle,
+  recentListStyle,
+  resultIconStyle,
   rowAddressStyle,
   rowStyle,
   rowTitleStyle,
   searchBarGrowStyle,
+  sectionStyle,
+  sectionTitleStyle,
   topBarStyle,
 } from './PlanSearchPage.css.ts'
+
+const POPULAR_KEYWORDS = ['성산일출봉', '협재 해수욕장', '애월 카페거리', '동문 시장', '한라산']
+
+function highlightMatch(text: string, query: string): ReactNode {
+  const trimmed = query.trim()
+  if (!trimmed) return text
+
+  const lowerText = text.toLowerCase()
+  const lowerQuery = trimmed.toLowerCase()
+  const index = lowerText.indexOf(lowerQuery)
+  if (index < 0) return text
+
+  return (
+    <>
+      {text.slice(0, index)}
+      <span className={matchStyle}>{text.slice(index, index + trimmed.length)}</span>
+      {text.slice(index + trimmed.length)}
+    </>
+  )
+}
 
 export function PlanSearchPage() {
   const { planId = '' } = useParams<{ planId: string }>()
@@ -29,18 +62,38 @@ export function PlanSearchPage() {
   const updateWaypointsMutation = useUpdatePlanWaypointsMutation()
 
   const [query, setQuery] = useState('')
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
+
+  const trimmedQuery = query.trim()
+  const showResults = trimmedQuery.length > 0
 
   const results = useMemo(() => {
-    const keyword = query.trim().toLowerCase()
-    if (!keyword) return []
+    if (!showResults) return []
+    const keyword = trimmedQuery.toLowerCase()
     return MOCK_PLACES.filter(
       (place) =>
         place.title.toLowerCase().includes(keyword) || place.location.toLowerCase().includes(keyword),
     )
-  }, [query])
+  }, [showResults, trimmedQuery])
 
-  const toggleAdd = (placeId: string) => {
+  const pushRecent = (term: string) => {
+    const next = term.trim()
+    if (!next) return
+    setRecentSearches((prev) => [next, ...prev.filter((item) => item !== next)].slice(0, 8))
+  }
+
+  const handleSelectKeyword = (term: string) => {
+    setQuery(term)
+    pushRecent(term)
+  }
+
+  const handleRemoveRecent = (term: string) => {
+    setRecentSearches((prev) => prev.filter((item) => item !== term))
+  }
+
+  const toggleAdd = (placeId: string, placeTitle: string) => {
     if (!plan) return
+    pushRecent(placeTitle)
     const nextWaypointPlaceIds = plan.waypointPlaceIds.includes(placeId)
       ? plan.waypointPlaceIds.filter((id) => id !== placeId)
       : [...plan.waypointPlaceIds, placeId]
@@ -85,30 +138,90 @@ export function PlanSearchPage() {
             />
           </div>
 
-          <div className={listStyle}>
-            {query.trim() === '' ? null : results.length === 0 ? (
-              <p className={emptyStateStyle}>검색 결과가 없어요.</p>
-            ) : (
-              results.map((place) => {
-                const added = plan.waypointPlaceIds.includes(place.id)
-                return (
-                  <div key={place.id} className={rowStyle}>
-                    <div className={infoColumnStyle}>
-                      <span className={rowTitleStyle}>{place.title}</span>
-                      <span className={rowAddressStyle}>{place.location}</span>
+          {showResults ? (
+            <div className={listStyle}>
+              {results.length === 0 ? (
+                <Empty title="검색 결과가 없어요" description="다른 키워드로 다시 찾아보세요." />
+              ) : (
+                results.map((place) => {
+                  const added = plan.waypointPlaceIds.includes(place.id)
+                  return (
+                    <div key={place.id} className={rowStyle}>
+                      <span className={resultIconStyle} aria-hidden>
+                        <MapPin size={18} strokeWidth={1.75} />
+                      </span>
+                      <div className={infoColumnStyle}>
+                        <span className={rowTitleStyle}>{highlightMatch(place.title, trimmedQuery)}</span>
+                        <span className={rowAddressStyle}>
+                          {place.categoryLabel ?? place.category} · {place.location}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className={added ? addedLinkStyle : addLinkStyle}
+                        onClick={() => toggleAdd(place.id, place.title)}
+                      >
+                        {added ? '담김 ✓' : '추가'}
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className={added ? addedLinkStyle : addLinkStyle}
-                      onClick={() => toggleAdd(place.id)}
+                  )
+                })
+              )}
+            </div>
+          ) : (
+            <>
+              <section className={sectionStyle} aria-labelledby="plan-search-popular-title">
+                <h2 id="plan-search-popular-title" className={sectionTitleStyle}>
+                  인기 검색어
+                </h2>
+                <div className={chipWrapStyle}>
+                  {POPULAR_KEYWORDS.map((keyword) => (
+                    <Chip
+                      key={keyword}
+                      size="md"
+                      colorScheme="neutral"
+                      isSelected
+                      onClick={() => handleSelectKeyword(keyword)}
                     >
-                      {added ? '담김 ✓' : '추가'}
-                    </button>
-                  </div>
-                )
-              })
-            )}
-          </div>
+                      {keyword}
+                    </Chip>
+                  ))}
+                </div>
+              </section>
+
+              {recentSearches.length > 0 ? (
+                <section className={sectionStyle} aria-labelledby="plan-search-recent-title">
+                  <h2 id="plan-search-recent-title" className={sectionTitleStyle}>
+                    최근 검색
+                  </h2>
+                  <ul className={recentListStyle}>
+                    {recentSearches.map((term) => (
+                      <li key={term} className={recentItemStyle}>
+                        <button
+                          type="button"
+                          className={recentButtonStyle}
+                          onClick={() => handleSelectKeyword(term)}
+                        >
+                          <span className={recentIconStyle} aria-hidden>
+                            <Clock size={18} strokeWidth={1.75} />
+                          </span>
+                          <span className={recentLabelStyle}>{term}</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={removeButtonStyle}
+                          aria-label={`${term} 삭제`}
+                          onClick={() => handleRemoveRecent(term)}
+                        >
+                          <X size={14} aria-hidden />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </>
+          )}
         </div>
       )}
     </div>
