@@ -13,13 +13,12 @@ import { BudgetStep } from './steps/BudgetStep'
 import { CompanionStep } from './steps/CompanionStep'
 import { DatesStep } from './steps/DatesStep'
 import { InterestsStep } from './steps/InterestsStep'
-import { SummaryStep } from './steps/SummaryStep'
 import { TransportStep } from './steps/TransportStep'
 import { TravelersStep } from './steps/TravelersStep'
 
-type WizardStepId = 'transport' | 'dates' | 'companion' | 'travelers' | 'budget' | 'interests' | 'summary'
+type WizardStepId = 'transport' | 'dates' | 'companion' | 'travelers' | 'budget' | 'interests'
 
-const STEP_PROGRESS_INDEX: Record<Exclude<WizardStepId, 'summary'>, number> = {
+const STEP_PROGRESS_INDEX: Record<WizardStepId, number> = {
   transport: 0,
   dates: 1,
   companion: 2,
@@ -108,39 +107,7 @@ export function PlanCreatePage() {
         return
       case 'interests':
         setStep('budget')
-        return
-      case 'summary':
-        setStep('interests')
     }
-  }
-
-  const goNext = () => {
-    switch (step) {
-      case 'transport':
-        setStep('dates')
-        return
-      case 'dates':
-        setStep('companion')
-        return
-      case 'companion':
-        setStep(draft.companionType === 'solo' ? 'budget' : 'travelers')
-        return
-      case 'travelers':
-        setStep('budget')
-        return
-      case 'budget':
-        setStep('interests')
-        return
-      case 'interests':
-        setStep('summary')
-        return
-      case 'summary':
-    }
-  }
-
-  const handleReset = () => {
-    setDraft(initialDraft)
-    setStep('transport')
   }
 
   const handleComplete = () => {
@@ -175,6 +142,30 @@ export function PlanCreatePage() {
     })
   }
 
+  // 관심사가 마지막 입력 항목이라, 여기서 다음으로 넘어가면 바로 계획을 완성한다
+  // (중간 확인 화면 없이).
+  const goNext = () => {
+    switch (step) {
+      case 'transport':
+        setStep('dates')
+        return
+      case 'dates':
+        setStep('companion')
+        return
+      case 'companion':
+        setStep(draft.companionType === 'solo' ? 'budget' : 'travelers')
+        return
+      case 'travelers':
+        setStep('budget')
+        return
+      case 'budget':
+        setStep('interests')
+        return
+      case 'interests':
+        handleComplete()
+    }
+  }
+
   if (isEditMode && (isExistingPlanLoading || !existingPlan)) {
     return (
       <div>
@@ -191,22 +182,18 @@ export function PlanCreatePage() {
         showBack
         onBack={goBack}
         rightSlot={
-          step !== 'summary' ? (
-            <button type="button" className={skipLinkStyle} onClick={goNext}>
-              건너뛰기
-            </button>
-          ) : null
+          <button type="button" className={skipLinkStyle} onClick={goNext}>
+            건너뛰기
+          </button>
         }
       />
 
       <div className={pageStyle}>
-        {step !== 'summary' ? (
-          <div className={topBarStyle}>
-            <div className={progressTrackStyle}>
-              <StepProgress total={TOTAL_PROGRESS_STEPS} activeIndex={STEP_PROGRESS_INDEX[step]} />
-            </div>
+        <div className={topBarStyle}>
+          <div className={progressTrackStyle}>
+            <StepProgress total={TOTAL_PROGRESS_STEPS} activeIndex={STEP_PROGRESS_INDEX[step]} />
           </div>
-        ) : null}
+        </div>
 
         {step === 'transport' ? (
           <TransportStep
@@ -271,16 +258,7 @@ export function PlanCreatePage() {
               }))
             }
             onNext={goNext}
-          />
-        ) : null}
-
-        {step === 'summary' ? (
-          <SummaryStep
-            draft={draft}
             isSubmitting={isEditMode ? updatePlanInfoMutation.isPending : createPlanMutation.isPending}
-            onComplete={handleComplete}
-            onReset={isEditMode ? () => navigate(-1) : handleReset}
-            mode={isEditMode ? 'edit' : 'create'}
           />
         ) : null}
       </div>

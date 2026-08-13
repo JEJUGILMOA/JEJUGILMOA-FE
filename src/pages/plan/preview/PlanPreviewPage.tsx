@@ -1,14 +1,16 @@
 import { differenceInCalendarDays, parse } from 'date-fns'
 import { Pencil } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
+import { Input } from '@/components/ui/Input/Input'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
-import { usePlanQuery } from '@/features/plans/hooks'
+import { usePlanQuery, useUpdatePlanTitleMutation } from '@/features/plans/hooks'
 import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
 import type { BudgetCategory } from '@/features/plans/types'
 import {
@@ -30,6 +32,8 @@ import {
   sectionHeaderRowStyle,
   sectionListStyle,
   sectionTitleStyle,
+  titleButtonStyle,
+  titleInputStyle,
   tripHeaderRowStyle,
   tripHeaderStyle,
   tripMetaStyle,
@@ -54,6 +58,10 @@ export function PlanPreviewPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
   const { data: plan, isLoading } = usePlanQuery(planId)
+  const updateTitleMutation = useUpdatePlanTitleMutation()
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
 
   const goBack = () => navigate(-1)
   const goEditInfo = () => navigate(ROUTES.planEdit(planId))
@@ -64,6 +72,26 @@ export function PlanPreviewPage() {
   const handleSave = () => {
     toast.success('계획을 저장했어요')
     navigate(ROUTES.plan)
+  }
+
+  const startEditTitle = (currentTitle: string) => {
+    setTitleDraft(currentTitle)
+    setIsEditingTitle(true)
+  }
+
+  const commitTitle = () => {
+    const nextTitle = titleDraft.trim()
+    setIsEditingTitle(false)
+    if (!plan || !nextTitle || nextTitle === plan.title) return
+
+    updateTitleMutation.mutate(
+      { planId, title: nextTitle },
+      {
+        onError: () => {
+          toast.error('제목 수정에 실패했어요. 다시 시도해 주세요.')
+        },
+      },
+    )
   }
 
   if (isLoading || !plan) {
@@ -100,7 +128,29 @@ export function PlanPreviewPage() {
       <div className={pageStyle}>
         <div className={tripHeaderStyle}>
           <div className={tripHeaderRowStyle}>
-            <h2 className={tripTitleStyle}>{plan.title}</h2>
+            {isEditingTitle ? (
+              <Input
+                className={titleInputStyle}
+                value={titleDraft}
+                onChange={(event) => setTitleDraft(event.target.value)}
+                onBlur={commitTitle}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') event.currentTarget.blur()
+                  if (event.key === 'Escape') setIsEditingTitle(false)
+                }}
+                aria-label="계획 제목"
+                autoFocus
+              />
+            ) : (
+              <button
+                type="button"
+                className={titleButtonStyle}
+                onClick={() => startEditTitle(plan.title)}
+                aria-label={`계획 제목 ${plan.title}. 눌러서 수정하세요`}
+              >
+                <h2 className={tripTitleStyle}>{plan.title}</h2>
+              </button>
+            )}
             <button
               type="button"
               className={editButtonStyle}

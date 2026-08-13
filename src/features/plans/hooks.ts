@@ -7,6 +7,7 @@ import {
   updatePlanBudget,
   updatePlanInfo,
   updatePlanItinerary,
+  updatePlanTitle,
   updatePlanWaypoints,
 } from './api'
 import type { BudgetCategory, PlanDraft } from './types'
@@ -41,6 +42,18 @@ export function useUpdatePlanInfoMutation() {
 
   return useMutation({
     mutationFn: ({ planId, draft }: { planId: string; draft: PlanDraft }) => updatePlanInfo(planId, draft),
+    onSuccess: (plan) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
+    },
+  })
+}
+
+export function useUpdatePlanTitleMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ planId, title }: { planId: string; title: string }) => updatePlanTitle(planId, title),
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })

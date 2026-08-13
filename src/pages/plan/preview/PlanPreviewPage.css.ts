@@ -32,6 +32,28 @@ export const tripTitleStyle = style({
   letterSpacing: '-0.03em',
 })
 
+export const titleButtonStyle = style({
+  display: 'block',
+  minWidth: 0,
+  border: 'none',
+  background: 'none',
+  padding: 0,
+  margin: 0,
+  textAlign: 'left',
+  cursor: 'pointer',
+})
+
+export const titleInputStyle = style({
+  flex: 1,
+  minWidth: 0,
+  minHeight: 'auto',
+  padding: `${vars.space[1]} ${vars.space[2]}`,
+  border: `1px solid ${colors.border[1]}`,
+  fontSize: vars.fontSize['2xl'],
+  fontWeight: vars.fontWeight.bold,
+  letterSpacing: '-0.03em',
+})
+
 export const tripMetaStyle = style({
   fontSize: vars.fontSize.sm,
   color: colors.text[4],

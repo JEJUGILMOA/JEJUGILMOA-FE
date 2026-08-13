@@ -121,6 +121,17 @@ export async function updatePlanInfo(planId: string, draft: PlanDraft): Promise<
   return updated
 }
 
+/** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/title`, ...)로 교체 */
+export async function updatePlanTitle(planId: string, title: string): Promise<TravelPlan> {
+  const index = mockPlans.findIndex((item) => item.id === planId)
+  if (index === -1) {
+    throw new Error('계획을 찾을 수 없어요.')
+  }
+  const updated: TravelPlan = { ...mockPlans[index], title }
+  mockPlans[index] = updated
+  return updated
+}
+
 /** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/budget`, ...)로 교체 */
 export async function updatePlanBudget(
   planId: string,
