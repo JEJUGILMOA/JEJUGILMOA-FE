@@ -35,24 +35,21 @@ export const nextButtonStyle = style({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
+  width: '40px',
   height: '40px',
-  padding: `0 ${vars.space[4]}`,
   border: 'none',
   borderRadius: vars.radius.full,
   backgroundColor: colors.primary[500],
   color: colors.text[5],
-  fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.bold,
   boxShadow: vars.shadow.sm,
   cursor: 'pointer',
-  whiteSpace: 'nowrap',
 })
 
 export const dayPagerFloatStyle = style({
   position: 'absolute',
   top: vars.space[3],
   left: '64px',
-  right: '84px',
+  right: '64px',
   zIndex: vars.zIndex.toast,
   filter: 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.12))',
 })

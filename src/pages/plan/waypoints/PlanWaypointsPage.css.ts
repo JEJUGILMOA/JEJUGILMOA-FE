@@ -9,6 +9,21 @@ export const pageStyle = style({
   paddingBottom: vars.space[8],
 })
 
+export const doneLinkStyle = style({
+  flexShrink: 0,
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.primary[500],
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+  selectors: {
+    '&:disabled': { color: colors.text[6], cursor: 'not-allowed' },
+  },
+})
+
 export const headerBlockStyle = style({
   display: 'flex',
   flexDirection: 'column',

@@ -7,7 +7,8 @@ export const rootStyle = style({
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: vars.space[3],
-  padding: `${vars.space[2]} ${vars.space[3]}`,
+  height: '40px',
+  padding: `0 ${vars.space[3]}`,
   borderRadius: vars.radius.full,
   border: `1px solid ${colors.border[1]}`,
   backgroundColor: colors.surface[1],
@@ -33,4 +34,5 @@ export const labelStyle = style({
   fontSize: vars.fontSize.sm,
   fontWeight: vars.fontWeight.bold,
   color: colors.text[1],
+  whiteSpace: 'nowrap',
 })

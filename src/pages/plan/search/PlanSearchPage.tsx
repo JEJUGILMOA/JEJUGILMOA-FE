@@ -60,7 +60,16 @@ export function PlanSearchPage() {
 
   return (
     <div>
-      <PageHeader title="장소 검색" showBack onBack={goBack} />
+      <PageHeader
+        title="장소 검색"
+        showBack
+        onBack={goBack}
+        rightSlot={
+          <button type="button" className={doneLinkStyle} onClick={goDone}>
+            완료
+          </button>
+        }
+      />
 
       {isLoading || !plan ? (
         <Loading label="여행 계획을 불러오는 중…" />
@@ -74,9 +83,6 @@ export function PlanSearchPage() {
               placeholder="장소, 주소를 검색해보세요"
               autoFocus
             />
-            <button type="button" className={doneLinkStyle} onClick={goDone}>
-              완료
-            </button>
           </div>
 
           <div className={listStyle}>

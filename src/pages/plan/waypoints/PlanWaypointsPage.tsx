@@ -14,6 +14,7 @@ import {
   categoryRowStyle,
   courseRowStyle,
   descriptionStyle,
+  doneLinkStyle,
   emptyListStyle,
   headerBlockStyle,
   listStyle,
@@ -90,7 +91,21 @@ export function PlanWaypointsPage() {
 
   return (
     <div>
-      <PageHeader title="경유지 추천" showBack onBack={goBack} />
+      <PageHeader
+        title="경유지 추천"
+        showBack
+        onBack={goBack}
+        rightSlot={
+          <button
+            type="button"
+            className={doneLinkStyle}
+            onClick={handleNext}
+            disabled={updateWaypointsMutation.isPending}
+          >
+            다음
+          </button>
+        }
+      />
 
       {isLoading || !plan ? (
         <Loading label="여행 계획을 불러오는 중…" />
