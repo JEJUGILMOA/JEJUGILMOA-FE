@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
+} from 'react'
 import {
   colonStyle,
   ITEM_HEIGHT,
@@ -106,6 +113,9 @@ function WheelColumn({ options, value, onChange, ariaLabel }: WheelColumnProps) 
   )
 }
 
+/** 화면 가장자리에 팝오버가 붙었을 때 뷰포트 밖으로 나가지 않도록 두는 최소 여백 */
+const SCREEN_EDGE_MARGIN = 8
+
 /** 알람 앱처럼 시/분을 각각 드래그(또는 마우스 휠)로 스크롤해서 맞추는 시간 피커 팝오버 */
 export function TimeWheelPopover({ value, onChange, anchorRect, onClose }: TimeWheelPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null)
@@ -122,10 +132,24 @@ export function TimeWheelPopover({ value, onChange, anchorRect, onClose }: TimeW
 
   const popoverHeight = ITEM_HEIGHT * VISIBLE_COUNT + 16
   const opensUpward = anchorRect.bottom + popoverHeight > window.innerHeight
-  const top = opensUpward ? anchorRect.top - popoverHeight - 6 : anchorRect.bottom + 6
+  const initialTop = opensUpward ? anchorRect.top - popoverHeight - 6 : anchorRect.bottom + 6
+
+  const [position, setPosition] = useState({ top: initialTop, left: anchorRect.left })
+
+  // 필드가 화면 오른쪽 끝 가까이 있으면(예: '출발 시각' 행) 팝오버 실제 너비를
+  // 측정해서 뷰포트를 벗어나지 않도록 왼쪽 위치를 다시 잡는다.
+  useLayoutEffect(() => {
+    const popover = popoverRef.current
+    if (!popover) return
+    const rect = popover.getBoundingClientRect()
+    const maxLeft = Math.max(window.innerWidth - rect.width - SCREEN_EDGE_MARGIN, SCREEN_EDGE_MARGIN)
+    const clampedLeft = Math.min(Math.max(anchorRect.left, SCREEN_EDGE_MARGIN), maxLeft)
+    setPosition((prev) => (prev.left === clampedLeft ? prev : { ...prev, left: clampedLeft }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
-    <div ref={popoverRef} className={popoverStyle} style={{ top, left: anchorRect.left }}>
+    <div ref={popoverRef} className={popoverStyle} style={{ top: position.top, left: position.left }}>
       <div className={wheelsRowStyle}>
         <WheelColumn options={HOURS} value={hour} onChange={(next) => onChange(`${next}:${minute}`)} ariaLabel="시" />
         <span className={colonStyle}>:</span>

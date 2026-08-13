@@ -27,6 +27,9 @@ const STEP_PROGRESS_INDEX: Record<Exclude<WizardStepId, 'summary'>, number> = {
 }
 const TOTAL_PROGRESS_STEPS = 6
 
+/** 값을 고르지 않으면 계획 생성이 실패하는 필수 단계라 건너뛰기를 막는다 */
+const SKIP_DISABLED_STEPS: WizardStepId[] = ['summary', 'dates', 'companion']
+
 const initialDraft: PlanDraft = {
   transportMode: '비행기',
   arrivalTime: '09:00',
@@ -128,7 +131,18 @@ export function PlanCreatePage() {
 
   return (
     <div>
-      <PageHeader title="여행 계획 만들기" showBack onBack={goBack} />
+      <PageHeader
+        title="여행 계획 만들기"
+        showBack
+        onBack={goBack}
+        rightSlot={
+          !SKIP_DISABLED_STEPS.includes(step) ? (
+            <button type="button" className={skipLinkStyle} onClick={goNext}>
+              건너뛰기
+            </button>
+          ) : null
+        }
+      />
 
       <div className={pageStyle}>
         {step !== 'summary' ? (
@@ -136,11 +150,6 @@ export function PlanCreatePage() {
             <div className={progressTrackStyle}>
               <StepProgress total={TOTAL_PROGRESS_STEPS} activeIndex={STEP_PROGRESS_INDEX[step]} />
             </div>
-            {step !== 'dates' ? (
-              <button type="button" className={skipLinkStyle} onClick={goNext}>
-                건너뛰기
-              </button>
-            ) : null}
           </div>
         ) : null}
 

@@ -20,10 +20,15 @@ export const progressTrackStyle = style({
 })
 
 export const skipLinkStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
   flexShrink: 0,
+  minHeight: vars.size.touch,
+  padding: `0 ${vars.space[2]}`,
+  marginRight: `-${vars.space[2]}`,
   border: 'none',
   background: 'transparent',
-  padding: 0,
   fontSize: vars.fontSize.xs,
   color: colors.text[4],
   cursor: 'pointer',
