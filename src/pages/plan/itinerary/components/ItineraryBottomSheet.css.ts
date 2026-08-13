@@ -10,6 +10,7 @@ export const contentStyle = style({
   zIndex: vars.zIndex.modal,
   display: 'flex',
   flexDirection: 'column',
+  overflow: 'hidden',
   outline: 'none',
   borderTopLeftRadius: vars.radius.xl,
   borderTopRightRadius: vars.radius.xl,
@@ -45,6 +46,28 @@ export const titleStyle = style({
   fontSize: vars.fontSize.md,
   fontWeight: vars.fontWeight.bold,
   color: colors.text[1],
+})
+
+export const expandButtonStyle = style({
+  position: 'fixed',
+  left: '50%',
+  bottom: `calc(${vars.space[4]} + env(safe-area-inset-bottom))`,
+  transform: 'translateX(-50%)',
+  zIndex: vars.zIndex.modal,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: vars.space[1],
+  height: '40px',
+  padding: `0 ${vars.space[4]}`,
+  border: 'none',
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.surface[1],
+  color: colors.text[1],
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.bold,
+  boxShadow: vars.shadow.md,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
 })
 
 export const bodyStyle = style({

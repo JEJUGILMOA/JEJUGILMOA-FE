@@ -10,6 +10,7 @@ import { toast } from '@/components/ui/Toast/Toast'
 import { PLACE_CATEGORY_LABELS, ROUTES } from '@/constants'
 import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanWaypointsMutation } from '@/features/plans/hooks'
+import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
 import {
   categoryRowStyle,
   courseRowStyle,
@@ -29,6 +30,8 @@ import { WaypointPlaceRow } from './components/WaypointPlaceRow'
 const ALL_CATEGORY = '전체'
 const CATEGORY_FILTERS = [ALL_CATEGORY, ...PLACE_CATEGORY_LABELS]
 
+type RecommendMode = 'popular' | 'nearby'
+
 export function PlanWaypointsPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
@@ -36,6 +39,7 @@ export function PlanWaypointsPage() {
   const updateWaypointsMutation = useUpdatePlanWaypointsMutation()
 
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY)
+  const [recommendMode, setRecommendMode] = useState<RecommendMode>('popular')
   const [selectedPlaceIds, setSelectedPlaceIds] = useState<string[]>([])
   const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
   const hasSyncedRef = useRef(false)
@@ -47,13 +51,32 @@ export function PlanWaypointsPage() {
     }
   }, [plan])
 
-  const filteredPlaces = useMemo(
+  const popularPlaces = useMemo(
     () =>
       activeCategory === ALL_CATEGORY
         ? MOCK_PLACES
         : MOCK_PLACES.filter((place) => place.category === activeCategory),
     [activeCategory],
   )
+
+  // 지금까지 담은 장소들 기준으로 가까운 곳을 추천한다 — 하나도 안 담았으면 기준점이 없어 추천할 수 없다.
+  const nearbyRanked = useMemo(() => rankNearbyPlaces(selectedPlaceIds), [selectedPlaceIds])
+  const nearbyPlaces = useMemo(
+    () =>
+      activeCategory === ALL_CATEGORY
+        ? nearbyRanked
+        : nearbyRanked.filter((item) => item.place.category === activeCategory),
+    [nearbyRanked, activeCategory],
+  )
+
+  const filteredPlaces = recommendMode === 'popular' ? popularPlaces : nearbyPlaces.map((item) => item.place)
+  const nearbyLabelByPlaceId = new Map(nearbyPlaces.map((item) => [item.place.id, item.travelLabel]))
+
+  const categoryLabelFor = (place: { id: string; category: string; categoryLabel?: string }) => {
+    const base = place.categoryLabel ?? place.category
+    const travelLabel = recommendMode === 'nearby' ? nearbyLabelByPlaceId.get(place.id) : null
+    return travelLabel ? `${base} · ${travelLabel}` : base
+  }
 
   const togglePlace = (placeId: string) => {
     setSelectedPlaceIds((prev) =>
@@ -134,6 +157,26 @@ export function PlanWaypointsPage() {
             </HorizontalScrollArea>
           </div>
 
+          <div className={sectionStyle}>
+            <span className={sectionLabelStyle}>추천 기준</span>
+            <div className={categoryRowStyle}>
+              <Chip
+                colorScheme="primary"
+                isSelected={recommendMode === 'popular'}
+                onClick={() => setRecommendMode('popular')}
+              >
+                유명한 장소
+              </Chip>
+              <Chip
+                colorScheme="primary"
+                isSelected={recommendMode === 'nearby'}
+                onClick={() => setRecommendMode('nearby')}
+              >
+                가까운 장소
+              </Chip>
+            </div>
+          </div>
+
           <div className={categoryRowStyle}>
             {CATEGORY_FILTERS.map((category) => (
               <Chip
@@ -148,14 +191,18 @@ export function PlanWaypointsPage() {
           </div>
 
           <div className={listStyle}>
-            {filteredPlaces.length === 0 ? (
+            {recommendMode === 'nearby' && selectedPlaceIds.length === 0 ? (
+              <p className={emptyListStyle}>
+                먼저 장소를 1곳 이상 담으면, 그 장소와 가까운 곳을 추천해드려요.
+              </p>
+            ) : filteredPlaces.length === 0 ? (
               <p className={emptyListStyle}>해당 카테고리의 장소가 없어요.</p>
             ) : (
               filteredPlaces.map((place) => (
                 <WaypointPlaceRow
                   key={place.id}
                   title={place.title}
-                  category={place.categoryLabel ?? place.category}
+                  category={categoryLabelFor(place)}
                   added={selectedPlaceIds.includes(place.id)}
                   onToggle={() => togglePlace(place.id)}
                 />
