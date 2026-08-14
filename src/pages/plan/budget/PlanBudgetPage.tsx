@@ -91,16 +91,26 @@ export function PlanBudgetPage() {
   const suggestedTotal =
     plan && !plan.budgetDetail ? computeSuggestedTotal(plan.budgetTier, plan.travelerCount) : null
 
-  const paidPlaces = (plan?.waypointPlaceIds ?? []).reduce<{ title: string; fee: string }[]>(
-    (list, placeId) => {
-      const place = MOCK_PLACES.find((item) => item.id === placeId)
-      if (place?.fee && place.fee !== '무료') {
-        list.push({ title: place.title, fee: place.fee })
-      }
-      return list
-    },
-    [],
-  )
+  // itinerary에 실제로 배정된 장소(출발지·필수 장소·그 외 방문지) 전체에서 유료 입장료가 있는 곳만 추려낸다.
+  const allPlannedPlaceIds = plan
+    ? Array.from(
+        new Set(
+          Object.values(plan.itinerary).flatMap((day) => [
+            ...(day.departurePlaceId ? [day.departurePlaceId] : []),
+            ...(day.mustVisitPlaceId ? [day.mustVisitPlaceId] : []),
+            ...day.placeIds,
+          ]),
+        ),
+      )
+    : []
+
+  const paidPlaces = allPlannedPlaceIds.reduce<{ title: string; fee: string }[]>((list, placeId) => {
+    const place = MOCK_PLACES.find((item) => item.id === placeId)
+    if (place?.fee && place.fee !== '무료') {
+      list.push({ title: place.title, fee: place.fee })
+    }
+    return list
+  }, [])
 
   const goBack = () => navigate(-1)
 

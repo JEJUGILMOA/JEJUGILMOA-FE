@@ -48,20 +48,54 @@ export const stopPinRecipe = recipe({
   },
 })
 
-export const unassignedPinStyle = style({
+// Day 출발지 전용 깃발 핀 — 방문 순서 핀(초록 번호)과는 다르게, 동선의 시작점임을 표시한다.
+export const departurePinStyle = style({
   position: 'absolute',
-  width: '16px',
-  height: '16px',
-  padding: 0,
-  border: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '22px',
+  height: '22px',
   borderRadius: '50%',
-  backgroundColor: colors.text[6],
-  opacity: 0.7,
-  cursor: 'pointer',
-  transition: 'opacity 120ms ease, background-color 120ms ease',
-  selectors: {
-    '&:hover': { opacity: 1, backgroundColor: colors.primary[500] },
-    '&:active': { opacity: 1, backgroundColor: colors.primary[600] },
+  backgroundColor: colors.text[2],
+  color: colors.text[5],
+  boxShadow: `0 0 0 2px ${colors.surface[1]}`,
+})
+
+// 유명한 장소(빨강)와 가까운 장소(파랑) 추천을 지도에서도 색으로 구분한다.
+// 초록은 이미 확정된 일정 스톱(stopPinRecipe) 색이라, 추천 핀은 둘 다 초록과 겹치지 않는 색으로 뺐다.
+export const unassignedPinRecipe = recipe({
+  base: {
+    position: 'absolute',
+    width: '16px',
+    height: '16px',
+    padding: 0,
+    border: 'none',
+    borderRadius: '50%',
+    opacity: 0.75,
+    cursor: 'pointer',
+    transition: 'opacity 120ms ease, background-color 120ms ease',
+  },
+  variants: {
+    kind: {
+      popular: {
+        backgroundColor: colors.error[100],
+        selectors: {
+          '&:hover': { opacity: 1, backgroundColor: colors.error[300] },
+          '&:active': { opacity: 1, backgroundColor: colors.error[500] },
+        },
+      },
+      nearby: {
+        backgroundColor: colors.secondary[400],
+        selectors: {
+          '&:hover': { opacity: 1, backgroundColor: colors.secondary[500] },
+          '&:active': { opacity: 1, backgroundColor: colors.secondary[600] },
+        },
+      },
+    },
+  },
+  defaultVariants: {
+    kind: 'popular',
   },
 })
 

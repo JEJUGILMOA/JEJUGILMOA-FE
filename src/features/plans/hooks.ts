@@ -8,7 +8,6 @@ import {
   updatePlanInfo,
   updatePlanItinerary,
   updatePlanTitle,
-  updatePlanWaypoints,
 } from './api'
 import type { BudgetCategory, DayItinerary, PlanDraft } from './types'
 
@@ -54,19 +53,6 @@ export function useUpdatePlanTitleMutation() {
 
   return useMutation({
     mutationFn: ({ planId, title }: { planId: string; title: string }) => updatePlanTitle(planId, title),
-    onSuccess: (plan) => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
-    },
-  })
-}
-
-export function useUpdatePlanWaypointsMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ planId, waypointPlaceIds }: { planId: string; waypointPlaceIds: string[] }) =>
-      updatePlanWaypoints(planId, waypointPlaceIds),
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })

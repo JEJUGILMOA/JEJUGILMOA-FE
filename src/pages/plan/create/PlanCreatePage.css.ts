@@ -59,27 +59,6 @@ export const chipWrapStyle = style({
   gap: vars.space[2],
 })
 
-export const timeFieldGroupStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[3],
-})
-
-export const timeRowStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: vars.space[3],
-  borderRadius: vars.radius.md,
-  border: `1px solid ${colors.border[1]}`,
-})
-
-export const timeRowLabelStyle = style({
-  fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.semibold,
-  color: colors.text[2],
-})
-
 export const stepperRowStyle = style({
   display: 'flex',
   alignItems: 'center',

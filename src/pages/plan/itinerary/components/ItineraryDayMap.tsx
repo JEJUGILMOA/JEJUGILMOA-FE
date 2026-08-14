@@ -1,29 +1,40 @@
-import { ZoomIn, ZoomOut } from 'lucide-react'
+import { Flag, ZoomIn, ZoomOut } from 'lucide-react'
 import { useZoomPan } from '@/hooks/useZoomPan'
 import { getPinPosition } from '@/utils/mapPinPositions'
 import { colors } from '@/styles/colors.css.ts'
 import {
   canvasStyle,
+  departurePinStyle,
   emptyStateStyle,
   routeSvgStyle,
   stopPinRecipe,
-  unassignedPinStyle,
+  unassignedPinRecipe,
   viewportStyle,
   zoomButtonStyle,
   zoomControlsStyle,
 } from './ItineraryDayMap.css.ts'
 
 export type ItineraryDayMapProps = {
+  /** 이 Day의 출발지 (검색으로 고른 곳, 없으면 null) */
+  departurePlace: { id: string; title: string } | null
   /** 현재 Day에 배정된 장소 (방문 순서대로) */
   stops: { id: string; title: string }[]
   /** 아직 어느 Day에도 배정되지 않은 장소 */
   unassignedPlaces: { id: string; title: string }[]
+  /** 미배정 장소 핀 색상 — 지금 추천 기준(유명한/가까운 장소)에 맞춰 지도에서도 구분해 보여준다 */
+  unassignedPinKind?: 'popular' | 'nearby'
   /** 미배정 장소 핀을 클릭했을 때 현재 Day에 담는다 */
   onAssignPlace: (id: string) => void
 }
 
-/** STEP 05 Day별 지도: 번호 핀 + 점선 동선 + 미배정 장소 회색 핀(클릭 시 담기) */
-export function ItineraryDayMap({ stops, unassignedPlaces, onAssignPlace }: ItineraryDayMapProps) {
+/** STEP 05 Day별 지도: 출발지 깃발 핀 + 번호 핀 + 점선 동선 + 미배정 장소 추천 핀(클릭 시 담기) */
+export function ItineraryDayMap({
+  departurePlace,
+  stops,
+  unassignedPlaces,
+  unassignedPinKind = 'popular',
+  onAssignPlace,
+}: ItineraryDayMapProps) {
   const {
     zoom,
     pan,
@@ -36,7 +47,11 @@ export function ItineraryDayMap({ stops, unassignedPlaces, onAssignPlace }: Itin
     handlePointerUp,
   } = useZoomPan()
 
-  const routePoints = stops.map((stop) => getPinPosition(stop.id))
+  // 동선(점선)이 출발지에서부터 시작하도록, 있으면 맨 앞에 끼워 넣는다.
+  const routePoints = [
+    ...(departurePlace ? [getPinPosition(departurePlace.id)] : []),
+    ...stops.map((stop) => getPinPosition(stop.id)),
+  ]
 
   return (
     <div className={viewportStyle}>
@@ -48,7 +63,7 @@ export function ItineraryDayMap({ stops, unassignedPlaces, onAssignPlace }: Itin
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        {stops.length === 0 && unassignedPlaces.length === 0 ? (
+        {!departurePlace && stops.length === 0 && unassignedPlaces.length === 0 ? (
           <span className={emptyStateStyle}>이 Day에 배정된 장소가 없어요</span>
         ) : null}
 
@@ -71,7 +86,7 @@ export function ItineraryDayMap({ stops, unassignedPlaces, onAssignPlace }: Itin
             <button
               key={place.id}
               type="button"
-              className={unassignedPinStyle}
+              className={unassignedPinRecipe({ kind: unassignedPinKind })}
               style={{
                 left: `${pos.left}%`,
                 top: `${pos.top}%`,
@@ -83,6 +98,20 @@ export function ItineraryDayMap({ stops, unassignedPlaces, onAssignPlace }: Itin
             />
           )
         })}
+
+        {departurePlace ? (
+          <span
+            className={departurePinStyle}
+            style={{
+              left: `${getPinPosition(departurePlace.id).left}%`,
+              top: `${getPinPosition(departurePlace.id).top}%`,
+              transform: `translate(-50%, -50%) scale(${1 / zoom})`,
+            }}
+            aria-label={`출발지: ${departurePlace.title}`}
+          >
+            <Flag size={12} fill="currentColor" />
+          </span>
+        ) : null}
 
         {stops.map((stop, index) => {
           const pos = getPinPosition(stop.id)

@@ -4,16 +4,22 @@ import { ChevronLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
+import { Chip } from '@/components/ui/Chip/Chip'
+import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
 import { Loading } from '@/components/ui/Loading/Loading'
+import { Modal } from '@/components/ui/Modal/Modal'
+import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { toast } from '@/components/ui/Toast/Toast'
-import { ROUTES } from '@/constants'
-import { MOCK_PLACES } from '@/data/mockExplore'
+import { PLACE_CATEGORY_LABELS, ROUTES } from '@/constants'
+import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
+import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
 import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
 import { GATEWAY_ARRIVAL_ID, GATEWAY_DEPARTURE_ID } from '@/utils/mapPinPositions'
 import {
-  assignButtonStyle,
   backButtonStyle,
+  chipRowStyle,
+  courseRowStyle,
   dayPagerFloatStyle,
   emptyTextStyle,
   gatewayLabelStyle,
@@ -21,21 +27,24 @@ import {
   gatewayTimeStyle,
   nextButtonStyle,
   pageRootStyle,
-  sectionHeaderStyle,
   sectionMetaStyle,
   sectionStyle,
-  sectionTitleStyle,
-  unassignedCategoryStyle,
-  unassignedInfoStyle,
-  unassignedRowStyle,
-  unassignedTitleStyle,
+  tabButtonRecipe,
+  tabRowStyle,
 } from './PlanItineraryPage.css.ts'
 import { DayPager } from './components/DayPager'
 import { ItineraryBottomSheet } from './components/ItineraryBottomSheet'
 import { ItineraryDayMap } from './components/ItineraryDayMap'
+import { RecommendedCourseChip } from './components/RecommendedCourseChip'
 import { ScheduleList } from './components/ScheduleList'
+import { WaypointPlaceRow } from './components/WaypointPlaceRow'
 
 const DATE_FORMAT = 'yyyy.MM.dd'
+const ALL_CATEGORY = '전체'
+const CATEGORY_FILTERS = [ALL_CATEGORY, ...PLACE_CATEGORY_LABELS]
+
+type RecommendMode = 'popular' | 'nearby'
+type SheetTab = 'schedule' | 'recommend'
 
 const DAY_START_MINUTES = 9 * 60
 const STOP_INTERVAL_MINUTES = 90
@@ -101,8 +110,16 @@ export function PlanItineraryPage() {
   const { data: plan, isLoading } = usePlanQuery(planId)
   const updateItineraryMutation = useUpdatePlanItineraryMutation()
 
-  const [selectedDay, setSelectedDay] = useState(1)
+  // 출발지 검색 화면(Day별)에서 돌아왔으면 그 Day가 그대로 보이게 시작한다.
+  const initialSelectedDay =
+    (location.state as { selectedDay?: number } | null)?.selectedDay ?? 1
+  const [selectedDay, setSelectedDay] = useState(initialSelectedDay)
   const [customTimes, setCustomTimes] = useState<Record<string, string>>({})
+  const [sheetTab, setSheetTab] = useState<SheetTab>('schedule')
+  const [recommendQuery, setRecommendQuery] = useState('')
+  const [recommendMode, setRecommendMode] = useState<RecommendMode>('popular')
+  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY)
+  const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
 
   // 미리보기의 연필 아이콘으로 들어왔으면 저장 후 다음 STEP(예산입력)으로 이어가지 않고
   // 미리보기로 바로 돌아간다 — 이 화면만 고쳐달라고 들어온 거라 나머지 단계를 강제로 거칠 필요가 없다.
@@ -123,9 +140,8 @@ export function PlanItineraryPage() {
   const dayCount = Math.max(differenceInCalendarDays(endDate, startDate) + 1, 1)
   const dayDateLabel = format(addDays(startDate, selectedDay - 1), 'M.d(EEE)', { locale: ko })
 
-  const currentDayPlaceIds = plan.itinerary[selectedDay]?.placeIds ?? []
-  const assignedPlaceIds = new Set(Object.values(plan.itinerary).flatMap((day) => day.placeIds))
-  const unassignedPlaceIds = plan.waypointPlaceIds.filter((id) => !assignedPlaceIds.has(id))
+  const currentDayEntry = plan.itinerary[selectedDay]
+  const currentDayPlaceIds = currentDayEntry?.placeIds ?? []
 
   // 이 Day가 첫/마지막 Day면 공항·항구 도착·출발 지점을 지도 핀으로도 함께 보여준다.
   // (실제 일정 데이터인 plan.itinerary에는 넣지 않고 화면 표시에만 끼워 넣는다 —
@@ -133,6 +149,10 @@ export function PlanItineraryPage() {
   const isFirstDay = selectedDay === 1
   const isLastDay = selectedDay === dayCount
   const gatewayLabel = ARRIVAL_POINT_BY_TRANSPORT_MODE[plan.transportMode]
+
+  const departurePlace = currentDayEntry?.departurePlaceId
+    ? { id: currentDayEntry.departurePlaceId, title: placeTitle(currentDayEntry.departurePlaceId) }
+    : null
 
   const stops = currentDayPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
   const stopTimes = computeScheduleTimes(currentDayPlaceIds.length, {
@@ -146,16 +166,57 @@ export function PlanItineraryPage() {
     title: stop.title,
     time: customTimes[stop.id] ?? stopTimes[index],
   }))
-  const unassignedPlaces = unassignedPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
+
+  // 이미 어느 Day엔가(장소·출발지·필수 장소로) 쓰인 곳은 추천/검색 후보에서 뺀다 —
+  // 같은 장소가 여러 Day에 중복 배정되는 걸 막는다.
+  const assignedEverywhere = new Set(
+    Object.values(plan.itinerary).flatMap((day) => [
+      ...(day.departurePlaceId ? [day.departurePlaceId] : []),
+      ...(day.mustVisitPlaceId ? [day.mustVisitPlaceId] : []),
+      ...day.placeIds,
+    ]),
+  )
+  const candidatePlaces = MOCK_PLACES.filter((place) => !assignedEverywhere.has(place.id))
+
+  // "가까운 장소"는 이 Day의 출발지·필수 장소·이미 담은 장소를 기준으로 추천한다.
+  const referencePlaceIds = [
+    ...(currentDayEntry?.departurePlaceId ? [currentDayEntry.departurePlaceId] : []),
+    ...(currentDayEntry?.mustVisitPlaceId ? [currentDayEntry.mustVisitPlaceId] : []),
+    ...currentDayPlaceIds,
+  ]
+  const nearbyRanked = rankNearbyPlaces(referencePlaceIds, candidatePlaces)
+  const travelLabelByPlaceId = new Map(nearbyRanked.map((item) => [item.place.id, item.travelLabel]))
+
+  const matchesCategory = (category: string) => activeCategory === ALL_CATEGORY || category === activeCategory
+
+  const trimmedRecommendQuery = recommendQuery.trim()
+  const recommendSearchResults = trimmedRecommendQuery
+    ? candidatePlaces.filter((place) => {
+        const keyword = trimmedRecommendQuery.toLowerCase()
+        return (
+          place.title.toLowerCase().includes(keyword) || place.location.toLowerCase().includes(keyword)
+        )
+      })
+    : null
+
+  const recommendedPlaces =
+    recommendSearchResults ??
+    (recommendMode === 'popular'
+      ? candidatePlaces.filter((place) => matchesCategory(place.category))
+      : nearbyRanked.filter((item) => matchesCategory(item.place.category)).map((item) => item.place))
+
+  const showTravelLabel = !trimmedRecommendQuery && recommendMode === 'nearby'
 
   const mapStops = [
     ...(isFirstDay ? [{ id: GATEWAY_ARRIVAL_ID, title: `${gatewayLabel} 도착` }] : []),
     ...stops,
     ...(isLastDay ? [{ id: GATEWAY_DEPARTURE_ID, title: `${gatewayLabel} 출발` }] : []),
   ]
+  // 탭은 바텀시트 안 내용만 나눈다 — 지도 자체는 네이버맵처럼 어느 탭에 있든 늘
+  // 오늘 동선 + 추천 핀을 함께 보여준다.
+  const unassignedPlacesForMap = recommendedPlaces.map((place) => ({ id: place.id, title: place.title }))
 
   const persistItinerary = (nextDayPlaceIds: string[], onSuccessMessage?: string) => {
-    const currentDayEntry = plan.itinerary[selectedDay]
     const nextItinerary = {
       ...plan.itinerary,
       [selectedDay]: {
@@ -193,6 +254,24 @@ export function PlanItineraryPage() {
     persistItinerary([...currentDayPlaceIds, id], `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`)
   }
 
+  const confirmAddCourse = () => {
+    if (!pendingCourse) return
+    const coursePlaceIds = pendingCourse.steps
+      .map((step) => step.placeId)
+      .filter(
+        (placeId) =>
+          MOCK_PLACES.some((place) => place.id === placeId) && !currentDayPlaceIds.includes(placeId),
+      )
+
+    if (coursePlaceIds.length > 0) {
+      persistItinerary(
+        [...currentDayPlaceIds, ...coursePlaceIds],
+        `${pendingCourse.title}의 경유지를 Day ${selectedDay}에 담았어요`,
+      )
+    }
+    setPendingCourse(null)
+  }
+
   const handleTimeChange = (id: string, time: string) => {
     // 이 Day의 모든 장소 시간을 먼저 확정(고정)한 뒤, 시간순으로 정렬해서 저장한다.
     // 그래야 순서가 바뀌어도 아직 수정 안 한 장소들의 시간이 인덱스 기반으로 다시
@@ -215,12 +294,17 @@ export function PlanItineraryPage() {
     navigate(fromPreview ? ROUTES.planPreview(planId) : ROUTES.planBudget(planId))
   }
 
-  // 마지막 Day가 아니면 '다음'은 다음 Day로 이동만 하고, 마지막 Day에서 눌러야
-  // 이 화면을 마치고 다음 단계(또는 미리보기)로 넘어간다 — 그래야 각 Day를
-  // 다 훑어보고 나서 저장하게 된다.
+  // 마지막 Day가 아니면 '다음'은 다음 Day의 출발지부터 정하도록 넘기고(그래야 그 Day의
+  // "가까운 장소" 추천이 제대로 잡힌다), 마지막 Day에서 눌러야 이 화면을 마치고 다음
+  // 단계(또는 미리보기)로 넘어간다. 미리보기에서 한 Day만 고치러 들어온 경우엔 그냥
+  // Day만 넘기고 끝낸다 — 전체 플로우를 다시 밟게 할 필요가 없다.
   const handleNext = () => {
     if (!isLastDay) {
-      setSelectedDay((day) => Math.min(day + 1, dayCount))
+      if (fromPreview) {
+        setSelectedDay((day) => Math.min(day + 1, dayCount))
+      } else {
+        navigate(ROUTES.planDeparture(planId, selectedDay + 1))
+      }
       return
     }
     finishEditing()
@@ -230,7 +314,13 @@ export function PlanItineraryPage() {
 
   return (
     <div className={pageRootStyle}>
-      <ItineraryDayMap stops={mapStops} unassignedPlaces={unassignedPlaces} onAssignPlace={handleAssign} />
+      <ItineraryDayMap
+        departurePlace={departurePlace}
+        stops={mapStops}
+        unassignedPlaces={unassignedPlacesForMap}
+        unassignedPinKind={recommendMode}
+        onAssignPlace={handleAssign}
+      />
 
       <button type="button" className={backButtonStyle} onClick={goBack} aria-label="뒤로 가기">
         <ChevronLeft size={22} />
@@ -251,66 +341,153 @@ export function PlanItineraryPage() {
       </div>
 
       <ItineraryBottomSheet title={`Day ${selectedDay} 일정 (${stops.length}곳)`}>
-        <div className={sectionStyle}>
-          {isFirstDay ? (
-            <div className={gatewayRowStyle}>
-              <span className={gatewayLabelStyle}>🛬 {gatewayLabel} 도착</span>
-              <span className={gatewayTimeStyle}>{plan.arrivalTime}</span>
-            </div>
-          ) : null}
-
-          {scheduleItems.length === 0 ? (
-            <p className={emptyTextStyle}>아직 배정된 장소가 없어요. 아래에서 담아보세요.</p>
-          ) : (
-            <ScheduleList
-              items={scheduleItems}
-              onReorder={handleReorder}
-              onRemove={handleRemove}
-              onTimeChange={handleTimeChange}
-            />
-          )}
-
-          {isLastDay ? (
-            <div className={gatewayRowStyle}>
-              <span className={gatewayLabelStyle}>🛫 {gatewayLabel} 출발</span>
-              <span className={gatewayTimeStyle}>{plan.departureTime}</span>
-            </div>
-          ) : null}
+        <div className={tabRowStyle}>
+          <button
+            type="button"
+            className={tabButtonRecipe({ active: sheetTab === 'schedule' })}
+            onClick={() => setSheetTab('schedule')}
+          >
+            일정
+          </button>
+          <button
+            type="button"
+            className={tabButtonRecipe({ active: sheetTab === 'recommend' })}
+            onClick={() => setSheetTab('recommend')}
+          >
+            추천·검색
+          </button>
         </div>
 
-        <div className={sectionStyle}>
-          <div className={sectionHeaderStyle}>
-            <span className={sectionTitleStyle}>미배정 장소</span>
-            <span className={sectionMetaStyle}>{unassignedPlaceIds.length}곳</span>
+        {sheetTab === 'schedule' ? (
+          <div className={sectionStyle}>
+            {isFirstDay ? (
+              <div className={gatewayRowStyle}>
+                <span className={gatewayLabelStyle}>🛬 {gatewayLabel} 도착</span>
+                <span className={gatewayTimeStyle}>{plan.arrivalTime}</span>
+              </div>
+            ) : null}
+
+            {departurePlace ? (
+              <div className={gatewayRowStyle}>
+                <span className={gatewayLabelStyle}>🚩 출발지: {departurePlace.title}</span>
+              </div>
+            ) : null}
+
+            {scheduleItems.length === 0 ? (
+              <p className={emptyTextStyle}>아직 배정된 장소가 없어요. "추천·검색" 탭에서 담아보세요.</p>
+            ) : (
+              <ScheduleList
+                items={scheduleItems}
+                onReorder={handleReorder}
+                onRemove={handleRemove}
+                onTimeChange={handleTimeChange}
+              />
+            )}
+
+            {isLastDay ? (
+              <div className={gatewayRowStyle}>
+                <span className={gatewayLabelStyle}>🛫 {gatewayLabel} 출발</span>
+                <span className={gatewayTimeStyle}>{plan.departureTime}</span>
+              </div>
+            ) : null}
           </div>
+        ) : (
+          <div className={sectionStyle}>
+            <span className={sectionMetaStyle}>고르면 바로 Day {selectedDay}에 담겨요</span>
 
-          {unassignedPlaceIds.length === 0 ? (
-            <p className={emptyTextStyle}>모든 장소를 Day에 배정했어요.</p>
-          ) : (
-            unassignedPlaceIds.map((id) => {
-              const place = MOCK_PLACES.find((item) => item.id === id)
-              if (!place) return null
-              return (
-                <div key={id} className={unassignedRowStyle}>
-                  <div className={unassignedInfoStyle}>
-                    <span className={unassignedTitleStyle}>{place.title}</span>
-                    <span className={unassignedCategoryStyle}>
-                      {place.categoryLabel ?? place.category}
-                    </span>
+            <SearchBar
+              value={recommendQuery}
+              onChange={setRecommendQuery}
+              placeholder="장소, 주소를 검색해보세요"
+            />
+
+            {!trimmedRecommendQuery ? (
+              <>
+                <HorizontalScrollArea>
+                  <div className={courseRowStyle}>
+                    {MOCK_COURSES.map((course) => (
+                      <RecommendedCourseChip
+                        key={course.id}
+                        title={course.title}
+                        meta={course.summary}
+                        onClick={() => setPendingCourse(course)}
+                      />
+                    ))}
                   </div>
-                  <button type="button" className={assignButtonStyle} onClick={() => handleAssign(id)}>
-                    Day {selectedDay}에 담기
-                  </button>
+                </HorizontalScrollArea>
+
+                <div className={chipRowStyle}>
+                  <Chip
+                    colorScheme="primary"
+                    isSelected={recommendMode === 'popular'}
+                    onClick={() => setRecommendMode('popular')}
+                  >
+                    유명한 장소
+                  </Chip>
+                  <Chip
+                    colorScheme="primary"
+                    isSelected={recommendMode === 'nearby'}
+                    onClick={() => setRecommendMode('nearby')}
+                    disabled={referencePlaceIds.length === 0}
+                  >
+                    가까운 장소
+                  </Chip>
                 </div>
-              )
-            })
-          )}
-        </div>
+
+                <HorizontalScrollArea>
+                  <div className={courseRowStyle}>
+                    {CATEGORY_FILTERS.map((category) => (
+                      <Chip
+                        key={category}
+                        colorScheme="primary"
+                        isSelected={category === activeCategory}
+                        onClick={() => setActiveCategory(category)}
+                      >
+                        {category}
+                      </Chip>
+                    ))}
+                  </div>
+                </HorizontalScrollArea>
+              </>
+            ) : null}
+
+            {recommendMode === 'nearby' && !trimmedRecommendQuery && referencePlaceIds.length === 0 ? (
+              <p className={emptyTextStyle}>출발지나 장소를 먼저 담아야 가까운 장소를 추천해드릴 수 있어요.</p>
+            ) : recommendedPlaces.length === 0 ? (
+              <p className={emptyTextStyle}>표시할 장소가 없어요.</p>
+            ) : (
+              recommendedPlaces.map((place) => (
+                <WaypointPlaceRow
+                  key={place.id}
+                  title={place.title}
+                  category={
+                    showTravelLabel && travelLabelByPlaceId.get(place.id)
+                      ? `${place.categoryLabel ?? place.category} · ${travelLabelByPlaceId.get(place.id)}`
+                      : (place.categoryLabel ?? place.category)
+                  }
+                  added={false}
+                  onToggle={() => handleAssign(place.id)}
+                />
+              ))
+            )}
+          </div>
+        )}
 
         <Button fullWidth size="lg" isLoading={updateItineraryMutation.isPending} onClick={handleNext}>
           {nextLabel}
         </Button>
       </ItineraryBottomSheet>
+
+      <Modal
+        open={pendingCourse !== null}
+        title={pendingCourse ? `${pendingCourse.title}의 경유지를 모두 담을까요?` : ''}
+        description={pendingCourse?.summary}
+        onClose={() => setPendingCourse(null)}
+        actions={[
+          { label: '취소', variant: 'ghost', onClick: () => setPendingCourse(null) },
+          { label: '담기', variant: 'primary', onClick: confirmAddCourse },
+        ]}
+      />
     </div>
   )
 }

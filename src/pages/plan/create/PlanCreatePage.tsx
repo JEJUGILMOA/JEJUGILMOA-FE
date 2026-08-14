@@ -13,20 +13,18 @@ import { BudgetStep } from './steps/BudgetStep'
 import { CompanionStep } from './steps/CompanionStep'
 import { DatesStep } from './steps/DatesStep'
 import { InterestsStep } from './steps/InterestsStep'
-import { TransportStep } from './steps/TransportStep'
 import { TravelersStep } from './steps/TravelersStep'
 
-type WizardStepId = 'transport' | 'dates' | 'companion' | 'travelers' | 'budget' | 'interests'
+type WizardStepId = 'dates' | 'companion' | 'travelers' | 'budget' | 'interests'
 
 const STEP_PROGRESS_INDEX: Record<WizardStepId, number> = {
-  transport: 0,
-  dates: 1,
-  companion: 2,
-  travelers: 3,
-  budget: 4,
-  interests: 5,
+  dates: 0,
+  companion: 1,
+  travelers: 2,
+  budget: 3,
+  interests: 4,
 }
-const TOTAL_PROGRESS_STEPS = 6
+const TOTAL_PROGRESS_STEPS = 5
 
 const DATE_FORMAT = 'yyyy.MM.dd'
 
@@ -64,7 +62,7 @@ export function PlanCreatePage() {
   const { planId } = useParams<{ planId?: string }>()
   const isEditMode = Boolean(planId)
 
-  const [step, setStep] = useState<WizardStepId>('transport')
+  const [step, setStep] = useState<WizardStepId>('dates')
   const [draft, setDraft] = useState<PlanDraft>(initialDraft)
   const createPlanMutation = useCreatePlanMutation()
   const updatePlanInfoMutation = useUpdatePlanInfoMutation()
@@ -90,11 +88,8 @@ export function PlanCreatePage() {
 
   const goBack = () => {
     switch (step) {
-      case 'transport':
-        navigate(-1)
-        return
       case 'dates':
-        setStep('transport')
+        navigate(-1)
         return
       case 'companion':
         setStep('dates')
@@ -134,7 +129,7 @@ export function PlanCreatePage() {
         toast.success('여행 계획을 만들었어요')
         // 완료된 마법사(/plan/new)는 히스토리에서 대체한다 — 뒤로가기를 눌렀을 때
         // 이미 끝난 마법사가 처음부터 다시 마운트되는 대신, 그 이전 화면(계획 목록)으로 나가게 한다.
-        navigate(ROUTES.planWaypoints(plan.id), { replace: true })
+        navigate(ROUTES.planDeparture(plan.id, 1), { replace: true })
       },
       onError: () => {
         toast.error('계획 생성에 실패했어요. 다시 시도해 주세요.')
@@ -146,9 +141,6 @@ export function PlanCreatePage() {
   // (중간 확인 화면 없이).
   const goNext = () => {
     switch (step) {
-      case 'transport':
-        setStep('dates')
-        return
       case 'dates':
         setStep('companion')
         return
@@ -194,18 +186,6 @@ export function PlanCreatePage() {
             <StepProgress total={TOTAL_PROGRESS_STEPS} activeIndex={STEP_PROGRESS_INDEX[step]} />
           </div>
         </div>
-
-        {step === 'transport' ? (
-          <TransportStep
-            transportMode={draft.transportMode}
-            arrivalTime={draft.arrivalTime}
-            departureTime={draft.departureTime}
-            onChangeTransportMode={(transportMode) => setDraft((prev) => ({ ...prev, transportMode }))}
-            onChangeArrivalTime={(arrivalTime) => setDraft((prev) => ({ ...prev, arrivalTime }))}
-            onChangeDepartureTime={(departureTime) => setDraft((prev) => ({ ...prev, departureTime }))}
-            onNext={goNext}
-          />
-        ) : null}
 
         {step === 'dates' ? (
           <DatesStep

@@ -1,6 +1,45 @@
 import { style } from '@vanilla-extract/css'
+import { recipe } from '@vanilla-extract/recipes'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
+
+export const tabRowStyle = style({
+  display: 'flex',
+  gap: vars.space[1],
+  padding: vars.space[1],
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.surface[4],
+})
+
+export const tabButtonRecipe = recipe({
+  base: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '36px',
+    border: 'none',
+    borderRadius: vars.radius.full,
+    background: 'transparent',
+    fontSize: vars.fontSize.sm,
+    fontWeight: vars.fontWeight.semibold,
+    color: colors.text[4],
+    cursor: 'pointer',
+  },
+  variants: {
+    active: {
+      true: {
+        backgroundColor: colors.surface[1],
+        color: colors.text[1],
+        boxShadow: vars.shadow.sm,
+      },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    active: false,
+  },
+})
 
 export const pageRootStyle = style({
   position: 'relative',
@@ -87,36 +126,15 @@ export const emptyTextStyle = style({
   color: colors.text[4],
 })
 
-export const unassignedRowStyle = style({
+export const courseRowStyle = style({
   display: 'flex',
-  alignItems: 'center',
   gap: vars.space[2],
-  padding: `${vars.space[2]} 0`,
-  borderBottom: `1px solid ${colors.border[1]}`,
-  selectors: {
-    '&:last-child': { borderBottom: 'none' },
-  },
 })
 
-export const unassignedInfoStyle = style({
-  flex: 1,
-  minWidth: 0,
+export const chipRowStyle = style({
   display: 'flex',
-  flexDirection: 'column',
-})
-
-export const unassignedTitleStyle = style({
-  fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.semibold,
-  color: colors.text[1],
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-})
-
-export const unassignedCategoryStyle = style({
-  fontSize: vars.fontSize.xs,
-  color: colors.text[4],
+  flexWrap: 'wrap',
+  gap: vars.space[2],
 })
 
 export const gatewayRowStyle = style({
@@ -140,14 +158,3 @@ export const gatewayTimeStyle = style({
   color: colors.primary[700],
 })
 
-export const assignButtonStyle = style({
-  flexShrink: 0,
-  border: 'none',
-  background: 'transparent',
-  padding: 0,
-  fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.semibold,
-  color: colors.primary[500],
-  cursor: 'pointer',
-  whiteSpace: 'nowrap',
-})
