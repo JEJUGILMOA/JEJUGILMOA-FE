@@ -48,6 +48,23 @@ export const stopPinRecipe = recipe({
   },
 })
 
+// "꼭 가고 싶은 장소"로 정한 스톱 핀의 오른쪽 위에 붙는 작은 별 배지 —
+// 방문 순서 번호는 그대로 두고, 이 장소가 앵커임을 추가로 표시한다.
+export const mustVisitBadgeStyle = style({
+  position: 'absolute',
+  top: '-4px',
+  right: '-4px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '13px',
+  height: '13px',
+  borderRadius: '50%',
+  backgroundColor: colors.warning[500],
+  color: colors.text[5],
+  boxShadow: `0 0 0 2px ${colors.surface[1]}`,
+})
+
 // Day 출발지 전용 깃발 핀 — 방문 순서 핀(초록 번호)과는 다르게, 동선의 시작점임을 표시한다.
 export const departurePinStyle = style({
   position: 'absolute',
@@ -102,8 +119,8 @@ export const unassignedPinRecipe = recipe({
 export const zoomControlsStyle = style({
   position: 'absolute',
   right: vars.space[3],
-  // Day 페이저 플로팅 pill(상단) 높이만큼 아래로 내려서 겹치지 않게 함
-  top: '64px',
+  // Day 페이저 플로팅 pill + 그 아래 헤더 검색창 높이만큼 내려서 겹치지 않게 함
+  top: '112px',
   display: 'flex',
   flexDirection: 'column',
   borderRadius: vars.radius.sm,

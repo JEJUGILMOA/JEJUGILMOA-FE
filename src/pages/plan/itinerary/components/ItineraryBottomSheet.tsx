@@ -19,10 +19,15 @@ const SNAP_FRACTIONS = [0.28, 0.58, 0.92]
 /** 드래그로 끝까지 내리면 네이버맵처럼 시트가 완전히 사라진다 — 대신 지도 위에
  * 뜨는 별도 버튼으로만 다시 펼칠 수 있다. */
 const COLLAPSED_HEIGHT = 0
+/** 지도 위에 항상 떠 있는 뒤로가기·Day페이저·다음 버튼 줄 + 헤더 검색창이 차지하는 높이 —
+ * 시트가 이보다 더 올라오면 그 위에 겹쳐 보이니, 최대 높이를 여기서 제한한다. */
+const RESERVED_TOP_SPACE = 120
 
 export type ItineraryBottomSheetProps = {
   title: string
   children: ReactNode
+  /** true로 바뀌는 순간(예: 헤더 검색창에 입력 시작) 접혀 있던 시트를 자동으로 펼친다 */
+  expandTrigger?: boolean
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -38,7 +43,7 @@ function clamp(value: number, min: number, max: number) {
  * 의존하면 캡처가 실패하는 환경(또는 손잡이가 작아 빠르게 벗어나는 제스처)에서
  * 드래그가 중간에 끊기는 문제가 있었다.
  */
-export function ItineraryBottomSheet({ title, children }: ItineraryBottomSheetProps) {
+export function ItineraryBottomSheet({ title, children, expandTrigger = false }: ItineraryBottomSheetProps) {
   const [viewportHeight, setViewportHeight] = useState(() =>
     typeof window === 'undefined' ? 800 : window.innerHeight,
   )
@@ -49,7 +54,10 @@ export function ItineraryBottomSheet({ title, children }: ItineraryBottomSheetPr
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const snapHeights = SNAP_FRACTIONS.map((fraction) => Math.round(viewportHeight * fraction))
+  const maxAllowedHeight = Math.max(viewportHeight - RESERVED_TOP_SPACE, Math.round(viewportHeight * SNAP_FRACTIONS[0]))
+  const snapHeights = SNAP_FRACTIONS.map((fraction) =>
+    Math.min(Math.round(viewportHeight * fraction), maxAllowedHeight),
+  )
   const minHeight = snapHeights[0]
   const maxHeight = snapHeights[snapHeights.length - 1]
   // 드래그로는 손잡이만 남기고(COLLAPSED_HEIGHT) 완전히 접을 수도 있다 — 지도를 크게 보고 싶을 때.
@@ -69,6 +77,21 @@ export function ItineraryBottomSheet({ title, children }: ItineraryBottomSheetPr
   }
 
   const expand = () => setHeight(lastExpandedHeightRef.current)
+
+  // 검색을 시작하면 결과가 잘 보이도록 최소 중간 스냅 높이까지는 올라오게 한다 —
+  // 접혀 있었든, 가장 낮은 스냅(28%)에 있었든 검색 결과를 보기엔 부족하니 그보다는 올려준다.
+  const expandForSearch = () => {
+    const targetHeight = snapHeights[1] ?? maxHeight
+    if (height < targetHeight) setHeight(targetHeight)
+  }
+
+  // expandTrigger는 시트 밖(헤더 검색창)에서 오는 외부 이벤트 신호라, 렌더 중 파생시키기보다
+  // 그 신호에 반응해 높이를 맞추는 편이 명확하다.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (expandTrigger) expandForSearch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandTrigger])
 
   useEffect(() => {
     if (!isDragging) return

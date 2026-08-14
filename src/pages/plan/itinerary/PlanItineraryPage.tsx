@@ -1,7 +1,7 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { ChevronLeft } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronLeft, Search, X } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Chip } from '@/components/ui/Chip/Chip'
@@ -34,6 +34,10 @@ import {
   gatewayLabelStyle,
   gatewayRowStyle,
   gatewayTimeStyle,
+  headerSearchBarStyle,
+  headerSearchClearButtonStyle,
+  headerSearchIconStyle,
+  headerSearchInputStyle,
   nextButtonStyle,
   pageRootStyle,
   sectionMetaStyle,
@@ -128,6 +132,7 @@ export function PlanItineraryPage() {
   const [recommendMode, setRecommendMode] = useState<RecommendMode>('popular')
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY)
   const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
+  const headerSearchInputRef = useRef<HTMLInputElement>(null)
   const [isEditingDeparture, setIsEditingDeparture] = useState(false)
   const [departureQuery, setDepartureQuery] = useState('')
 
@@ -191,6 +196,10 @@ export function PlanItineraryPage() {
   // "가까운 장소"는 이 Day에 꼭 가고 싶은 장소(앵커)를 정해뒀으면 그곳들 기준으로만 추천해서
   // 하루 일정이 그 앵커 주변으로 짜이게 하고, 아직 안 정했으면 출발지·이미 담은 장소로 대신한다.
   const currentDayMustVisitIds = currentDayEntry?.mustVisitPlaceIds ?? []
+  // 출발지·필수 장소·일정 중 아무것도 안 정해졌으면 이 Day는 아직 "빈 상태" —
+  // 추천이 기준점 없이 막 나오니, 먼저 앵커부터 잡으라고 안내한다.
+  const hasAnyDayContent =
+    Boolean(departurePlace) || currentDayMustVisitIds.length > 0 || currentDayPlaceIds.length > 0
   const fallbackReferencePlaceIds = [
     ...(currentDayEntry?.departurePlaceId ? [currentDayEntry.departurePlaceId] : []),
     ...currentDayPlaceIds,
@@ -353,6 +362,20 @@ export function PlanItineraryPage() {
     setDepartureQuery('')
   }
 
+  // 헤더 검색창은 탭과 무관하게 항상 떠 있어서, "일정" 탭을 보다가 검색을 시작해도
+  // 결과가 바로 보이도록 "추천·검색" 탭으로 전환해준다.
+  const handleRecommendQueryChange = (value: string) => {
+    setRecommendQuery(value)
+    if (value.trim()) setSheetTab('recommend')
+  }
+
+  // 네이버맵처럼 지도를 탭하면 검색에서 빠져나가 일반 추천 탭으로 돌아간다.
+  const handleTapMap = () => {
+    if (!recommendQuery) return
+    setRecommendQuery('')
+    headerSearchInputRef.current?.blur()
+  }
+
   const finishEditing = () => {
     toast.success('일정을 저장했어요')
     navigate(fromPreview ? ROUTES.planPreview(planId) : ROUTES.planBudget(planId))
@@ -376,9 +399,11 @@ export function PlanItineraryPage() {
       <ItineraryDayMap
         departurePlace={departurePlace}
         stops={mapStops}
+        mustVisitIds={currentDayMustVisitIds}
         unassignedPlaces={unassignedPlacesForMap}
         unassignedPinKind={recommendMode}
         onAssignPlace={handleAssign}
+        onTapMap={handleTapMap}
       />
 
       <button type="button" className={backButtonStyle} onClick={goBack} aria-label="뒤로 가기">
@@ -399,7 +424,33 @@ export function PlanItineraryPage() {
         />
       </div>
 
-      <ItineraryBottomSheet title={`Day ${selectedDay} 일정 (${stops.length}곳)`}>
+      <div className={headerSearchBarStyle}>
+        <Search size={16} className={headerSearchIconStyle} aria-hidden />
+        <input
+          ref={headerSearchInputRef}
+          type="text"
+          className={headerSearchInputStyle}
+          value={recommendQuery}
+          onChange={(event) => handleRecommendQueryChange(event.target.value)}
+          placeholder="장소, 주소를 검색해보세요"
+          aria-label="장소, 주소 검색"
+        />
+        {recommendQuery ? (
+          <button
+            type="button"
+            className={headerSearchClearButtonStyle}
+            onClick={() => setRecommendQuery('')}
+            aria-label="검색어 지우기"
+          >
+            <X size={12} />
+          </button>
+        ) : null}
+      </div>
+
+      <ItineraryBottomSheet
+        title={`Day ${selectedDay} 일정 (${stops.length}곳)`}
+        expandTrigger={Boolean(trimmedRecommendQuery)}
+      >
         <div className={tabRowStyle}>
           <button
             type="button"
@@ -477,7 +528,11 @@ export function PlanItineraryPage() {
             )}
 
             {scheduleItems.length === 0 ? (
-              <p className={emptyTextStyle}>아직 배정된 장소가 없어요. "추천·검색" 탭에서 담아보세요.</p>
+              <p className={emptyTextStyle}>
+                {hasAnyDayContent
+                  ? '아직 배정된 장소가 없어요. "추천·검색" 탭에서 담아보세요.'
+                  : '먼저 이 Day의 출발지나 꼭 가고 싶은 장소를 정해보세요. 그 장소를 기준으로 근처를 추천해드려요.'}
+              </p>
             ) : (
               <ScheduleList
                 items={scheduleItems}
@@ -499,12 +554,6 @@ export function PlanItineraryPage() {
         ) : (
           <div className={sectionStyle}>
             <span className={sectionMetaStyle}>고르면 바로 Day {selectedDay}에 담겨요</span>
-
-            <SearchBar
-              value={recommendQuery}
-              onChange={setRecommendQuery}
-              placeholder="장소, 주소를 검색해보세요"
-            />
 
             {!trimmedRecommendQuery ? (
               <>

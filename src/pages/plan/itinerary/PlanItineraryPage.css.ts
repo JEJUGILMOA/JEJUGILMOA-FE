@@ -96,6 +96,59 @@ export const dayPagerFloatStyle = style({
   filter: 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.12))',
 })
 
+// 네이버맵처럼 지도 위, 뒤로가기·Day페이저·다음 버튼 줄 바로 아래에 항상 떠 있는 검색창 —
+// "일정" 탭을 보고 있어도 탭 전환 없이 바로 검색할 수 있게 한다.
+export const headerSearchBarStyle = style({
+  position: 'absolute',
+  top: '64px',
+  left: vars.space[3],
+  right: vars.space[3],
+  zIndex: vars.zIndex.toast,
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[2],
+  height: '40px',
+  padding: `0 ${vars.space[4]}`,
+  borderRadius: vars.radius.full,
+  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+  boxShadow: vars.shadow.sm,
+})
+
+export const headerSearchIconStyle = style({
+  flexShrink: 0,
+  color: colors.text[4],
+})
+
+export const headerSearchInputStyle = style({
+  flex: 1,
+  minWidth: 0,
+  height: '100%',
+  border: 'none',
+  background: 'transparent',
+  fontFamily: vars.fontFamily.sans,
+  fontSize: vars.fontSize.sm,
+  color: colors.text[1],
+  outline: 'none',
+  selectors: {
+    '&::placeholder': { color: colors.text[4] },
+  },
+})
+
+export const headerSearchClearButtonStyle = style({
+  flexShrink: 0,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '20px',
+  height: '20px',
+  padding: 0,
+  border: 'none',
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.surface[5],
+  color: colors.text[3],
+  cursor: 'pointer',
+})
+
 export const sectionStyle = style({
   display: 'flex',
   flexDirection: 'column',
@@ -239,4 +292,3 @@ export const fieldResultMetaStyle = style({
   fontSize: vars.fontSize.xs,
   color: colors.text[4],
 })
-
