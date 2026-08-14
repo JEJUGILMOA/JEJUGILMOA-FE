@@ -158,3 +158,85 @@ export const gatewayTimeStyle = style({
   color: colors.primary[700],
 })
 
+// 출발지 등, 일정 화면 안에서 탭하면 바로 값을 고칠 수 있는 필드 행.
+export const fieldRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  width: '100%',
+  padding: vars.space[3],
+  border: 'none',
+  borderRadius: vars.radius.md,
+  backgroundColor: colors.surface[4],
+  font: 'inherit',
+  textAlign: 'left',
+  cursor: 'pointer',
+})
+
+export const fieldHintStyle = style({
+  flexShrink: 0,
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.primary[600],
+})
+
+export const fieldEditorStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+  padding: vars.space[3],
+  borderRadius: vars.radius.md,
+  backgroundColor: colors.surface[4],
+})
+
+export const fieldEditorHeaderStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+})
+
+export const fieldCloseButtonStyle = style({
+  flexShrink: 0,
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.text[4],
+  cursor: 'pointer',
+})
+
+export const fieldResultListStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  maxHeight: '240px',
+  overflowY: 'auto',
+})
+
+export const fieldResultRowStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[1],
+  width: '100%',
+  padding: `${vars.space[3]} ${vars.space[1]}`,
+  border: 'none',
+  borderBottom: `1px solid ${colors.border[1]}`,
+  background: 'none',
+  textAlign: 'left',
+  cursor: 'pointer',
+  selectors: {
+    '&:last-child': { borderBottom: 'none' },
+  },
+})
+
+export const fieldResultTitleStyle = style({
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.bold,
+  color: colors.text[1],
+})
+
+export const fieldResultMetaStyle = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})
+

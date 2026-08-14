@@ -22,6 +22,15 @@ import {
   courseRowStyle,
   dayPagerFloatStyle,
   emptyTextStyle,
+  fieldCloseButtonStyle,
+  fieldEditorHeaderStyle,
+  fieldEditorStyle,
+  fieldHintStyle,
+  fieldResultListStyle,
+  fieldResultMetaStyle,
+  fieldResultRowStyle,
+  fieldResultTitleStyle,
+  fieldRowStyle,
   gatewayLabelStyle,
   gatewayRowStyle,
   gatewayTimeStyle,
@@ -110,16 +119,15 @@ export function PlanItineraryPage() {
   const { data: plan, isLoading } = usePlanQuery(planId)
   const updateItineraryMutation = useUpdatePlanItineraryMutation()
 
-  // 출발지 검색 화면(Day별)에서 돌아왔으면 그 Day가 그대로 보이게 시작한다.
-  const initialSelectedDay =
-    (location.state as { selectedDay?: number } | null)?.selectedDay ?? 1
-  const [selectedDay, setSelectedDay] = useState(initialSelectedDay)
+  const [selectedDay, setSelectedDay] = useState(1)
   const [customTimes, setCustomTimes] = useState<Record<string, string>>({})
   const [sheetTab, setSheetTab] = useState<SheetTab>('schedule')
   const [recommendQuery, setRecommendQuery] = useState('')
   const [recommendMode, setRecommendMode] = useState<RecommendMode>('popular')
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY)
   const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
+  const [isEditingDeparture, setIsEditingDeparture] = useState(false)
+  const [departureQuery, setDepartureQuery] = useState('')
 
   // 미리보기의 연필 아이콘으로 들어왔으면 저장 후 다음 STEP(예산입력)으로 이어가지 않고
   // 미리보기로 바로 돌아간다 — 이 화면만 고쳐달라고 들어온 거라 나머지 단계를 강제로 거칠 필요가 없다.
@@ -216,13 +224,21 @@ export function PlanItineraryPage() {
   // 오늘 동선 + 추천 핀을 함께 보여준다.
   const unassignedPlacesForMap = recommendedPlaces.map((place) => ({ id: place.id, title: place.title }))
 
-  const persistItinerary = (nextDayPlaceIds: string[], onSuccessMessage?: string) => {
+  const persistDay = (
+    updates: Partial<{
+      departurePlaceId: string | null
+      mustVisitPlaceId: string | null
+      placeIds: string[]
+    }>,
+    onSuccessMessage?: string,
+  ) => {
     const nextItinerary = {
       ...plan.itinerary,
       [selectedDay]: {
         departurePlaceId: currentDayEntry?.departurePlaceId ?? null,
         mustVisitPlaceId: currentDayEntry?.mustVisitPlaceId ?? null,
-        placeIds: nextDayPlaceIds,
+        placeIds: currentDayPlaceIds,
+        ...updates,
       },
     }
     updateItineraryMutation.mutate(
@@ -239,19 +255,19 @@ export function PlanItineraryPage() {
   }
 
   const handleReorder = (nextOrderIds: string[]) => {
-    persistItinerary(nextOrderIds)
+    persistDay({ placeIds: nextOrderIds })
   }
 
   const handleRemove = (id: string) => {
-    persistItinerary(
-      currentDayPlaceIds.filter((placeId) => placeId !== id),
+    persistDay(
+      { placeIds: currentDayPlaceIds.filter((placeId) => placeId !== id) },
       `${placeTitle(id)}를 Day ${selectedDay} 일정에서 뺐어요`,
     )
   }
 
   const handleAssign = (id: string) => {
     if (currentDayPlaceIds.includes(id)) return
-    persistItinerary([...currentDayPlaceIds, id], `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`)
+    persistDay({ placeIds: [...currentDayPlaceIds, id] }, `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`)
   }
 
   const confirmAddCourse = () => {
@@ -264,8 +280,8 @@ export function PlanItineraryPage() {
       )
 
     if (coursePlaceIds.length > 0) {
-      persistItinerary(
-        [...currentDayPlaceIds, ...coursePlaceIds],
+      persistDay(
+        { placeIds: [...currentDayPlaceIds, ...coursePlaceIds] },
         `${pendingCourse.title}의 경유지를 Day ${selectedDay}에 담았어요`,
       )
     }
@@ -286,7 +302,23 @@ export function PlanItineraryPage() {
     const sortedPlaceIds = [...currentDayPlaceIds].sort((a, b) =>
       timesById[a].localeCompare(timesById[b]),
     )
-    persistItinerary(sortedPlaceIds)
+    persistDay({ placeIds: sortedPlaceIds })
+  }
+
+  const trimmedDepartureQuery = departureQuery.trim()
+  const departureSearchResults = trimmedDepartureQuery
+    ? MOCK_PLACES.filter((place) => {
+        const keyword = trimmedDepartureQuery.toLowerCase()
+        return (
+          place.title.toLowerCase().includes(keyword) || place.location.toLowerCase().includes(keyword)
+        )
+      })
+    : []
+
+  const handleSelectDeparture = (id: string) => {
+    persistDay({ departurePlaceId: id }, '출발지를 저장했어요')
+    setIsEditingDeparture(false)
+    setDepartureQuery('')
   }
 
   const finishEditing = () => {
@@ -294,17 +326,12 @@ export function PlanItineraryPage() {
     navigate(fromPreview ? ROUTES.planPreview(planId) : ROUTES.planBudget(planId))
   }
 
-  // 마지막 Day가 아니면 '다음'은 다음 Day의 출발지부터 정하도록 넘기고(그래야 그 Day의
-  // "가까운 장소" 추천이 제대로 잡힌다), 마지막 Day에서 눌러야 이 화면을 마치고 다음
-  // 단계(또는 미리보기)로 넘어간다. 미리보기에서 한 Day만 고치러 들어온 경우엔 그냥
-  // Day만 넘기고 끝낸다 — 전체 플로우를 다시 밟게 할 필요가 없다.
+  // 마지막 Day가 아니면 '다음'은 이 화면 안에서 다음 Day로만 넘기고(출발지·필수 장소는
+  // 이 화면 안에서 언제든 인라인으로 정할 수 있다), 마지막 Day에서 눌러야 이 화면을
+  // 마치고 다음 단계(또는 미리보기)로 넘어간다.
   const handleNext = () => {
     if (!isLastDay) {
-      if (fromPreview) {
-        setSelectedDay((day) => Math.min(day + 1, dayCount))
-      } else {
-        navigate(ROUTES.planDeparture(planId, selectedDay + 1))
-      }
+      setSelectedDay((day) => Math.min(day + 1, dayCount))
       return
     }
     finishEditing()
@@ -367,11 +394,55 @@ export function PlanItineraryPage() {
               </div>
             ) : null}
 
-            {departurePlace ? (
-              <div className={gatewayRowStyle}>
-                <span className={gatewayLabelStyle}>🚩 출발지: {departurePlace.title}</span>
+            {isEditingDeparture ? (
+              <div className={fieldEditorStyle}>
+                <div className={fieldEditorHeaderStyle}>
+                  <span className={sectionMetaStyle}>Day {selectedDay}, 어디서 출발하시나요?</span>
+                  <button
+                    type="button"
+                    className={fieldCloseButtonStyle}
+                    onClick={() => {
+                      setIsEditingDeparture(false)
+                      setDepartureQuery('')
+                    }}
+                  >
+                    닫기
+                  </button>
+                </div>
+                <SearchBar
+                  value={departureQuery}
+                  onChange={setDepartureQuery}
+                  placeholder="장소, 주소를 검색해보세요"
+                  autoFocus
+                />
+                {trimmedDepartureQuery ? (
+                  <div className={fieldResultListStyle}>
+                    {departureSearchResults.length === 0 ? (
+                      <p className={emptyTextStyle}>검색 결과가 없어요.</p>
+                    ) : (
+                      departureSearchResults.map((place) => (
+                        <button
+                          key={place.id}
+                          type="button"
+                          className={fieldResultRowStyle}
+                          onClick={() => handleSelectDeparture(place.id)}
+                        >
+                          <span className={fieldResultTitleStyle}>{place.title}</span>
+                          <span className={fieldResultMetaStyle}>{place.location}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            ) : (
+              <button type="button" className={fieldRowStyle} onClick={() => setIsEditingDeparture(true)}>
+                <span className={gatewayLabelStyle}>
+                  {departurePlace ? `🚩 출발지: ${departurePlace.title}` : '🚩 출발지 설정하기'}
+                </span>
+                <span className={fieldHintStyle}>{departurePlace ? '변경' : '설정'}</span>
+              </button>
+            )}
 
             {scheduleItems.length === 0 ? (
               <p className={emptyTextStyle}>아직 배정된 장소가 없어요. "추천·검색" 탭에서 담아보세요.</p>

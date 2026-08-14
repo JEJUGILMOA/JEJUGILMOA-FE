@@ -20,7 +20,6 @@ export const ROUTES = {
   plan: '/plan',
   planCreate: '/plan/new',
   planEdit: (id: string) => `/plan/${id}/edit`,
-  planDeparture: (id: string, day: number) => `/plan/${id}/departure/${day}`,
   planItinerary: (id: string) => `/plan/${id}/itinerary`,
   planBudget: (id: string) => `/plan/${id}/budget`,
   planPreview: (id: string) => `/plan/${id}/preview`,

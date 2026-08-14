@@ -9,7 +9,6 @@ import { CourseDetailPage } from '@/pages/courses/CourseDetailPage'
 import { SearchPage } from '@/pages/search/SearchPage'
 import { PlanPage } from '@/pages/plan/PlanPage'
 import { PlanCreatePage } from '@/pages/plan/create/PlanCreatePage'
-import { PlanDepartureSearchPage } from '@/pages/plan/departure/PlanDepartureSearchPage'
 import { PlanItineraryPage } from '@/pages/plan/itinerary/PlanItineraryPage'
 import { PlanBudgetPage } from '@/pages/plan/budget/PlanBudgetPage'
 import { PlanPreviewPage } from '@/pages/plan/preview/PlanPreviewPage'
@@ -120,11 +119,6 @@ export const router = createBrowserRouter([
         path: 'plan/:planId/edit',
         Component: PlanCreatePage,
         handle: { title: '여행 정보 수정' } satisfies RouteHandle,
-      },
-      {
-        path: 'plan/:planId/departure/:day',
-        Component: PlanDepartureSearchPage,
-        handle: { title: '출발 장소 검색' } satisfies RouteHandle,
       },
       {
         path: 'plan/:planId/itinerary',

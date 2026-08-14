@@ -129,7 +129,7 @@ export function PlanCreatePage() {
         toast.success('여행 계획을 만들었어요')
         // 완료된 마법사(/plan/new)는 히스토리에서 대체한다 — 뒤로가기를 눌렀을 때
         // 이미 끝난 마법사가 처음부터 다시 마운트되는 대신, 그 이전 화면(계획 목록)으로 나가게 한다.
-        navigate(ROUTES.planDeparture(plan.id, 1), { replace: true })
+        navigate(ROUTES.planItinerary(plan.id), { replace: true })
       },
       onError: () => {
         toast.error('계획 생성에 실패했어요. 다시 시도해 주세요.')
