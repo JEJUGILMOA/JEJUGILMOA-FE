@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css'
+import { recipe } from '@vanilla-extract/recipes'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
@@ -41,4 +42,28 @@ export const categoryStyle = style({
 
 export const toggleButtonStyle = style({
   flexShrink: 0,
+})
+
+export const mustVisitButtonRecipe = recipe({
+  base: {
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '28px',
+    height: '28px',
+    border: 'none',
+    background: 'transparent',
+    color: colors.text[6],
+    cursor: 'pointer',
+  },
+  variants: {
+    active: {
+      true: { color: colors.warning[500] },
+      false: {},
+    },
+  },
+  defaultVariants: {
+    active: false,
+  },
 })

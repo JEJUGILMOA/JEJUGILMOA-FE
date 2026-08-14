@@ -51,6 +51,8 @@ import { WaypointPlaceRow } from './components/WaypointPlaceRow'
 const DATE_FORMAT = 'yyyy.MM.dd'
 const ALL_CATEGORY = '전체'
 const CATEGORY_FILTERS = [ALL_CATEGORY, ...PLACE_CATEGORY_LABELS]
+/** Day당 "꼭 가고 싶은 장소"로 정할 수 있는 최대 개수 — 너무 많아지면 앵커의 의미가 없어져 2개로 제한 */
+const MAX_MUST_VISIT_PLACES = 2
 
 type RecommendMode = 'popular' | 'nearby'
 type SheetTab = 'schedule' | 'recommend'
@@ -180,16 +182,17 @@ export function PlanItineraryPage() {
   const assignedEverywhere = new Set(
     Object.values(plan.itinerary).flatMap((day) => [
       ...(day.departurePlaceId ? [day.departurePlaceId] : []),
-      ...(day.mustVisitPlaceId ? [day.mustVisitPlaceId] : []),
+      ...day.mustVisitPlaceIds,
       ...day.placeIds,
     ]),
   )
   const candidatePlaces = MOCK_PLACES.filter((place) => !assignedEverywhere.has(place.id))
 
   // "가까운 장소"는 이 Day의 출발지·필수 장소·이미 담은 장소를 기준으로 추천한다.
+  const currentDayMustVisitIds = currentDayEntry?.mustVisitPlaceIds ?? []
   const referencePlaceIds = [
     ...(currentDayEntry?.departurePlaceId ? [currentDayEntry.departurePlaceId] : []),
-    ...(currentDayEntry?.mustVisitPlaceId ? [currentDayEntry.mustVisitPlaceId] : []),
+    ...currentDayMustVisitIds,
     ...currentDayPlaceIds,
   ]
   const nearbyRanked = rankNearbyPlaces(referencePlaceIds, candidatePlaces)
@@ -227,7 +230,7 @@ export function PlanItineraryPage() {
   const persistDay = (
     updates: Partial<{
       departurePlaceId: string | null
-      mustVisitPlaceId: string | null
+      mustVisitPlaceIds: string[]
       placeIds: string[]
     }>,
     onSuccessMessage?: string,
@@ -236,7 +239,7 @@ export function PlanItineraryPage() {
       ...plan.itinerary,
       [selectedDay]: {
         departurePlaceId: currentDayEntry?.departurePlaceId ?? null,
-        mustVisitPlaceId: currentDayEntry?.mustVisitPlaceId ?? null,
+        mustVisitPlaceIds: currentDayMustVisitIds,
         placeIds: currentDayPlaceIds,
         ...updates,
       },
@@ -303,6 +306,30 @@ export function PlanItineraryPage() {
       timesById[a].localeCompare(timesById[b]),
     )
     persistDay({ placeIds: sortedPlaceIds })
+  }
+
+  // 별 토글: 이미 담긴 장소면 그대로 꼭 가고 싶은 장소로만 정하고, 아직 안 담은
+  // 추천/검색 결과면 담으면서 함께 정한다. 같은 곳을 다시 누르면 해제된다.
+  // 하루에 너무 많아지면 오히려 "꼭 가야 할 곳"이라는 의미가 흐려지니 최대 2개까지만 허용한다.
+  const handleToggleMustVisit = (id: string) => {
+    const isUnsetting = currentDayMustVisitIds.includes(id)
+
+    if (!isUnsetting && currentDayMustVisitIds.length >= MAX_MUST_VISIT_PLACES) {
+      toast.error(`꼭 가고 싶은 장소는 Day당 ${MAX_MUST_VISIT_PLACES}곳까지만 정할 수 있어요`)
+      return
+    }
+
+    const nextMustVisitPlaceIds = isUnsetting
+      ? currentDayMustVisitIds.filter((placeId) => placeId !== id)
+      : [...currentDayMustVisitIds, id]
+    const nextPlaceIds =
+      isUnsetting || currentDayPlaceIds.includes(id) ? currentDayPlaceIds : [...currentDayPlaceIds, id]
+    persistDay(
+      { mustVisitPlaceIds: nextMustVisitPlaceIds, placeIds: nextPlaceIds },
+      isUnsetting
+        ? '꼭 가고 싶은 장소 설정을 해제했어요'
+        : `${placeTitle(id)}를 Day ${selectedDay}의 꼭 가고 싶은 장소로 정했어요`,
+    )
   }
 
   const trimmedDepartureQuery = departureQuery.trim()
@@ -449,9 +476,11 @@ export function PlanItineraryPage() {
             ) : (
               <ScheduleList
                 items={scheduleItems}
+                mustVisitIds={currentDayMustVisitIds}
                 onReorder={handleReorder}
                 onRemove={handleRemove}
                 onTimeChange={handleTimeChange}
+                onToggleMustVisit={handleToggleMustVisit}
               />
             )}
 
@@ -538,6 +567,8 @@ export function PlanItineraryPage() {
                   }
                   added={false}
                   onToggle={() => handleAssign(place.id)}
+                  isMustVisit={currentDayMustVisitIds.includes(place.id)}
+                  onToggleMustVisit={() => handleToggleMustVisit(place.id)}
                 />
               ))
             )}

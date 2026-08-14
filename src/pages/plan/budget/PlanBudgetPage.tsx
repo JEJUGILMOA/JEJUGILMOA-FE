@@ -97,7 +97,7 @@ export function PlanBudgetPage() {
         new Set(
           Object.values(plan.itinerary).flatMap((day) => [
             ...(day.departurePlaceId ? [day.departurePlaceId] : []),
-            ...(day.mustVisitPlaceId ? [day.mustVisitPlaceId] : []),
+            ...day.mustVisitPlaceIds,
             ...day.placeIds,
           ]),
         ),

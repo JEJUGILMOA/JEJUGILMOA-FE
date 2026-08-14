@@ -1,6 +1,13 @@
-import { GripVertical, X } from 'lucide-react'
+import { GripVertical, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { dragHandleStyle, listStyle, removeButtonStyle, rowStyle, titleStyle } from './ScheduleList.css.ts'
+import {
+  dragHandleStyle,
+  listStyle,
+  mustVisitButtonRecipe,
+  removeButtonStyle,
+  rowStyle,
+  titleStyle,
+} from './ScheduleList.css.ts'
 import { TimeField } from './TimeField'
 
 export type ScheduleListItem = {
@@ -11,9 +18,12 @@ export type ScheduleListItem = {
 
 export type ScheduleListProps = {
   items: ScheduleListItem[]
+  /** 이 Day에서 "꼭 가고 싶은 장소"로 정한 곳들(최대 2개) */
+  mustVisitIds: string[]
   onReorder: (nextOrderIds: string[]) => void
   onRemove: (id: string) => void
   onTimeChange: (id: string, time: string) => void
+  onToggleMustVisit: (id: string) => void
 }
 
 /**
@@ -24,7 +34,14 @@ export type ScheduleListProps = {
  * 신뢰도가 낮았다. window에 pointermove/pointerup을 붙이는 방식은 ItineraryBottomSheet의
  * 드래그 구현과 동일하며, 훨씬 안정적으로 동작한다.
  */
-export function ScheduleList({ items, onReorder, onRemove, onTimeChange }: ScheduleListProps) {
+export function ScheduleList({
+  items,
+  mustVisitIds,
+  onReorder,
+  onRemove,
+  onTimeChange,
+  onToggleMustVisit,
+}: ScheduleListProps) {
   const rowRefs = useRef(new Map<string, HTMLDivElement>())
   const previewOrderRef = useRef<string[] | null>(null)
   const dragStartYRef = useRef(0)
@@ -129,6 +146,18 @@ export function ScheduleList({ items, onReorder, onRemove, onTimeChange }: Sched
             label={`${item.title} 시간`}
           />
           <span className={titleStyle}>{item.title}</span>
+          <button
+            type="button"
+            className={mustVisitButtonRecipe({ active: mustVisitIds.includes(item.id) })}
+            onClick={() => onToggleMustVisit(item.id)}
+            aria-label={
+              mustVisitIds.includes(item.id)
+                ? `${item.title} 꼭 가고 싶은 장소 해제`
+                : `${item.title}를 꼭 가고 싶은 장소로 정하기`
+            }
+          >
+            <Star size={16} fill={mustVisitIds.includes(item.id) ? 'currentColor' : 'none'} />
+          </button>
           <button
             type="button"
             className={removeButtonStyle}
