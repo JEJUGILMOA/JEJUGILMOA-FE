@@ -18,7 +18,6 @@ import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
 import { GATEWAY_ARRIVAL_ID, GATEWAY_DEPARTURE_ID } from '@/utils/mapPinPositions'
 import {
   backButtonStyle,
-  chipRowStyle,
   courseRowStyle,
   dayPagerFloatStyle,
   emptyTextStyle,
@@ -38,6 +37,8 @@ import {
   headerSearchClearButtonStyle,
   headerSearchIconStyle,
   headerSearchInputStyle,
+  metaRowStyle,
+  modeToggleRowStyle,
   nextButtonStyle,
   pageRootStyle,
   sectionMetaStyle,
@@ -553,7 +554,30 @@ export function PlanItineraryPage() {
           </div>
         ) : (
           <div className={sectionStyle}>
-            <span className={sectionMetaStyle}>고르면 바로 Day {selectedDay}에 담겨요</span>
+            <div className={metaRowStyle}>
+              <span className={sectionMetaStyle}>고르면 바로 Day {selectedDay}에 담겨요</span>
+              {!trimmedRecommendQuery ? (
+                <div className={modeToggleRowStyle}>
+                  <Chip
+                    size="sm"
+                    colorScheme="primary"
+                    isSelected={recommendMode === 'popular'}
+                    onClick={() => setRecommendMode('popular')}
+                  >
+                    유명한 장소
+                  </Chip>
+                  <Chip
+                    size="sm"
+                    colorScheme="primary"
+                    isSelected={recommendMode === 'nearby'}
+                    onClick={() => setRecommendMode('nearby')}
+                    disabled={referencePlaceIds.length === 0}
+                  >
+                    가까운 장소
+                  </Chip>
+                </div>
+              ) : null}
+            </div>
 
             {!trimmedRecommendQuery ? (
               <>
@@ -569,24 +593,6 @@ export function PlanItineraryPage() {
                     ))}
                   </div>
                 </HorizontalScrollArea>
-
-                <div className={chipRowStyle}>
-                  <Chip
-                    colorScheme="primary"
-                    isSelected={recommendMode === 'popular'}
-                    onClick={() => setRecommendMode('popular')}
-                  >
-                    유명한 장소
-                  </Chip>
-                  <Chip
-                    colorScheme="primary"
-                    isSelected={recommendMode === 'nearby'}
-                    onClick={() => setRecommendMode('nearby')}
-                    disabled={referencePlaceIds.length === 0}
-                  >
-                    가까운 장소
-                  </Chip>
-                </div>
 
                 <HorizontalScrollArea>
                   <div className={courseRowStyle}>

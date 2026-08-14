@@ -172,6 +172,20 @@ export const sectionMetaStyle = style({
   color: colors.text[4],
 })
 
+// 안내문구 옆에 유명한/가까운 장소 토글을 같은 줄로 붙여서, 그만큼 세로 줄 수를 줄인다.
+export const metaRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space[2],
+})
+
+export const modeToggleRowStyle = style({
+  display: 'flex',
+  flexShrink: 0,
+  gap: vars.space[1],
+})
+
 export const emptyTextStyle = style({
   padding: `${vars.space[4]} 0`,
   textAlign: 'center',
@@ -184,11 +198,6 @@ export const courseRowStyle = style({
   gap: vars.space[2],
 })
 
-export const chipRowStyle = style({
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: vars.space[2],
-})
 
 export const gatewayRowStyle = style({
   display: 'flex',
