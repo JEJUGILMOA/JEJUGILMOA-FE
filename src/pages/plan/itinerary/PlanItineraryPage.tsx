@@ -188,15 +188,20 @@ export function PlanItineraryPage() {
   )
   const candidatePlaces = MOCK_PLACES.filter((place) => !assignedEverywhere.has(place.id))
 
-  // "가까운 장소"는 이 Day의 출발지·필수 장소·이미 담은 장소를 기준으로 추천한다.
+  // "가까운 장소"는 이 Day에 꼭 가고 싶은 장소(앵커)를 정해뒀으면 그곳들 기준으로만 추천해서
+  // 하루 일정이 그 앵커 주변으로 짜이게 하고, 아직 안 정했으면 출발지·이미 담은 장소로 대신한다.
   const currentDayMustVisitIds = currentDayEntry?.mustVisitPlaceIds ?? []
-  const referencePlaceIds = [
+  const fallbackReferencePlaceIds = [
     ...(currentDayEntry?.departurePlaceId ? [currentDayEntry.departurePlaceId] : []),
-    ...currentDayMustVisitIds,
     ...currentDayPlaceIds,
   ]
+  const referencePlaceIds =
+    currentDayMustVisitIds.length > 0 ? currentDayMustVisitIds : fallbackReferencePlaceIds
   const nearbyRanked = rankNearbyPlaces(referencePlaceIds, candidatePlaces)
   const travelLabelByPlaceId = new Map(nearbyRanked.map((item) => [item.place.id, item.travelLabel]))
+  const nearestPlaceTitleByPlaceId = new Map(
+    nearbyRanked.map((item) => [item.place.id, placeTitle(item.nearestToPlaceId)]),
+  )
 
   const matchesCategory = (category: string) => activeCategory === ALL_CATEGORY || category === activeCategory
 
@@ -562,7 +567,7 @@ export function PlanItineraryPage() {
                   title={place.title}
                   category={
                     showTravelLabel && travelLabelByPlaceId.get(place.id)
-                      ? `${place.categoryLabel ?? place.category} · ${travelLabelByPlaceId.get(place.id)}`
+                      ? `${place.categoryLabel ?? place.category} · ${nearestPlaceTitleByPlaceId.get(place.id)} 근처 · ${travelLabelByPlaceId.get(place.id)}`
                       : (place.categoryLabel ?? place.category)
                   }
                   added={false}
