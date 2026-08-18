@@ -141,6 +141,7 @@ export function PlanItineraryPage() {
   const [recommendMode, setRecommendMode] = useState<RecommendMode>('popular')
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY)
   const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
+  const [showAnchorPrompt, setShowAnchorPrompt] = useState(false)
   const headerSearchInputRef = useRef<HTMLInputElement>(null)
   const [isEditingDeparture, setIsEditingDeparture] = useState(false)
   const [departureQuery, setDepartureQuery] = useState('')
@@ -300,11 +301,23 @@ export function PlanItineraryPage() {
     )
   }
 
+  // "유명한 장소"(전역) 모드에서 담는 건 곧 "1단계에서 고른 꼭 가고 싶은 장소"라, 별도로
+  // 별표를 안 찍어도 자동으로 필수 장소가 된다(최대 개수까지). "가까운 장소" 모드로
+  // 넘어간 뒤에는 그냥 일반 경유지로만 담긴다.
   const handleAssign = (id: string) => {
     if (currentDayPlaceIds.includes(id)) return
+    const shouldMarkMustVisit =
+      recommendMode === 'popular' && currentDayMustVisitIds.length < MAX_MUST_VISIT_PLACES
     persistDay(
-      { placeIds: [...currentDayPlaceIds, id] },
-      `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`,
+      {
+        placeIds: [...currentDayPlaceIds, id],
+        mustVisitPlaceIds: shouldMarkMustVisit
+          ? [...currentDayMustVisitIds, id]
+          : currentDayMustVisitIds,
+      },
+      shouldMarkMustVisit
+        ? `${placeTitle(id)}를 Day ${selectedDay}의 꼭 가고 싶은 장소로 담았어요`
+        : `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`,
     )
   }
 
@@ -409,12 +422,33 @@ export function PlanItineraryPage() {
   // 마지막 Day가 아니면 '다음'은 이 화면 안에서 다음 Day로만 넘기고(출발지·필수 장소는
   // 이 화면 안에서 언제든 인라인으로 정할 수 있다), 마지막 Day에서 눌러야 이 화면을
   // 마치고 다음 단계(또는 미리보기)로 넘어간다.
-  const handleNext = () => {
+  const proceedNext = () => {
     if (!isLastDay) {
       setSelectedDay((day) => Math.min(day + 1, dayCount))
       return
     }
     finishEditing()
+  }
+
+  // 아직 "유명한 장소"(전역) 모드에 머물러 있는데 꼭 가고 싶은 장소를 골라뒀으면,
+  // 다음으로 넘어가기 전에 그 장소 주변 추천(2단계)을 보고 갈지 먼저 물어본다.
+  const handleNext = () => {
+    if (recommendMode === 'popular' && currentDayMustVisitIds.length > 0) {
+      setShowAnchorPrompt(true)
+      return
+    }
+    proceedNext()
+  }
+
+  const handleShowAnchorRecommendations = () => {
+    setShowAnchorPrompt(false)
+    setRecommendMode('nearby')
+    setSheetTab('recommend')
+  }
+
+  const handleSkipAnchorRecommendations = () => {
+    setShowAnchorPrompt(false)
+    proceedNext()
   }
 
   const nextLabel = isLastDay && fromPreview ? '저장하기' : '다음'
@@ -689,6 +723,17 @@ export function PlanItineraryPage() {
         actions={[
           { label: '취소', variant: 'ghost', onClick: () => setPendingCourse(null) },
           { label: '담기', variant: 'primary', onClick: confirmAddCourse },
+        ]}
+      />
+
+      <Modal
+        open={showAnchorPrompt}
+        title="꼭 가고 싶은 장소 주변으로 추천받아볼까요?"
+        description="지금까지 고른 장소들 근처로 나머지 일정을 채워드릴게요."
+        onClose={() => setShowAnchorPrompt(false)}
+        actions={[
+          { label: '그냥 넘어갈게요', variant: 'ghost', onClick: handleSkipAnchorRecommendations },
+          { label: '네, 보여주세요', variant: 'primary', onClick: handleShowAnchorRecommendations },
         ]}
       />
     </div>
