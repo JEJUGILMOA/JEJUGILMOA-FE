@@ -172,30 +172,6 @@ export const sectionMetaStyle = style({
   color: colors.text[4],
 })
 
-// 안내문구 옆에 유명한/가까운 장소 토글을 같은 줄로 붙여서, 그만큼 세로 줄 수를 줄인다.
-export const metaRowStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: vars.space[2],
-})
-
-export const modeToggleRowStyle = style({
-  display: 'flex',
-  flexShrink: 0,
-  gap: vars.space[1],
-})
-
-// 좁은 화면에서 안내문구가 토글 칩을 밀어내며 여러 줄로 꺾이지 않도록,
-// 남는 공간만 차지하고 넘치면 말줄임표로 잘라낸다.
-export const metaTextTruncateStyle = style({
-  flex: 1,
-  minWidth: 0,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-})
-
 export const emptyTextStyle = style({
   padding: `${vars.space[4]} 0`,
   textAlign: 'center',

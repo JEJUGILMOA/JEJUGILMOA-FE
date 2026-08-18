@@ -15,7 +15,6 @@ import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
 import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
 import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
-import { cn } from '@/utils/cn'
 import { GATEWAY_ARRIVAL_ID, GATEWAY_DEPARTURE_ID } from '@/utils/mapPinPositions'
 import {
   backButtonStyle,
@@ -38,9 +37,6 @@ import {
   headerSearchClearButtonStyle,
   headerSearchIconStyle,
   headerSearchInputStyle,
-  metaRowStyle,
-  metaTextTruncateStyle,
-  modeToggleRowStyle,
   nextButtonStyle,
   pageRootStyle,
   sectionMetaStyle,
@@ -58,12 +54,8 @@ import { WaypointPlaceRow } from './components/WaypointPlaceRow'
 const DATE_FORMAT = 'yyyy.MM.dd'
 const ALL_CATEGORY = '전체'
 const CATEGORY_FILTERS = [ALL_CATEGORY, ...PLACE_CATEGORY_LABELS]
-/** Day당 "꼭 가고 싶은 장소"로 정할 수 있는 최대 개수 — 너무 많아지면 앵커의 의미가 없어져 2개로 제한 */
-const MAX_MUST_VISIT_PLACES = 2
-
-// Chip에는 sm(22px)/md(33px) 사이 크기가 없어서, 안내문구 옆 인라인 토글에 맞게
-// sm 위에 인라인 스타일로 살짝 키운 값을 얹는다.
-const modeToggleChipStyle = { height: '28px', padding: '0 14px', fontSize: '13px' }
+/** Day당 "꼭 가고 싶은 장소"로 정할 수 있는 최대 개수 — 너무 많아지면 앵커의 의미가 없어져 4개로 제한 */
+const MAX_MUST_VISIT_PLACES = 4
 
 type RecommendMode = 'popular' | 'nearby'
 type SheetTab = 'schedule' | 'recommend'
@@ -359,7 +351,7 @@ export function PlanItineraryPage() {
 
   // 별 토글: 이미 담긴 장소면 그대로 꼭 가고 싶은 장소로만 정하고, 아직 안 담은
   // 추천/검색 결과면 담으면서 함께 정한다. 같은 곳을 다시 누르면 해제된다.
-  // 하루에 너무 많아지면 오히려 "꼭 가야 할 곳"이라는 의미가 흐려지니 최대 2개까지만 허용한다.
+  // 하루에 너무 많아지면 오히려 "꼭 가야 할 곳"이라는 의미가 흐려지니 최대 MAX_MUST_VISIT_PLACES개까지만 허용한다.
   const handleToggleMustVisit = (id: string) => {
     const isUnsetting = currentDayMustVisitIds.includes(id)
 
@@ -419,12 +411,19 @@ export function PlanItineraryPage() {
     navigate(fromPreview ? ROUTES.planPreview(planId) : ROUTES.planBudget(planId))
   }
 
+  // Day를 옮길 때는 이전 Day에서 "가까운 장소"(주변 추천) 단계까지 갔었더라도, 새 Day는
+  // 아직 앵커(꼭 가고 싶은 장소)를 안 정한 상태이니 "유명한 장소"(전역 추천) 단계로 되돌린다.
+  const changeDay = (day: number) => {
+    setSelectedDay(day)
+    setRecommendMode('popular')
+  }
+
   // 마지막 Day가 아니면 '다음'은 이 화면 안에서 다음 Day로만 넘기고(출발지·필수 장소는
   // 이 화면 안에서 언제든 인라인으로 정할 수 있다), 마지막 Day에서 눌러야 이 화면을
   // 마치고 다음 단계(또는 미리보기)로 넘어간다.
   const proceedNext = () => {
     if (!isLastDay) {
-      setSelectedDay((day) => Math.min(day + 1, dayCount))
+      changeDay(Math.min(selectedDay + 1, dayCount))
       return
     }
     finishEditing()
@@ -452,6 +451,10 @@ export function PlanItineraryPage() {
   }
 
   const nextLabel = isLastDay && fromPreview ? '저장하기' : '다음'
+  // 탭 이름 자체가 지금 몇 단계인지 알려준다 — 앵커(꼭 가고 싶은 장소) 기준으로
+  // "가까운 장소" 모드에 들어섰으면 "주변 추천"으로, 아직 전역으로 둘러보는 중이면
+  // 기존 "추천·검색"으로 보여준다.
+  const recommendTabLabel = recommendMode === 'nearby' ? '주변 추천' : '추천·검색'
 
   return (
     <div className={pageRootStyle}>
@@ -478,8 +481,8 @@ export function PlanItineraryPage() {
           day={selectedDay}
           totalDays={dayCount}
           dateLabel={dayDateLabel}
-          onPrev={() => setSelectedDay((day) => Math.max(day - 1, 1))}
-          onNext={() => setSelectedDay((day) => Math.min(day + 1, dayCount))}
+          onPrev={() => changeDay(Math.max(selectedDay - 1, 1))}
+          onNext={() => changeDay(Math.min(selectedDay + 1, dayCount))}
         />
       </div>
 
@@ -523,7 +526,7 @@ export function PlanItineraryPage() {
             className={tabButtonRecipe({ active: sheetTab === 'recommend' })}
             onClick={() => setSheetTab('recommend')}
           >
-            추천·검색
+            {recommendTabLabel}
           </button>
         </div>
 
@@ -593,7 +596,7 @@ export function PlanItineraryPage() {
             {scheduleItems.length === 0 ? (
               <p className={emptyTextStyle}>
                 {hasAnyDayContent
-                  ? '아직 배정된 장소가 없어요. "추천·검색" 탭에서 담아보세요.'
+                  ? `아직 배정된 장소가 없어요. "${recommendTabLabel}" 탭에서 담아보세요.`
                   : '먼저 이 Day의 출발지나 꼭 가고 싶은 장소를 정해보세요. 그 장소를 기준으로 근처를 추천해드려요.'}
               </p>
             ) : (
@@ -616,34 +619,7 @@ export function PlanItineraryPage() {
           </div>
         ) : (
           <div className={sectionStyle}>
-            <div className={metaRowStyle}>
-              <span className={cn(sectionMetaStyle, metaTextTruncateStyle)}>
-                고르면 바로 Day {selectedDay}에 담겨요
-              </span>
-              {!trimmedRecommendQuery ? (
-                <div className={modeToggleRowStyle}>
-                  <Chip
-                    size="sm"
-                    style={modeToggleChipStyle}
-                    colorScheme="primary"
-                    isSelected={recommendMode === 'popular'}
-                    onClick={() => setRecommendMode('popular')}
-                  >
-                    유명한
-                  </Chip>
-                  <Chip
-                    size="sm"
-                    style={modeToggleChipStyle}
-                    colorScheme="primary"
-                    isSelected={recommendMode === 'nearby'}
-                    onClick={() => setRecommendMode('nearby')}
-                    disabled={referencePlaceIds.length === 0}
-                  >
-                    가까운
-                  </Chip>
-                </div>
-              ) : null}
-            </div>
+            <span className={sectionMetaStyle}>고르면 바로 Day {selectedDay}에 담겨요</span>
 
             {!trimmedRecommendQuery ? (
               <>
