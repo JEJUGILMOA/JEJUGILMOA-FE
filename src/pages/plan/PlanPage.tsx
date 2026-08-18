@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { FloatingActionButton } from '@/components/ui/FloatingActionButton/FloatingActionButton'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { ROUTES } from '@/constants'
 import { usePlansQuery } from '@/features/plans/hooks'
@@ -30,17 +31,14 @@ export function PlanPage() {
           />
         </Card>
       ) : (
-        <>
-          <Button fullWidth size="lg" onClick={goToCreate}>
-            새 계획 만들기
-          </Button>
-          <div className={listStyle}>
-            {plans.map((plan) => (
-              <PlanListItem key={plan.id} plan={plan} />
-            ))}
-          </div>
-        </>
+        <div className={listStyle}>
+          {plans.map((plan) => (
+            <PlanListItem key={plan.id} plan={plan} />
+          ))}
+        </div>
       )}
+
+      <FloatingActionButton onClick={goToCreate} aria-label="새 계획 만들기" />
     </div>
   )
 }
