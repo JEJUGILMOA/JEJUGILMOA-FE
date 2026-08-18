@@ -186,6 +186,16 @@ export const modeToggleRowStyle = style({
   gap: vars.space[1],
 })
 
+// 좁은 화면에서 안내문구가 토글 칩을 밀어내며 여러 줄로 꺾이지 않도록,
+// 남는 공간만 차지하고 넘치면 말줄임표로 잘라낸다.
+export const metaTextTruncateStyle = style({
+  flex: 1,
+  minWidth: 0,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+})
+
 export const emptyTextStyle = style({
   padding: `${vars.space[4]} 0`,
   textAlign: 'center',

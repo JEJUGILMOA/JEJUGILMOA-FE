@@ -15,6 +15,7 @@ import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
 import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
 import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
+import { cn } from '@/utils/cn'
 import { GATEWAY_ARRIVAL_ID, GATEWAY_DEPARTURE_ID } from '@/utils/mapPinPositions'
 import {
   backButtonStyle,
@@ -38,6 +39,7 @@ import {
   headerSearchIconStyle,
   headerSearchInputStyle,
   metaRowStyle,
+  metaTextTruncateStyle,
   modeToggleRowStyle,
   nextButtonStyle,
   pageRootStyle,
@@ -58,6 +60,10 @@ const ALL_CATEGORY = '전체'
 const CATEGORY_FILTERS = [ALL_CATEGORY, ...PLACE_CATEGORY_LABELS]
 /** Day당 "꼭 가고 싶은 장소"로 정할 수 있는 최대 개수 — 너무 많아지면 앵커의 의미가 없어져 2개로 제한 */
 const MAX_MUST_VISIT_PLACES = 2
+
+// Chip에는 sm(22px)/md(33px) 사이 크기가 없어서, 안내문구 옆 인라인 토글에 맞게
+// sm 위에 인라인 스타일로 살짝 키운 값을 얹는다.
+const modeToggleChipStyle = { height: '28px', padding: '0 14px', fontSize: '13px' }
 
 type RecommendMode = 'popular' | 'nearby'
 type SheetTab = 'schedule' | 'recommend'
@@ -112,7 +118,9 @@ function computeScheduleTimes(
     }
   }
 
-  return Array.from({ length: stopCount }, (_, index) => formatMinutesToTime(dayStart + index * interval))
+  return Array.from({ length: stopCount }, (_, index) =>
+    formatMinutesToTime(dayStart + index * interval),
+  )
 }
 
 function placeTitle(placeId: string) {
@@ -208,19 +216,23 @@ export function PlanItineraryPage() {
   const referencePlaceIds =
     currentDayMustVisitIds.length > 0 ? currentDayMustVisitIds : fallbackReferencePlaceIds
   const nearbyRanked = rankNearbyPlaces(referencePlaceIds, candidatePlaces)
-  const travelLabelByPlaceId = new Map(nearbyRanked.map((item) => [item.place.id, item.travelLabel]))
+  const travelLabelByPlaceId = new Map(
+    nearbyRanked.map((item) => [item.place.id, item.travelLabel]),
+  )
   const nearestPlaceTitleByPlaceId = new Map(
     nearbyRanked.map((item) => [item.place.id, placeTitle(item.nearestToPlaceId)]),
   )
 
-  const matchesCategory = (category: string) => activeCategory === ALL_CATEGORY || category === activeCategory
+  const matchesCategory = (category: string) =>
+    activeCategory === ALL_CATEGORY || category === activeCategory
 
   const trimmedRecommendQuery = recommendQuery.trim()
   const recommendSearchResults = trimmedRecommendQuery
     ? candidatePlaces.filter((place) => {
         const keyword = trimmedRecommendQuery.toLowerCase()
         return (
-          place.title.toLowerCase().includes(keyword) || place.location.toLowerCase().includes(keyword)
+          place.title.toLowerCase().includes(keyword) ||
+          place.location.toLowerCase().includes(keyword)
         )
       })
     : null
@@ -229,7 +241,9 @@ export function PlanItineraryPage() {
     recommendSearchResults ??
     (recommendMode === 'popular'
       ? candidatePlaces.filter((place) => matchesCategory(place.category))
-      : nearbyRanked.filter((item) => matchesCategory(item.place.category)).map((item) => item.place))
+      : nearbyRanked
+          .filter((item) => matchesCategory(item.place.category))
+          .map((item) => item.place))
 
   const showTravelLabel = !trimmedRecommendQuery && recommendMode === 'nearby'
 
@@ -240,7 +254,10 @@ export function PlanItineraryPage() {
   ]
   // 탭은 바텀시트 안 내용만 나눈다 — 지도 자체는 네이버맵처럼 어느 탭에 있든 늘
   // 오늘 동선 + 추천 핀을 함께 보여준다.
-  const unassignedPlacesForMap = recommendedPlaces.map((place) => ({ id: place.id, title: place.title }))
+  const unassignedPlacesForMap = recommendedPlaces.map((place) => ({
+    id: place.id,
+    title: place.title,
+  }))
 
   const persistDay = (
     updates: Partial<{
@@ -285,7 +302,10 @@ export function PlanItineraryPage() {
 
   const handleAssign = (id: string) => {
     if (currentDayPlaceIds.includes(id)) return
-    persistDay({ placeIds: [...currentDayPlaceIds, id] }, `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`)
+    persistDay(
+      { placeIds: [...currentDayPlaceIds, id] },
+      `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`,
+    )
   }
 
   const confirmAddCourse = () => {
@@ -294,7 +314,8 @@ export function PlanItineraryPage() {
       .map((step) => step.placeId)
       .filter(
         (placeId) =>
-          MOCK_PLACES.some((place) => place.id === placeId) && !currentDayPlaceIds.includes(placeId),
+          MOCK_PLACES.some((place) => place.id === placeId) &&
+          !currentDayPlaceIds.includes(placeId),
       )
 
     if (coursePlaceIds.length > 0) {
@@ -338,7 +359,9 @@ export function PlanItineraryPage() {
       ? currentDayMustVisitIds.filter((placeId) => placeId !== id)
       : [...currentDayMustVisitIds, id]
     const nextPlaceIds =
-      isUnsetting || currentDayPlaceIds.includes(id) ? currentDayPlaceIds : [...currentDayPlaceIds, id]
+      isUnsetting || currentDayPlaceIds.includes(id)
+        ? currentDayPlaceIds
+        : [...currentDayPlaceIds, id]
     persistDay(
       { mustVisitPlaceIds: nextMustVisitPlaceIds, placeIds: nextPlaceIds },
       isUnsetting
@@ -352,7 +375,8 @@ export function PlanItineraryPage() {
     ? MOCK_PLACES.filter((place) => {
         const keyword = trimmedDepartureQuery.toLowerCase()
         return (
-          place.title.toLowerCase().includes(keyword) || place.location.toLowerCase().includes(keyword)
+          place.title.toLowerCase().includes(keyword) ||
+          place.location.toLowerCase().includes(keyword)
         )
       })
     : []
@@ -520,7 +544,11 @@ export function PlanItineraryPage() {
                 ) : null}
               </div>
             ) : (
-              <button type="button" className={fieldRowStyle} onClick={() => setIsEditingDeparture(true)}>
+              <button
+                type="button"
+                className={fieldRowStyle}
+                onClick={() => setIsEditingDeparture(true)}
+              >
                 <span className={gatewayLabelStyle}>
                   {departurePlace ? `🚩 출발지: ${departurePlace.title}` : '🚩 출발지 설정하기'}
                 </span>
@@ -555,25 +583,29 @@ export function PlanItineraryPage() {
         ) : (
           <div className={sectionStyle}>
             <div className={metaRowStyle}>
-              <span className={sectionMetaStyle}>고르면 바로 Day {selectedDay}에 담겨요</span>
+              <span className={cn(sectionMetaStyle, metaTextTruncateStyle)}>
+                고르면 바로 Day {selectedDay}에 담겨요
+              </span>
               {!trimmedRecommendQuery ? (
                 <div className={modeToggleRowStyle}>
                   <Chip
                     size="sm"
+                    style={modeToggleChipStyle}
                     colorScheme="primary"
                     isSelected={recommendMode === 'popular'}
                     onClick={() => setRecommendMode('popular')}
                   >
-                    유명한 장소
+                    유명한
                   </Chip>
                   <Chip
                     size="sm"
+                    style={modeToggleChipStyle}
                     colorScheme="primary"
                     isSelected={recommendMode === 'nearby'}
                     onClick={() => setRecommendMode('nearby')}
                     disabled={referencePlaceIds.length === 0}
                   >
-                    가까운 장소
+                    가까운
                   </Chip>
                 </div>
               ) : null}
@@ -611,8 +643,12 @@ export function PlanItineraryPage() {
               </>
             ) : null}
 
-            {recommendMode === 'nearby' && !trimmedRecommendQuery && referencePlaceIds.length === 0 ? (
-              <p className={emptyTextStyle}>출발지나 장소를 먼저 담아야 가까운 장소를 추천해드릴 수 있어요.</p>
+            {recommendMode === 'nearby' &&
+            !trimmedRecommendQuery &&
+            referencePlaceIds.length === 0 ? (
+              <p className={emptyTextStyle}>
+                출발지나 장소를 먼저 담아야 가까운 장소를 추천해드릴 수 있어요.
+              </p>
             ) : recommendedPlaces.length === 0 ? (
               <p className={emptyTextStyle}>표시할 장소가 없어요.</p>
             ) : (
@@ -635,7 +671,12 @@ export function PlanItineraryPage() {
           </div>
         )}
 
-        <Button fullWidth size="lg" isLoading={updateItineraryMutation.isPending} onClick={handleNext}>
+        <Button
+          fullWidth
+          size="lg"
+          isLoading={updateItineraryMutation.isPending}
+          onClick={handleNext}
+        >
           {nextLabel}
         </Button>
       </ItineraryBottomSheet>
