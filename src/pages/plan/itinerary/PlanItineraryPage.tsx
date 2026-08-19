@@ -20,6 +20,7 @@ import {
   departureResultChevronStyle,
   departureResultRowStyle,
   departureResultTextStyle,
+  departureSuggestionBadgeStyle,
   emptyTextStyle,
   fieldHintStyle,
   fieldResultMetaStyle,
@@ -161,6 +162,16 @@ export function PlanItineraryPage() {
   const departurePlace = currentDayEntry?.departurePlaceId
     ? { id: currentDayEntry.departurePlaceId, title: placeTitle(currentDayEntry.departurePlaceId) }
     : null
+
+  // 전날 출발지(예: 숙소)는 오늘도 그대로 출발지일 가능성이 높으니, 아직 안 정했으면
+  // 출발지 검색 목록 맨 위에 추천으로 보여준다 — 다른 Day에서 이미 쓰인 장소라
+  // candidatePlaces에서는 걸러지므로 이렇게 따로 찾아와야 한다.
+  const previousDayDeparturePlaceId =
+    selectedDay > 1 ? (plan.itinerary[selectedDay - 1]?.departurePlaceId ?? null) : null
+  const previousDayDeparturePlace =
+    previousDayDeparturePlaceId && previousDayDeparturePlaceId !== currentDayEntry?.departurePlaceId
+      ? MOCK_PLACES.find((place) => place.id === previousDayDeparturePlaceId)
+      : undefined
 
   const stops = currentDayPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
   const stopTimes = computeScheduleTimes(currentDayPlaceIds.length, {
@@ -650,24 +661,41 @@ export function PlanItineraryPage() {
             ) : null}
 
             {isSelectingDeparture ? (
-              departureCandidates.length === 0 ? (
-                <p className={emptyTextStyle}>검색 결과가 없어요.</p>
-              ) : (
-                departureCandidates.map((place) => (
+              <>
+                {!trimmedRecommendQuery && previousDayDeparturePlace ? (
                   <button
-                    key={place.id}
                     type="button"
                     className={departureResultRowStyle}
-                    onClick={() => handleSelectDeparture(place.id)}
+                    onClick={() => handleSelectDeparture(previousDayDeparturePlace.id)}
                   >
                     <span className={departureResultTextStyle}>
-                      <span className={fieldResultTitleStyle}>{place.title}</span>
-                      <span className={fieldResultMetaStyle}>{place.location}</span>
+                      <span className={departureSuggestionBadgeStyle}>이전 Day와 동일</span>
+                      <span className={fieldResultTitleStyle}>{previousDayDeparturePlace.title}</span>
+                      <span className={fieldResultMetaStyle}>{previousDayDeparturePlace.location}</span>
                     </span>
                     <ChevronRight size={18} className={departureResultChevronStyle} aria-hidden />
                   </button>
-                ))
-              )
+                ) : null}
+
+                {departureCandidates.length === 0 ? (
+                  <p className={emptyTextStyle}>검색 결과가 없어요.</p>
+                ) : (
+                  departureCandidates.map((place) => (
+                    <button
+                      key={place.id}
+                      type="button"
+                      className={departureResultRowStyle}
+                      onClick={() => handleSelectDeparture(place.id)}
+                    >
+                      <span className={departureResultTextStyle}>
+                        <span className={fieldResultTitleStyle}>{place.title}</span>
+                        <span className={fieldResultMetaStyle}>{place.location}</span>
+                      </span>
+                      <ChevronRight size={18} className={departureResultChevronStyle} aria-hidden />
+                    </button>
+                  ))
+                )}
+              </>
             ) : recommendMode === 'nearby' &&
               !trimmedRecommendQuery &&
               referencePlaceIds.length === 0 ? (

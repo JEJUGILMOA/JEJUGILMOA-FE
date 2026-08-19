@@ -272,6 +272,17 @@ export const departureResultChevronStyle = style({
   color: colors.text[6],
 })
 
+// 전날 출발지를 그대로 재사용할 수 있게 목록 맨 위에 얹는 추천 행의 배지.
+export const departureSuggestionBadgeStyle = style({
+  alignSelf: 'flex-start',
+  padding: `2px ${vars.space[2]}`,
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.primary[100],
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.primary[700],
+})
+
 export const fieldResultTitleStyle = style({
   fontSize: vars.fontSize.sm,
   fontWeight: vars.fontWeight.bold,
