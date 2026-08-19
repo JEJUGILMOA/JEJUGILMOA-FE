@@ -189,10 +189,11 @@ export function PlanItineraryPage() {
   // "가까운 장소"는 이 Day에 꼭 가고 싶은 장소(앵커)를 정해뒀으면 그곳들 기준으로만 추천해서
   // 하루 일정이 그 앵커 주변으로 짜이게 하고, 아직 안 정했으면 출발지·이미 담은 장소로 대신한다.
   const currentDayMustVisitIds = currentDayEntry?.mustVisitPlaceIds ?? []
-  // 출발지·필수 장소·일정 중 아무것도 안 정해졌으면 이 Day는 아직 "빈 상태" —
-  // 추천이 기준점 없이 막 나오니, 먼저 앵커부터 잡으라고 안내한다.
-  const hasAnyDayContent =
-    Boolean(departurePlace) || currentDayMustVisitIds.length > 0 || currentDayPlaceIds.length > 0
+  // 출발지만 정해진 상태는 아직 "빈 일정"으로 본다 — 출발지는 참고 지점일 뿐 실제
+  // 방문 계획이 아니라서, 출발지만 있고 꼭 가고 싶은 장소·일정이 없으면 코스 추천을
+  // 계속 보여준다. 반대로 꼭 가고 싶은 장소가 있는데 일정이 비어 있으면(예: 담았던
+  // 곳을 다시 뺀 경우) 이미 앵커를 잡아둔 상태라 코스 추천 대신 안내 문구를 보여준다.
+  const hasMustVisitWithoutStops = currentDayMustVisitIds.length > 0
   const fallbackReferencePlaceIds = [
     ...(currentDayEntry?.departurePlaceId ? [currentDayEntry.departurePlaceId] : []),
     ...currentDayPlaceIds,
@@ -570,13 +571,13 @@ export function PlanItineraryPage() {
               <span className={fieldHintStyle}>{departurePlace ? '변경' : '설정'}</span>
             </button>
 
-            {scheduleItems.length === 0 && hasAnyDayContent ? (
+            {scheduleItems.length === 0 && hasMustVisitWithoutStops ? (
               <p className={emptyTextStyle}>
                 아직 배정된 장소가 없어요. "{recommendTabLabel}" 탭에서 담아보세요.
               </p>
             ) : null}
 
-            {scheduleItems.length === 0 && !hasAnyDayContent ? (
+            {scheduleItems.length === 0 && !hasMustVisitWithoutStops ? (
               <>
                 <span className={sectionMetaStyle}>이런 코스는 어때요?</span>
                 <HorizontalScrollArea>
