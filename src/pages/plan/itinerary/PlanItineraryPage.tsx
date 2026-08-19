@@ -312,9 +312,21 @@ export function PlanItineraryPage() {
       )
 
     if (coursePlaceIds.length > 0) {
+      // 코스로 한 번에 담는 경유지도 직접 고른 장소와 마찬가지로 이 Day의 "꼭 가고 싶은
+      // 장소"라, 남은 자리만큼은 자동으로 별표까지 함께 찍는다.
+      const remainingMustVisitSlots = Math.max(
+        MAX_MUST_VISIT_PLACES - currentDayMustVisitIds.length,
+        0,
+      )
+      const newMustVisitIds = coursePlaceIds.slice(0, remainingMustVisitSlots)
       persistDay(
-        { placeIds: [...currentDayPlaceIds, ...coursePlaceIds] },
-        `${pendingCourse.title}의 경유지를 Day ${selectedDay}에 담았어요`,
+        {
+          placeIds: [...currentDayPlaceIds, ...coursePlaceIds],
+          mustVisitPlaceIds: [...currentDayMustVisitIds, ...newMustVisitIds],
+        },
+        newMustVisitIds.length > 0
+          ? `${pendingCourse.title}의 경유지를 Day ${selectedDay}의 꼭 가고 싶은 장소로 담았어요`
+          : `${pendingCourse.title}의 경유지를 Day ${selectedDay}에 담았어요`,
       )
     }
     setPendingCourse(null)
