@@ -1,12 +1,13 @@
-import { addDays, format } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Loading } from '@/components/ui/Loading/Loading'
+import { Modal } from '@/components/ui/Modal/Modal'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { useCreatePlanMutation, usePlanQuery, useUpdatePlanInfoMutation } from '@/features/plans/hooks'
-import type { CompanionType, PlanDraft } from '@/features/plans/types'
+import type { CompanionType, DayItinerary, PlanDraft } from '@/features/plans/types'
 import { StepProgress } from './components/StepProgress'
 import { pageStyle, progressTrackStyle, skipLinkStyle, topBarStyle } from './PlanCreatePage.css.ts'
 import { BudgetStep } from './steps/BudgetStep'
@@ -27,6 +28,19 @@ const STEP_PROGRESS_INDEX: Record<WizardStepId, number> = {
 const TOTAL_PROGRESS_STEPS = 5
 
 const DATE_FORMAT = 'yyyy.MM.dd'
+
+function hasDayContent(day: DayItinerary | undefined): boolean {
+  if (!day) return false
+  return Boolean(day.departurePlaceId) || day.mustVisitPlaceIds.length > 0 || day.placeIds.length > 0
+}
+
+/** 실제로 장소가 배정된 Day 중 가장 늦은 번호. 아무 Day에도 아직 아무것도 안 담았으면 0. */
+function getLastPlannedDay(itinerary: Record<number, DayItinerary>): number {
+  return Object.entries(itinerary).reduce(
+    (max, [dayKey, day]) => (hasDayContent(day) && Number(dayKey) > max ? Number(dayKey) : max),
+    0,
+  )
+}
 
 function defaultTravelerCount(companionType: CompanionType): number {
   switch (companionType) {
@@ -64,6 +78,7 @@ export function PlanCreatePage() {
 
   const [step, setStep] = useState<WizardStepId>('dates')
   const [draft, setDraft] = useState<PlanDraft>(initialDraft)
+  const [showDateShrinkWarning, setShowDateShrinkWarning] = useState(false)
   const createPlanMutation = useCreatePlanMutation()
   const updatePlanInfoMutation = useUpdatePlanInfoMutation()
 
@@ -72,6 +87,10 @@ export function PlanCreatePage() {
   // 저장된 계획은 이미 그 날짜 기준으로 Day별 일정이 짜여 있어서, 날짜를 바꾸면
   // 일부 Day의 일정이 조용히 갈 곳을 잃는다 — 그래서 날짜만 수정 자체를 막는다.
   const isDateEditLocked = isEditMode && existingPlan?.status === 'saved'
+  // draft는 날짜를 계속 바꿀 수 있지만, 이미 일정을 짜둔 상태에서 날짜를 줄이면
+  // 저장된 계획과 같은 문제가 생긴다 — 막지는 않되 줄이기 직전에 한 번 경고한다.
+  const lastPlannedDay =
+    isEditMode && existingPlan?.status === 'draft' ? getLastPlannedDay(existingPlan.itinerary) : 0
 
   useEffect(() => {
     if (!isEditMode || !existingPlan || hasSyncedEditDraftRef.current) return
@@ -144,9 +163,19 @@ export function PlanCreatePage() {
   // (중간 확인 화면 없이).
   const goNext = () => {
     switch (step) {
-      case 'dates':
+      case 'dates': {
+        if (lastPlannedDay > 0 && draft.startDate && draft.endDate) {
+          const start = parse(draft.startDate, DATE_FORMAT, new Date())
+          const end = parse(draft.endDate, DATE_FORMAT, new Date())
+          const newDayCount = Math.max(differenceInCalendarDays(end, start) + 1, 1)
+          if (newDayCount < lastPlannedDay) {
+            setShowDateShrinkWarning(true)
+            return
+          }
+        }
         setStep('companion')
         return
+      }
       case 'companion':
         setStep(draft.companionType === 'solo' ? 'budget' : 'travelers')
         return
@@ -246,6 +275,24 @@ export function PlanCreatePage() {
           />
         ) : null}
       </div>
+
+      <Modal
+        open={showDateShrinkWarning}
+        title="날짜를 줄이면 일정이 사라져요"
+        description={`이미 ${lastPlannedDay}일차까지 일정을 짜두셨어요. 날짜를 줄이면 그 이후 Day의 일정은 더 이상 볼 수 없어요.`}
+        onClose={() => setShowDateShrinkWarning(false)}
+        actions={[
+          { label: '취소', variant: 'ghost', onClick: () => setShowDateShrinkWarning(false) },
+          {
+            label: '그대로 진행',
+            variant: 'danger',
+            onClick: () => {
+              setShowDateShrinkWarning(false)
+              setStep('companion')
+            },
+          },
+        ]}
+      />
     </div>
   )
 }
