@@ -54,8 +54,8 @@ import { WaypointPlaceRow } from './components/WaypointPlaceRow'
 const DATE_FORMAT = 'yyyy.MM.dd'
 const ALL_CATEGORY = '전체'
 const CATEGORY_FILTERS = [ALL_CATEGORY, ...PLACE_CATEGORY_LABELS]
-/** Day당 "꼭 가고 싶은 장소"로 정할 수 있는 최대 개수 — 너무 많아지면 앵커의 의미가 없어져 4개로 제한 */
-const MAX_MUST_VISIT_PLACES = 4
+/** "꼭 가고 싶은 장소"는 개수 제한이 없다 — 대신 Day 하나에 담을 수 있는 일정 전체를 10곳으로 제한한다 */
+const MAX_DAY_PLACES = 10
 
 type RecommendMode = 'popular' | 'nearby'
 type SheetTab = 'schedule' | 'recommend'
@@ -299,12 +299,15 @@ export function PlanItineraryPage() {
   }
 
   // "유명한 장소"(전역) 모드에서 담는 건 곧 "1단계에서 고른 꼭 가고 싶은 장소"라, 별도로
-  // 별표를 안 찍어도 자동으로 필수 장소가 된다(최대 개수까지). "가까운 장소" 모드로
-  // 넘어간 뒤에는 그냥 일반 경유지로만 담긴다.
+  // 별표를 안 찍어도 자동으로 필수 장소가 된다. "가까운 장소" 모드로 넘어간 뒤에는
+  // 그냥 일반 경유지로만 담긴다.
   const handleAssign = (id: string) => {
     if (currentDayPlaceIds.includes(id)) return
-    const shouldMarkMustVisit =
-      recommendMode === 'popular' && currentDayMustVisitIds.length < MAX_MUST_VISIT_PLACES
+    if (currentDayPlaceIds.length >= MAX_DAY_PLACES) {
+      toast.error(`Day당 일정은 최대 ${MAX_DAY_PLACES}곳까지만 담을 수 있어요`)
+      return
+    }
+    const shouldMarkMustVisit = recommendMode === 'popular'
     persistDay(
       {
         placeIds: [...currentDayPlaceIds, id],
@@ -328,22 +331,27 @@ export function PlanItineraryPage() {
           !currentDayPlaceIds.includes(placeId),
       )
 
+    if (currentDayPlaceIds.length >= MAX_DAY_PLACES) {
+      toast.error(`Day당 일정은 최대 ${MAX_DAY_PLACES}곳까지만 담을 수 있어요`)
+      setPendingCourse(null)
+      return
+    }
+
     if (coursePlaceIds.length > 0) {
-      // 코스로 한 번에 담는 경유지도 직접 고른 장소와 마찬가지로 이 Day의 "꼭 가고 싶은
-      // 장소"라, 남은 자리만큼은 자동으로 별표까지 함께 찍는다.
-      const remainingMustVisitSlots = Math.max(
-        MAX_MUST_VISIT_PLACES - currentDayMustVisitIds.length,
-        0,
-      )
-      const newMustVisitIds = coursePlaceIds.slice(0, remainingMustVisitSlots)
+      // Day 하나에 담을 수 있는 일정은 최대 MAX_DAY_PLACES곳이라, 코스에 남은 자리보다
+      // 많은 경유지가 있으면 자리가 남은 만큼만 담는다.
+      const remainingSlots = MAX_DAY_PLACES - currentDayPlaceIds.length
+      const addedPlaceIds = coursePlaceIds.slice(0, remainingSlots)
+      // 코스로 한 번에 담는 경유지도 직접 고른 장소와 마찬가지로 이 Day의
+      // "꼭 가고 싶은 장소"로 함께 찍는다.
       persistDay(
         {
-          placeIds: [...currentDayPlaceIds, ...coursePlaceIds],
-          mustVisitPlaceIds: [...currentDayMustVisitIds, ...newMustVisitIds],
+          placeIds: [...currentDayPlaceIds, ...addedPlaceIds],
+          mustVisitPlaceIds: [...currentDayMustVisitIds, ...addedPlaceIds],
         },
-        newMustVisitIds.length > 0
-          ? `${pendingCourse.title}의 경유지를 Day ${selectedDay}의 꼭 가고 싶은 장소로 담았어요`
-          : `${pendingCourse.title}의 경유지를 Day ${selectedDay}에 담았어요`,
+        addedPlaceIds.length < coursePlaceIds.length
+          ? `Day ${selectedDay}은 최대 ${MAX_DAY_PLACES}곳까지만 담을 수 있어 일부만 담았어요`
+          : `${pendingCourse.title}의 경유지를 Day ${selectedDay}의 꼭 가고 싶은 장소로 담았어요`,
       )
     }
     setPendingCourse(null)
@@ -368,12 +376,14 @@ export function PlanItineraryPage() {
 
   // 별 토글: 이미 담긴 장소면 그대로 꼭 가고 싶은 장소로만 정하고, 아직 안 담은
   // 추천/검색 결과면 담으면서 함께 정한다. 같은 곳을 다시 누르면 해제된다.
-  // 하루에 너무 많아지면 오히려 "꼭 가야 할 곳"이라는 의미가 흐려지니 최대 MAX_MUST_VISIT_PLACES개까지만 허용한다.
+  // "꼭 가고 싶은 장소" 자체는 개수 제한이 없지만, 아직 안 담은 곳을 새로 담는
+  // 것이라면 Day 전체 일정 한도(MAX_DAY_PLACES)는 그대로 적용된다.
   const handleToggleMustVisit = (id: string) => {
     const isUnsetting = currentDayMustVisitIds.includes(id)
+    const isAlreadyInSchedule = currentDayPlaceIds.includes(id)
 
-    if (!isUnsetting && currentDayMustVisitIds.length >= MAX_MUST_VISIT_PLACES) {
-      toast.error(`꼭 가고 싶은 장소는 Day당 ${MAX_MUST_VISIT_PLACES}곳까지만 정할 수 있어요`)
+    if (!isUnsetting && !isAlreadyInSchedule && currentDayPlaceIds.length >= MAX_DAY_PLACES) {
+      toast.error(`Day당 일정은 최대 ${MAX_DAY_PLACES}곳까지만 담을 수 있어요`)
       return
     }
 
@@ -381,9 +391,7 @@ export function PlanItineraryPage() {
       ? currentDayMustVisitIds.filter((placeId) => placeId !== id)
       : [...currentDayMustVisitIds, id]
     const nextPlaceIds =
-      isUnsetting || currentDayPlaceIds.includes(id)
-        ? currentDayPlaceIds
-        : [...currentDayPlaceIds, id]
+      isUnsetting || isAlreadyInSchedule ? currentDayPlaceIds : [...currentDayPlaceIds, id]
     persistDay(
       { mustVisitPlaceIds: nextMustVisitPlaceIds, placeIds: nextPlaceIds },
       isUnsetting
@@ -555,7 +563,7 @@ export function PlanItineraryPage() {
         title={
           isSelectingDeparture
             ? `Day ${selectedDay} 출발지 검색`
-            : `Day ${selectedDay} 일정 (${stops.length}곳)`
+            : `Day ${selectedDay} 일정 (${stops.length}/${MAX_DAY_PLACES}곳)`
         }
         expandTrigger={Boolean(trimmedRecommendQuery) || isSelectingDeparture}
       >
@@ -616,9 +624,7 @@ export function PlanItineraryPage() {
                     <Star size={14} fill="#FFAC00" stroke="#FFAC00" aria-hidden />
                     꼭 가고 싶은 장소로 정한 곳 주변으로 나머지 일정을 추천해드려요
                   </span>
-                  <span className={mustVisitSummaryCountStyle}>
-                    {currentDayMustVisitIds.length}/4
-                  </span>
+                  <span className={mustVisitSummaryCountStyle}>{currentDayMustVisitIds.length}곳</span>
                 </div>
 
                 <ScheduleList
