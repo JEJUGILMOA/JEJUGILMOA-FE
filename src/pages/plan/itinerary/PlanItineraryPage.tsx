@@ -614,7 +614,10 @@ export function PlanItineraryPage() {
                 : `고르면 바로 Day ${selectedDay}에 담겨요`}
             </span>
 
-            {!trimmedRecommendQuery && !isSelectingDeparture && recommendMode === 'popular' ? (
+            {!trimmedRecommendQuery &&
+            !isSelectingDeparture &&
+            recommendMode === 'popular' &&
+            departurePlace ? (
               <HorizontalScrollArea>
                 <div className={courseRowStyle}>
                   {MOCK_COURSES.map((course) => (
