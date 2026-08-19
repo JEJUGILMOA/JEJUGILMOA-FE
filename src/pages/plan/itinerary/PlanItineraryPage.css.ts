@@ -185,25 +185,10 @@ export const courseRowStyle = style({
 })
 
 
-export const gatewayRowStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: vars.space[3],
-  borderRadius: vars.radius.md,
-  backgroundColor: colors.surface[4],
-})
-
 export const gatewayLabelStyle = style({
   fontSize: vars.fontSize.sm,
   fontWeight: vars.fontWeight.semibold,
   color: colors.text[2],
-})
-
-export const gatewayTimeStyle = style({
-  fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.bold,
-  color: colors.primary[700],
 })
 
 // 출발지 등, 일정 화면 안에서 탭하면 바로 값을 고칠 수 있는 필드 행.

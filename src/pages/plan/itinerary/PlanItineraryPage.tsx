@@ -14,8 +14,6 @@ import { PLACE_CATEGORY_LABELS, ROUTES } from '@/constants'
 import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
 import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
-import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
-import { GATEWAY_ARRIVAL_ID, GATEWAY_DEPARTURE_ID } from '@/utils/mapPinPositions'
 import {
   backButtonStyle,
   courseRowStyle,
@@ -31,8 +29,6 @@ import {
   fieldResultTitleStyle,
   fieldRowStyle,
   gatewayLabelStyle,
-  gatewayRowStyle,
-  gatewayTimeStyle,
   headerSearchBarStyle,
   headerSearchClearButtonStyle,
   headerSearchIconStyle,
@@ -160,12 +156,8 @@ export function PlanItineraryPage() {
   const currentDayEntry = plan.itinerary[selectedDay]
   const currentDayPlaceIds = currentDayEntry?.placeIds ?? []
 
-  // 이 Day가 첫/마지막 Day면 공항·항구 도착·출발 지점을 지도 핀으로도 함께 보여준다.
-  // (실제 일정 데이터인 plan.itinerary에는 넣지 않고 화면 표시에만 끼워 넣는다 —
-  // 드래그·삭제·시간수정 대상이 아니라 위치만 고정된 앵커라서 별도 취급한다.)
   const isFirstDay = selectedDay === 1
   const isLastDay = selectedDay === dayCount
-  const gatewayLabel = ARRIVAL_POINT_BY_TRANSPORT_MODE[plan.transportMode]
 
   const departurePlace = currentDayEntry?.departurePlaceId
     ? { id: currentDayEntry.departurePlaceId, title: placeTitle(currentDayEntry.departurePlaceId) }
@@ -240,11 +232,7 @@ export function PlanItineraryPage() {
 
   const showTravelLabel = !trimmedRecommendQuery && recommendMode === 'nearby'
 
-  const mapStops = [
-    ...(isFirstDay ? [{ id: GATEWAY_ARRIVAL_ID, title: `${gatewayLabel} 도착` }] : []),
-    ...stops,
-    ...(isLastDay ? [{ id: GATEWAY_DEPARTURE_ID, title: `${gatewayLabel} 출발` }] : []),
-  ]
+  const mapStops = stops
   // 탭은 바텀시트 안 내용만 나눈다 — 지도 자체는 네이버맵처럼 어느 탭에 있든 늘
   // 오늘 동선 + 추천 핀을 함께 보여준다.
   const unassignedPlacesForMap = recommendedPlaces.map((place) => ({
@@ -532,13 +520,6 @@ export function PlanItineraryPage() {
 
         {sheetTab === 'schedule' ? (
           <div className={sectionStyle}>
-            {isFirstDay ? (
-              <div className={gatewayRowStyle}>
-                <span className={gatewayLabelStyle}>🛬 {gatewayLabel} 도착</span>
-                <span className={gatewayTimeStyle}>{plan.arrivalTime}</span>
-              </div>
-            ) : null}
-
             {isEditingDeparture ? (
               <div className={fieldEditorStyle}>
                 <div className={fieldEditorHeaderStyle}>
@@ -609,13 +590,6 @@ export function PlanItineraryPage() {
                 onToggleMustVisit={handleToggleMustVisit}
               />
             )}
-
-            {isLastDay ? (
-              <div className={gatewayRowStyle}>
-                <span className={gatewayLabelStyle}>🛫 {gatewayLabel} 출발</span>
-                <span className={gatewayTimeStyle}>{plan.departureTime}</span>
-              </div>
-            ) : null}
           </div>
         ) : (
           <div className={sectionStyle}>
