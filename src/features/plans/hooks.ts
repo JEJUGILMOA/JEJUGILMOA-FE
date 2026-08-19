@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants'
 import {
+  confirmPlan,
   createPlan,
+  deletePlan,
   fetchPlanById,
   fetchPlans,
   updatePlanBudget,
@@ -87,6 +89,29 @@ export function useUpdatePlanBudgetMutation() {
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
+    },
+  })
+}
+
+export function useConfirmPlanMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: confirmPlan,
+    onSuccess: (plan) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
+    },
+  })
+}
+
+export function useDeletePlanMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (planId: string) => deletePlan(planId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
     },
   })
 }

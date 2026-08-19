@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
-import { usePlanQuery, useUpdatePlanTitleMutation } from '@/features/plans/hooks'
+import { useConfirmPlanMutation, usePlanQuery, useUpdatePlanTitleMutation } from '@/features/plans/hooks'
 import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
 import type { BudgetCategory } from '@/features/plans/types'
 import {
@@ -59,6 +59,7 @@ export function PlanPreviewPage() {
   const navigate = useNavigate()
   const { data: plan, isLoading } = usePlanQuery(planId)
   const updateTitleMutation = useUpdatePlanTitleMutation()
+  const confirmPlanMutation = useConfirmPlanMutation()
 
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
@@ -70,8 +71,15 @@ export function PlanPreviewPage() {
   const goEditBudget = () => navigate(ROUTES.planBudget(planId), { state: { fromPreview: true } })
 
   const handleSave = () => {
-    toast.success('계획을 저장했어요')
-    navigate(ROUTES.plan)
+    confirmPlanMutation.mutate(planId, {
+      onSuccess: () => {
+        toast.success('계획을 저장했어요')
+        navigate(ROUTES.plan)
+      },
+      onError: () => {
+        toast.error('계획 저장에 실패했어요. 다시 시도해 주세요.')
+      },
+    })
   }
 
   const startEditTitle = (currentTitle: string) => {
@@ -239,7 +247,12 @@ export function PlanPreviewPage() {
           </Card>
         </div>
 
-        <Button fullWidth size="lg" onClick={handleSave}>
+        <Button
+          fullWidth
+          size="lg"
+          isLoading={confirmPlanMutation.isPending}
+          onClick={handleSave}
+        >
           계획 저장하기
         </Button>
       </div>

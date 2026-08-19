@@ -45,6 +45,7 @@ function toTravelPlan(draft: PlanDraft): TravelPlan {
     id: `plan-${Date.now()}`,
     title: buildTitle(info.startDate, info.endDate),
     destination: DESTINATION,
+    status: 'draft',
     ...info,
     createdAt: new Date().toISOString(),
     waypointPlaceIds: [],
@@ -128,4 +129,22 @@ export async function updatePlanBudget(
   const updated: TravelPlan = { ...mockPlans[index], budgetDetail }
   mockPlans[index] = updated
   return updated
+}
+
+/** 미리보기의 "계획 저장하기" — 여기서만 draft를 saved로 확정한다. TODO: 백엔드 API가
+ * 준비되면 apiClient.patch(`/plans/${id}/confirm`, ...)로 교체 */
+export async function confirmPlan(planId: string): Promise<TravelPlan> {
+  const index = mockPlans.findIndex((item) => item.id === planId)
+  if (index === -1) {
+    throw new Error('계획을 찾을 수 없어요.')
+  }
+  const updated: TravelPlan = { ...mockPlans[index], status: 'saved' }
+  mockPlans[index] = updated
+  return updated
+}
+
+/** TODO: 백엔드 API가 준비되면 apiClient.delete(`/plans/${id}`)로 교체 */
+export async function deletePlan(planId: string): Promise<void> {
+  const index = mockPlans.findIndex((item) => item.id === planId)
+  if (index !== -1) mockPlans.splice(index, 1)
 }

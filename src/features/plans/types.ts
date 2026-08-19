@@ -26,10 +26,18 @@ export type DayItinerary = {
   placeIds: string[]
 }
 
+/**
+ * draft = STEP01만 마치고 아직 "계획 저장하기"를 누르지 않은 상태(계획하다 중간에 나옴).
+ * saved = 미리보기에서 저장까지 마친 상태. "진행중인 계획"은 이 saved 중 여행 기간에
+ * 오늘이 포함된 경우로, 별도 필드 없이 날짜로만 계산한다 ({@link getPlanGroup}).
+ */
+export type PlanStatus = 'draft' | 'saved'
+
 export type TravelPlan = {
   id: string
   title: string
   destination: string
+  status: PlanStatus
   startDate: string
   endDate: string
   transportMode: TransportMode
