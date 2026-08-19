@@ -24,7 +24,16 @@ export function AppProviders({ children }: AppProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary FallbackComponent={AppErrorFallback}>
         {children}
-        <Toaster position="top-center" richColors closeButton />
+        <Toaster
+          position="top-center"
+          gap={8}
+          toastOptions={{
+            unstyled: true,
+            classNames: {
+              toast: 'jeju-toast',
+            },
+          }}
+        />
       </ErrorBoundary>
     </QueryClientProvider>
   )

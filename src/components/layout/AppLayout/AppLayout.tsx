@@ -1,13 +1,16 @@
 import { Outlet, useMatches } from 'react-router'
-import { AppHeader } from '@/components/layout/AppHeader/AppHeader'
 import { BottomNavigation } from '@/components/layout/BottomNavigation/BottomNavigation'
 import { useNativeMessage } from '@/bridge/useNativeMessage'
 import { useAppBootstrap } from '@/hooks/useAppBootstrap'
-import { APP_NAME } from '@/constants'
-import { layoutStyle, contentStyle } from './AppLayout.css.ts'
+import { cn } from '@/utils/cn'
+import { layoutStyle, contentStyle, contentFlushStyle, contentFullBleedStyle } from './AppLayout.css.ts'
 
-type RouteHandle = {
+export type RouteHandle = {
   title?: string
+  /** true면 BottomNavigation 숨김 */
+  hideNav?: boolean
+  /** true면 content 기본 패딩 제거 (풀블리드 히어로 등) */
+  flush?: boolean
 }
 
 export function AppLayout() {
@@ -15,19 +18,21 @@ export function AppLayout() {
   useNativeMessage()
 
   const matches = useMatches()
-  const title =
-    [...matches]
-      .reverse()
-      .map((match) => (match.handle as RouteHandle | undefined)?.title)
-      .find(Boolean) ?? APP_NAME
+  const handles = matches.map((match) => match.handle as RouteHandle | undefined)
+
+  const hideNav = handles.some((handle) => handle?.hideNav)
+  const flush = handles.some((handle) => handle?.flush)
+
+  const mainClassName = flush
+    ? contentFlushStyle
+    : cn(contentStyle, hideNav && contentFullBleedStyle)
 
   return (
     <div className={layoutStyle}>
-      <AppHeader title={title} />
-      <main className={contentStyle}>
+      <main className={mainClassName}>
         <Outlet />
       </main>
-      <BottomNavigation />
+      {!hideNav ? <BottomNavigation /> : null}
     </div>
   )
 }

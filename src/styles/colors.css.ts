@@ -67,4 +67,9 @@ export const colors = createGlobalTheme(':root', {
   border: {
     1: '#EBEBED',
   },
+  /** Figma Tertiary button hover/pressed */
+  stone: {
+    200: '#E7E5E4',
+    300: '#D6D3D1',
+  },
 })

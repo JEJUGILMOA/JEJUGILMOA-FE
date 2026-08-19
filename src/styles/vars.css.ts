@@ -40,6 +40,8 @@ export const vars = createGlobalTheme(':root', {
   radius: {
     none: '0px',
     sm: '6px',
+    /** Figma --radius-lg (button large) */
+    buttonLg: '8px',
     md: '10px',
     lg: '14px',
     xl: '20px',

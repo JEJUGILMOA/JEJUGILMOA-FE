@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { waitFor, screen } from '@testing-library/react'
 import { renderWithProviders } from '@/test/test-utils'
-import { PlaceCard } from '@/features/places/components/PlaceCard'
 import { usePlacesQuery } from '@/features/places/hooks'
 
 function PlacesList() {
@@ -13,9 +12,7 @@ function PlacesList() {
   return (
     <ul>
       {data?.map((place) => (
-        <li key={place.id}>
-          <PlaceCard place={place} />
-        </li>
+        <li key={place.id}>{place.name}</li>
       ))}
     </ul>
   )
