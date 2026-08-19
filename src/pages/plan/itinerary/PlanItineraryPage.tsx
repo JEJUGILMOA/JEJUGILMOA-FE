@@ -625,36 +625,36 @@ export function PlanItineraryPage() {
           <div className={sectionStyle}>
             <span className={sectionMetaStyle}>고르면 바로 Day {selectedDay}에 담겨요</span>
 
-            {!trimmedRecommendQuery ? (
-              <>
-                <HorizontalScrollArea>
-                  <div className={courseRowStyle}>
-                    {MOCK_COURSES.map((course) => (
-                      <RecommendedCourseChip
-                        key={course.id}
-                        title={course.title}
-                        meta={course.summary}
-                        onClick={() => setPendingCourse(course)}
-                      />
-                    ))}
-                  </div>
-                </HorizontalScrollArea>
+            {!trimmedRecommendQuery && recommendMode === 'popular' ? (
+              <HorizontalScrollArea>
+                <div className={courseRowStyle}>
+                  {MOCK_COURSES.map((course) => (
+                    <RecommendedCourseChip
+                      key={course.id}
+                      title={course.title}
+                      meta={course.summary}
+                      onClick={() => setPendingCourse(course)}
+                    />
+                  ))}
+                </div>
+              </HorizontalScrollArea>
+            ) : null}
 
-                <HorizontalScrollArea>
-                  <div className={courseRowStyle}>
-                    {CATEGORY_FILTERS.map((category) => (
-                      <Chip
-                        key={category}
-                        colorScheme="primary"
-                        isSelected={category === activeCategory}
-                        onClick={() => setActiveCategory(category)}
-                      >
-                        {category}
-                      </Chip>
-                    ))}
-                  </div>
-                </HorizontalScrollArea>
-              </>
+            {!trimmedRecommendQuery ? (
+              <HorizontalScrollArea>
+                <div className={courseRowStyle}>
+                  {CATEGORY_FILTERS.map((category) => (
+                    <Chip
+                      key={category}
+                      colorScheme="primary"
+                      isSelected={category === activeCategory}
+                      onClick={() => setActiveCategory(category)}
+                    >
+                      {category}
+                    </Chip>
+                  ))}
+                </div>
+              </HorizontalScrollArea>
             ) : null}
 
             {recommendMode === 'nearby' &&
