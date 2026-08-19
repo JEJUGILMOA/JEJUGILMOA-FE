@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { ChevronLeft, Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
@@ -8,7 +8,6 @@ import { Chip } from '@/components/ui/Chip/Chip'
 import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { Modal } from '@/components/ui/Modal/Modal'
-import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { toast } from '@/components/ui/Toast/Toast'
 import { PLACE_CATEGORY_LABELS, ROUTES } from '@/constants'
 import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
@@ -18,21 +17,22 @@ import {
   backButtonStyle,
   courseRowStyle,
   dayPagerFloatStyle,
+  departureResultChevronStyle,
+  departureResultRowStyle,
+  departureResultTextStyle,
   emptyTextStyle,
-  fieldCloseButtonStyle,
-  fieldEditorHeaderStyle,
-  fieldEditorStyle,
   fieldHintStyle,
-  fieldResultListStyle,
   fieldResultMetaStyle,
-  fieldResultRowStyle,
   fieldResultTitleStyle,
   fieldRowStyle,
   gatewayLabelStyle,
+  headerSearchBarActiveStyle,
   headerSearchBarStyle,
+  headerSearchCancelButtonStyle,
   headerSearchClearButtonStyle,
   headerSearchIconStyle,
   headerSearchInputStyle,
+  headerSearchModeLabelStyle,
   nextButtonStyle,
   pageRootStyle,
   sectionMetaStyle,
@@ -131,8 +131,7 @@ export function PlanItineraryPage() {
   const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
   const [showAnchorPrompt, setShowAnchorPrompt] = useState(false)
   const headerSearchInputRef = useRef<HTMLInputElement>(null)
-  const [isEditingDeparture, setIsEditingDeparture] = useState(false)
-  const [departureQuery, setDepartureQuery] = useState('')
+  const [isSelectingDeparture, setIsSelectingDeparture] = useState(false)
 
   // 미리보기의 연필 아이콘으로 들어왔으면 저장 후 다음 STEP(예산입력)으로 이어가지 않고
   // 미리보기로 바로 돌아간다 — 이 화면만 고쳐달라고 들어온 거라 나머지 단계를 강제로 거칠 필요가 없다.
@@ -231,6 +230,9 @@ export function PlanItineraryPage() {
           .map((item) => item.place))
 
   const showTravelLabel = !trimmedRecommendQuery && recommendMode === 'nearby'
+  // 출발지 검색은 헤더 검색창을 그대로 재사용한다 — 카테고리·코스 추천과 무관한
+  // 단순 검색이라 popular 후보군에 검색어만 적용하면 된다.
+  const departureCandidates = recommendSearchResults ?? candidatePlaces
 
   const mapStops = stops
   // 탭은 바텀시트 안 내용만 나눈다 — 지도 자체는 네이버맵처럼 어느 탭에 있든 늘
@@ -375,21 +377,26 @@ export function PlanItineraryPage() {
     )
   }
 
-  const trimmedDepartureQuery = departureQuery.trim()
-  const departureSearchResults = trimmedDepartureQuery
-    ? MOCK_PLACES.filter((place) => {
-        const keyword = trimmedDepartureQuery.toLowerCase()
-        return (
-          place.title.toLowerCase().includes(keyword) ||
-          place.location.toLowerCase().includes(keyword)
-        )
-      })
-    : []
+  // 출발지 검색을 위해 별도 입력창을 시트 안에 두지 않고, 지도 위 헤더 검색창을
+  // "출발지 검색 모드"로 전환해서 재사용한다 — 검색 진입점을 하나로 합쳐서 좁은
+  // 시트 안에서 결과가 잘리는 문제를 피한다.
+  const handleStartDeparture = () => {
+    setIsSelectingDeparture(true)
+    setRecommendQuery('')
+    setSheetTab('recommend')
+  }
+
+  const handleCancelDeparture = () => {
+    setIsSelectingDeparture(false)
+    setRecommendQuery('')
+    setSheetTab('schedule')
+  }
 
   const handleSelectDeparture = (id: string) => {
     persistDay({ departurePlaceId: id }, '출발지를 저장했어요')
-    setIsEditingDeparture(false)
-    setDepartureQuery('')
+    setIsSelectingDeparture(false)
+    setRecommendQuery('')
+    setSheetTab('schedule')
   }
 
   // 헤더 검색창은 탭과 무관하게 항상 떠 있어서, "일정" 탭을 보다가 검색을 시작해도
@@ -401,8 +408,9 @@ export function PlanItineraryPage() {
 
   // 네이버맵처럼 지도를 탭하면 검색에서 빠져나가 일반 추천 탭으로 돌아간다.
   const handleTapMap = () => {
-    if (!recommendQuery) return
+    if (!recommendQuery && !isSelectingDeparture) return
     setRecommendQuery('')
+    setIsSelectingDeparture(false)
     headerSearchInputRef.current?.blur()
   }
 
@@ -486,18 +494,37 @@ export function PlanItineraryPage() {
         />
       </div>
 
-      <div className={headerSearchBarStyle}>
-        <Search size={16} className={headerSearchIconStyle} aria-hidden />
+      <div
+        className={
+          isSelectingDeparture
+            ? `${headerSearchBarStyle} ${headerSearchBarActiveStyle}`
+            : headerSearchBarStyle
+        }
+      >
+        {isSelectingDeparture ? (
+          <span className={headerSearchModeLabelStyle}>🚩 출발지</span>
+        ) : (
+          <Search size={16} className={headerSearchIconStyle} aria-hidden />
+        )}
         <input
           ref={headerSearchInputRef}
           type="text"
           className={headerSearchInputStyle}
           value={recommendQuery}
           onChange={(event) => handleRecommendQueryChange(event.target.value)}
-          placeholder="장소, 주소를 검색해보세요"
-          aria-label="장소, 주소 검색"
+          placeholder={isSelectingDeparture ? '출발지를 검색해보세요' : '장소, 주소를 검색해보세요'}
+          aria-label={isSelectingDeparture ? '출발지 검색' : '장소, 주소 검색'}
+          autoFocus={isSelectingDeparture}
         />
-        {recommendQuery ? (
+        {isSelectingDeparture ? (
+          <button
+            type="button"
+            className={headerSearchCancelButtonStyle}
+            onClick={handleCancelDeparture}
+          >
+            취소
+          </button>
+        ) : recommendQuery ? (
           <button
             type="button"
             className={headerSearchClearButtonStyle}
@@ -510,8 +537,12 @@ export function PlanItineraryPage() {
       </div>
 
       <ItineraryBottomSheet
-        title={`Day ${selectedDay} 일정 (${stops.length}곳)`}
-        expandTrigger={Boolean(trimmedRecommendQuery)}
+        title={
+          isSelectingDeparture
+            ? `Day ${selectedDay} 출발지 검색`
+            : `Day ${selectedDay} 일정 (${stops.length}곳)`
+        }
+        expandTrigger={Boolean(trimmedRecommendQuery) || isSelectingDeparture}
       >
         <div className={tabRowStyle}>
           <button
@@ -532,59 +563,12 @@ export function PlanItineraryPage() {
 
         {sheetTab === 'schedule' ? (
           <div className={sectionStyle}>
-            {isEditingDeparture ? (
-              <div className={fieldEditorStyle}>
-                <div className={fieldEditorHeaderStyle}>
-                  <span className={sectionMetaStyle}>Day {selectedDay}, 어디서 출발하시나요?</span>
-                  <button
-                    type="button"
-                    className={fieldCloseButtonStyle}
-                    onClick={() => {
-                      setIsEditingDeparture(false)
-                      setDepartureQuery('')
-                    }}
-                  >
-                    닫기
-                  </button>
-                </div>
-                <SearchBar
-                  value={departureQuery}
-                  onChange={setDepartureQuery}
-                  placeholder="장소, 주소를 검색해보세요"
-                  autoFocus
-                />
-                {trimmedDepartureQuery ? (
-                  <div className={fieldResultListStyle}>
-                    {departureSearchResults.length === 0 ? (
-                      <p className={emptyTextStyle}>검색 결과가 없어요.</p>
-                    ) : (
-                      departureSearchResults.map((place) => (
-                        <button
-                          key={place.id}
-                          type="button"
-                          className={fieldResultRowStyle}
-                          onClick={() => handleSelectDeparture(place.id)}
-                        >
-                          <span className={fieldResultTitleStyle}>{place.title}</span>
-                          <span className={fieldResultMetaStyle}>{place.location}</span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <button
-                type="button"
-                className={fieldRowStyle}
-                onClick={() => setIsEditingDeparture(true)}
-              >
-                <span className={gatewayLabelStyle}>
-                  {departurePlace ? `🚩 출발지: ${departurePlace.title}` : '🚩 출발지 설정하기'}
-                </span>
-                <span className={fieldHintStyle}>{departurePlace ? '변경' : '설정'}</span>
-              </button>
-            )}
+            <button type="button" className={fieldRowStyle} onClick={handleStartDeparture}>
+              <span className={gatewayLabelStyle}>
+                {departurePlace ? `🚩 출발지: ${departurePlace.title}` : '🚩 출발지 설정하기'}
+              </span>
+              <span className={fieldHintStyle}>{departurePlace ? '변경' : '설정'}</span>
+            </button>
 
             {scheduleItems.length === 0 && hasAnyDayContent ? (
               <p className={emptyTextStyle}>
@@ -623,9 +607,13 @@ export function PlanItineraryPage() {
           </div>
         ) : (
           <div className={sectionStyle}>
-            <span className={sectionMetaStyle}>고르면 바로 Day {selectedDay}에 담겨요</span>
+            <span className={sectionMetaStyle}>
+              {isSelectingDeparture
+                ? `탭하면 Day ${selectedDay}의 출발지로 설정돼요`
+                : `고르면 바로 Day ${selectedDay}에 담겨요`}
+            </span>
 
-            {!trimmedRecommendQuery && recommendMode === 'popular' ? (
+            {!trimmedRecommendQuery && !isSelectingDeparture && recommendMode === 'popular' ? (
               <HorizontalScrollArea>
                 <div className={courseRowStyle}>
                   {MOCK_COURSES.map((course) => (
@@ -640,7 +628,7 @@ export function PlanItineraryPage() {
               </HorizontalScrollArea>
             ) : null}
 
-            {!trimmedRecommendQuery ? (
+            {!trimmedRecommendQuery && !isSelectingDeparture ? (
               <HorizontalScrollArea>
                 <div className={courseRowStyle}>
                   {CATEGORY_FILTERS.map((category) => (
@@ -657,9 +645,28 @@ export function PlanItineraryPage() {
               </HorizontalScrollArea>
             ) : null}
 
-            {recommendMode === 'nearby' &&
-            !trimmedRecommendQuery &&
-            referencePlaceIds.length === 0 ? (
+            {isSelectingDeparture ? (
+              departureCandidates.length === 0 ? (
+                <p className={emptyTextStyle}>검색 결과가 없어요.</p>
+              ) : (
+                departureCandidates.map((place) => (
+                  <button
+                    key={place.id}
+                    type="button"
+                    className={departureResultRowStyle}
+                    onClick={() => handleSelectDeparture(place.id)}
+                  >
+                    <span className={departureResultTextStyle}>
+                      <span className={fieldResultTitleStyle}>{place.title}</span>
+                      <span className={fieldResultMetaStyle}>{place.location}</span>
+                    </span>
+                    <ChevronRight size={18} className={departureResultChevronStyle} aria-hidden />
+                  </button>
+                ))
+              )
+            ) : recommendMode === 'nearby' &&
+              !trimmedRecommendQuery &&
+              referencePlaceIds.length === 0 ? (
               <p className={emptyTextStyle}>
                 출발지나 장소를 먼저 담아야 가까운 장소를 추천해드릴 수 있어요.
               </p>

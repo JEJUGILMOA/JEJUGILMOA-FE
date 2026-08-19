@@ -149,6 +149,33 @@ export const headerSearchClearButtonStyle = style({
   cursor: 'pointer',
 })
 
+// 헤더 검색창이 "출발지 검색 모드"로 전환됐을 때의 강조 테두리 — 필드 포커스 색과 동일한
+// secondary 톤을 써서 지금 검색이 평소와 다른 의미(장소 담기 아님)임을 알려준다.
+export const headerSearchBarActiveStyle = style({
+  border: `1.5px solid ${colors.secondary[500]}`,
+  boxShadow: `0 0 0 3px ${colors.secondary[100]}`,
+})
+
+export const headerSearchModeLabelStyle = style({
+  flexShrink: 0,
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.bold,
+  color: colors.secondary[600],
+  whiteSpace: 'nowrap',
+})
+
+export const headerSearchCancelButtonStyle = style({
+  flexShrink: 0,
+  border: 'none',
+  background: 'transparent',
+  padding: 0,
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.text[3],
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+})
+
 export const sectionStyle = style({
   display: 'flex',
   flexDirection: 'column',
@@ -213,43 +240,14 @@ export const fieldHintStyle = style({
   color: colors.primary[600],
 })
 
-export const fieldEditorStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[2],
-  padding: vars.space[3],
-  borderRadius: vars.radius.md,
-  backgroundColor: colors.surface[4],
-})
-
-export const fieldEditorHeaderStyle = style({
+// 출발지 검색 결과 행 — 헤더 검색창을 통해 "추천·검색" 탭에 뜨는, 탭하면 바로
+// 출발지로 지정되는 목록. 일반 장소 추천 행(WaypointPlaceRow)과 달리 담기·별표
+// 토글이 없는 단순 선택 목록이라 별도 스타일로 둔다.
+export const departureResultRowStyle = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-})
-
-export const fieldCloseButtonStyle = style({
-  flexShrink: 0,
-  border: 'none',
-  background: 'transparent',
-  padding: 0,
-  fontSize: vars.fontSize.xs,
-  fontWeight: vars.fontWeight.semibold,
-  color: colors.text[4],
-  cursor: 'pointer',
-})
-
-export const fieldResultListStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  maxHeight: '240px',
-  overflowY: 'auto',
-})
-
-export const fieldResultRowStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[1],
+  gap: vars.space[2],
   width: '100%',
   padding: `${vars.space[3]} ${vars.space[1]}`,
   border: 'none',
@@ -260,6 +258,18 @@ export const fieldResultRowStyle = style({
   selectors: {
     '&:last-child': { borderBottom: 'none' },
   },
+})
+
+export const departureResultTextStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[1],
+  minWidth: 0,
+})
+
+export const departureResultChevronStyle = style({
+  flexShrink: 0,
+  color: colors.text[6],
 })
 
 export const fieldResultTitleStyle = style({
