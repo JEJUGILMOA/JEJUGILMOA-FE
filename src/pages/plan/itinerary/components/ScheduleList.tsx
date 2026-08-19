@@ -1,10 +1,12 @@
 import { GripVertical, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { cn } from '@/utils/cn'
 import {
   dragHandleStyle,
   listStyle,
   mustVisitButtonRecipe,
   removeButtonStyle,
+  rowMustVisitStyle,
   rowStyle,
   titleStyle,
 } from './ScheduleList.css.ts'
@@ -18,7 +20,7 @@ export type ScheduleListItem = {
 
 export type ScheduleListProps = {
   items: ScheduleListItem[]
-  /** 이 Day에서 "꼭 가고 싶은 장소"로 정한 곳들(최대 2개) */
+  /** 이 Day에서 "꼭 가고 싶은 장소"로 정한 곳들(최대 4개) */
   mustVisitIds: string[]
   onReorder: (nextOrderIds: string[]) => void
   onRemove: (id: string) => void
@@ -133,7 +135,7 @@ export function ScheduleList({
             if (el) rowRefs.current.set(item.id, el)
             else rowRefs.current.delete(item.id)
           }}
-          className={rowStyle}
+          className={cn(rowStyle, mustVisitIds.includes(item.id) && rowMustVisitStyle)}
           data-dragging={item.id === draggingId}
           style={item.id === draggingId ? { transform: `translateY(${dragOffsetY}px)` } : undefined}
         >

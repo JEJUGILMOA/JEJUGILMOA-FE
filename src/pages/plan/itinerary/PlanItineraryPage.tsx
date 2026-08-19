@@ -1,6 +1,6 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Search, Star, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
@@ -34,6 +34,9 @@ import {
   headerSearchIconStyle,
   headerSearchInputStyle,
   headerSearchModeLabelStyle,
+  mustVisitSummaryCountStyle,
+  mustVisitSummaryRowStyle,
+  mustVisitSummaryTextStyle,
   nextButtonStyle,
   pageRootStyle,
   sectionMetaStyle,
@@ -607,14 +610,26 @@ export function PlanItineraryPage() {
             ) : null}
 
             {scheduleItems.length > 0 ? (
-              <ScheduleList
-                items={scheduleItems}
-                mustVisitIds={currentDayMustVisitIds}
-                onReorder={handleReorder}
-                onRemove={handleRemove}
-                onTimeChange={handleTimeChange}
-                onToggleMustVisit={handleToggleMustVisit}
-              />
+              <>
+                <div className={mustVisitSummaryRowStyle}>
+                  <span className={mustVisitSummaryTextStyle}>
+                    <Star size={14} fill="#FFAC00" stroke="#FFAC00" aria-hidden />
+                    꼭 가고 싶은 장소로 정한 곳 주변으로 나머지 일정을 추천해드려요
+                  </span>
+                  <span className={mustVisitSummaryCountStyle}>
+                    {currentDayMustVisitIds.length}/4
+                  </span>
+                </div>
+
+                <ScheduleList
+                  items={scheduleItems}
+                  mustVisitIds={currentDayMustVisitIds}
+                  onReorder={handleReorder}
+                  onRemove={handleRemove}
+                  onTimeChange={handleTimeChange}
+                  onToggleMustVisit={handleToggleMustVisit}
+                />
+              </>
             ) : null}
           </div>
         ) : (

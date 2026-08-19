@@ -25,6 +25,16 @@ export const rowStyle = style({
   },
 })
 
+// "꼭 가고 싶은 장소"로 찍힌 행만 시간순 그대로 둔 채 살짝 튀게 한다 — 목록을
+// 재배치하면 시간순(=방문 순서)이 깨지니, 위치는 안 건드리고 강조만 더한다.
+export const rowMustVisitStyle = style({
+  paddingLeft: vars.space[2],
+  paddingRight: vars.space[2],
+  borderLeft: `4px solid ${colors.warning[700]}`,
+  backgroundColor: '#FFFCF2',
+  borderRadius: vars.radius.sm,
+})
+
 export const dragHandleStyle = style({
   flexShrink: 0,
   display: 'flex',

@@ -206,6 +206,35 @@ export const emptyTextStyle = style({
   color: colors.text[4],
 })
 
+// "꼭 가고 싶은 장소"가 뭘 위해 쓰이는지, 몇 개까지 정할 수 있는지 알려주는 안내줄.
+// 일정 목록 자체는 시간순을 유지해야 해서(방문 순서 그대로), 항목을 재배치하는
+// 대신 목록 위에 안내만 얹는다 — 실제 강조는 각 행에서 개별적으로 한다.
+export const mustVisitSummaryRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space[2],
+  padding: `${vars.space[2]} ${vars.space[3]}`,
+  borderRadius: vars.radius.md,
+  backgroundColor: '#FFF8E8',
+})
+
+export const mustVisitSummaryTextStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[1],
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.semibold,
+  color: '#8A5A00',
+})
+
+export const mustVisitSummaryCountStyle = style({
+  flexShrink: 0,
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.bold,
+  color: '#8A5A00',
+})
+
 export const courseRowStyle = style({
   display: 'flex',
   gap: vars.space[2],
