@@ -574,13 +574,31 @@ export function PlanItineraryPage() {
               </button>
             )}
 
-            {scheduleItems.length === 0 ? (
+            {scheduleItems.length === 0 && hasAnyDayContent ? (
               <p className={emptyTextStyle}>
-                {hasAnyDayContent
-                  ? `아직 배정된 장소가 없어요. "${recommendTabLabel}" 탭에서 담아보세요.`
-                  : '먼저 이 Day의 출발지나 꼭 가고 싶은 장소를 정해보세요. 그 장소를 기준으로 근처를 추천해드려요.'}
+                아직 배정된 장소가 없어요. "{recommendTabLabel}" 탭에서 담아보세요.
               </p>
-            ) : (
+            ) : null}
+
+            {scheduleItems.length === 0 && !hasAnyDayContent ? (
+              <>
+                <span className={sectionMetaStyle}>이런 코스는 어때요?</span>
+                <HorizontalScrollArea>
+                  <div className={courseRowStyle}>
+                    {MOCK_COURSES.map((course) => (
+                      <RecommendedCourseChip
+                        key={course.id}
+                        title={course.title}
+                        meta={course.summary}
+                        onClick={() => setPendingCourse(course)}
+                      />
+                    ))}
+                  </div>
+                </HorizontalScrollArea>
+              </>
+            ) : null}
+
+            {scheduleItems.length > 0 ? (
               <ScheduleList
                 items={scheduleItems}
                 mustVisitIds={currentDayMustVisitIds}
@@ -589,7 +607,7 @@ export function PlanItineraryPage() {
                 onTimeChange={handleTimeChange}
                 onToggleMustVisit={handleToggleMustVisit}
               />
-            )}
+            ) : null}
           </div>
         ) : (
           <div className={sectionStyle}>
