@@ -69,6 +69,9 @@ export function PlanCreatePage() {
 
   const { data: existingPlan, isLoading: isExistingPlanLoading } = usePlanQuery(planId ?? '')
   const hasSyncedEditDraftRef = useRef(false)
+  // 저장된 계획은 이미 그 날짜 기준으로 Day별 일정이 짜여 있어서, 날짜를 바꾸면
+  // 일부 Day의 일정이 조용히 갈 곳을 잃는다 — 그래서 날짜만 수정 자체를 막는다.
+  const isDateEditLocked = isEditMode && existingPlan?.status === 'saved'
 
   useEffect(() => {
     if (!isEditMode || !existingPlan || hasSyncedEditDraftRef.current) return
@@ -193,6 +196,7 @@ export function PlanCreatePage() {
             endDate={draft.endDate}
             onChange={(startDate, endDate) => setDraft((prev) => ({ ...prev, startDate, endDate }))}
             onNext={goNext}
+            readOnly={isDateEditLocked}
           />
         ) : null}
 

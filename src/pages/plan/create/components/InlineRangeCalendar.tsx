@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   addMonths,
   differenceInCalendarDays,
@@ -39,14 +39,28 @@ export type InlineRangeCalendarProps = {
   startDate: string | null
   endDate: string | null
   onChange: (startDate: string, endDate: string | null) => void
+  /** true면 날짜를 볼 수만 있고 고를 수 없다 (저장된 계획은 날짜 수정 불가) */
+  readOnly?: boolean
 }
 
 /** STEP 01-2: 인라인 월 캘린더 range 선택 (오늘 이전 날짜 비활성화) */
-export function InlineRangeCalendar({ startDate, endDate, onChange }: InlineRangeCalendarProps) {
+export function InlineRangeCalendar({
+  startDate,
+  endDate,
+  onChange,
+  readOnly = false,
+}: InlineRangeCalendarProps) {
   const start = useMemo(() => (startDate ? parse(startDate, DISPLAY_FORMAT, new Date()) : null), [startDate])
   const end = useMemo(() => (endDate ? parse(endDate, DISPLAY_FORMAT, new Date()) : null), [endDate])
   const [viewMonth, setViewMonth] = useState(() => start ?? new Date())
   const today = startOfDay(new Date())
+
+  // 수정 화면에서는 기존 계획의 startDate가 마운트 이후(비동기 조회)에 채워지므로,
+  // useState 초기값만으로는 처음 보여줄 달을 못 맞춘다 — 값이 들어오면 그 달로 맞춰준다.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (start) setViewMonth(start)
+  }, [start])
 
   const days = useMemo(() => {
     const gridStart = startOfWeek(startOfMonth(viewMonth), { weekStartsOn: 0 })
@@ -55,6 +69,7 @@ export function InlineRangeCalendar({ startDate, endDate, onChange }: InlineRang
   }, [viewMonth])
 
   const handleSelectDay = (day: Date) => {
+    if (readOnly) return
     if (!start || end) {
       onChange(format(day, DISPLAY_FORMAT), null)
       return
@@ -113,7 +128,7 @@ export function InlineRangeCalendar({ startDate, endDate, onChange }: InlineRang
             )
           }
 
-          const disabled = isBefore(day, today)
+          const disabled = readOnly || isBefore(day, today)
           const isStart = start ? isSameDay(day, start) : false
           const isEnd = end ? isSameDay(day, end) : false
           const inRange = start && end ? day > start && day < end : false
