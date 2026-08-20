@@ -11,7 +11,6 @@ import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
 import { useConfirmPlanMutation, usePlanQuery, useUpdatePlanTitleMutation } from '@/features/plans/hooks'
-import { ARRIVAL_POINT_BY_TRANSPORT_MODE } from '@/features/plans/transportMode'
 import type { BudgetCategory } from '@/features/plans/types'
 import {
   budgetRowLabelStyle,
@@ -117,12 +116,17 @@ export function PlanPreviewPage() {
   const nights = Math.max(dayCount - 1, 0)
   const durationLabel = dayCount <= 1 ? '당일치기' : `${nights}박 ${dayCount}일`
 
-  const gatewayLabel = ARRIVAL_POINT_BY_TRANSPORT_MODE[plan.transportMode]
-
   const days = Array.from({ length: dayCount }, (_, index) => {
     const day = index + 1
-    const placeIds = plan.itinerary[day]?.placeIds ?? []
-    return { day, places: placeIds.map((id) => ({ id, title: placeTitle(id) })) }
+    const dayEntry = plan.itinerary[day]
+    const placeIds = dayEntry?.placeIds ?? []
+    const places = [
+      ...(dayEntry?.departurePlaceId
+        ? [{ id: dayEntry.departurePlaceId, title: placeTitle(dayEntry.departurePlaceId), isDeparture: true }]
+        : []),
+      ...placeIds.map((id) => ({ id, title: placeTitle(id) })),
+    ]
+    return { day, places }
   })
 
   const budgetTotal = plan.budgetDetail
@@ -169,8 +173,7 @@ export function PlanPreviewPage() {
             </button>
           </div>
           <p className={tripMetaStyle}>
-            {plan.startDate} - {plan.endDate} · {durationLabel} · {gatewayLabel} {plan.arrivalTime}{' '}
-            도착
+            {plan.startDate} - {plan.endDate} · {durationLabel} · {plan.arrivalTime} 도착
           </p>
         </div>
 
@@ -179,7 +182,7 @@ export function PlanPreviewPage() {
             <div className={sectionHeaderRowStyle}>
               <span className={sectionTitleStyle}>경로 지도</span>
             </div>
-            <PlanRouteMap days={days} gatewayLabel={gatewayLabel} />
+            <PlanRouteMap days={days} />
           </Card>
 
           <Card as="section">
@@ -196,11 +199,7 @@ export function PlanPreviewPage() {
             </div>
             <div className={dayListStyle}>
               {days.map(({ day, places }) => {
-                const labels = [
-                  ...(day === 1 ? [`${gatewayLabel} 도착`] : []),
-                  ...places.map((place) => place.title),
-                  ...(day === dayCount ? [`${gatewayLabel} 출발`] : []),
-                ]
+                const labels = places.map((place) => place.title)
                 return (
                   <div key={day} className={dayRowStyle}>
                     <div className={dayLabelRowStyle}>

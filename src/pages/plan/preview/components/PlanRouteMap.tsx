@@ -1,6 +1,7 @@
+import { Flag } from 'lucide-react'
 import { useState } from 'react'
 import { Chip } from '@/components/ui/Chip/Chip'
-import { GATEWAY_ARRIVAL_ID, GATEWAY_DEPARTURE_ID, getPinPosition } from '@/utils/mapPinPositions'
+import { getPinPosition } from '@/utils/mapPinPositions'
 import { colors } from '@/styles/colors.css.ts'
 import {
   dayTabRowStyle,
@@ -11,29 +12,51 @@ import {
 } from './PlanRouteMap.css.ts'
 
 export type PlanRouteMapProps = {
-  /** Day별로 배정된 장소 목록 (방문 순서대로) */
-  days: { day: number; places: { id: string; title: string }[] }[]
-  /** 배/비행기 도착·출발 지점 라벨 (예: "제주국제공항") */
-  gatewayLabel: string
+  /** Day별로 배정된 장소 목록 (방문 순서대로). isDeparture는 그 Day의 출발지를 뜻한다. */
+  days: { day: number; places: { id: string; title: string; isDeparture?: boolean }[] }[]
+}
+
+/** "전체" 탭에서 Day를 구분하는 핀 색상 팔레트 — Day 수가 넘으면 처음부터 반복 */
+const DAY_PIN_COLORS = [colors.primary[500], colors.secondary[500], colors.warning[500], colors.error[100]]
+/** 출발지는 어느 Day든 항상 중립 회색으로 고정 */
+const DEPARTURE_PIN_COLOR = colors.text[3]
+
+/** 출발지는 번호를 매기지 않고 깃발 아이콘으로 표시하고, 나머지 장소만 Day마다 1부터 번호를 매긴다. */
+function numberDayPlaces(places: { id: string; title: string; isDeparture?: boolean }[]) {
+  let count = 0
+  return places.map((place) => {
+    if (place.isDeparture) return { ...place, number: undefined }
+    count += 1
+    return { ...place, number: count }
+  })
 }
 
 /** STEP 08 계획 미리보기: 전체/Day별로 전환해서 볼 수 있는 정적 경로 미니맵 (확대/축소 없음) */
-export function PlanRouteMap({ days, gatewayLabel }: PlanRouteMapProps) {
+export function PlanRouteMap({ days }: PlanRouteMapProps) {
   const [selectedDay, setSelectedDay] = useState<number | 'all'>('all')
 
-  const firstDay = days[0]?.day
-  const lastDay = days[days.length - 1]?.day
-  const arrivalStop = { id: GATEWAY_ARRIVAL_ID, title: `${gatewayLabel} 도착` }
-  const departureStop = { id: GATEWAY_DEPARTURE_ID, title: `${gatewayLabel} 출발` }
+  const dayColor = (dayIndex: number) => DAY_PIN_COLORS[dayIndex % DAY_PIN_COLORS.length]
 
-  const stops =
+  const stops: { key: string; id: string; title: string; color?: string; number?: number; isDeparture?: boolean }[] =
     selectedDay === 'all'
-      ? [arrivalStop, ...days.flatMap((entry) => entry.places), departureStop]
-      : [
-          ...(selectedDay === firstDay ? [arrivalStop] : []),
-          ...(days.find((entry) => entry.day === selectedDay)?.places ?? []),
-          ...(selectedDay === lastDay ? [departureStop] : []),
-        ]
+      ? days.flatMap((entry, dayIndex) =>
+          numberDayPlaces(entry.places).map((place) => ({
+            ...place,
+            key: `${entry.day}-${place.id}`,
+            color: place.isDeparture ? DEPARTURE_PIN_COLOR : dayColor(dayIndex),
+          })),
+        )
+      : (() => {
+          const dayIndex = days.findIndex((entry) => entry.day === selectedDay)
+          const entry = days[dayIndex]
+          return entry
+            ? numberDayPlaces(entry.places).map((place) => ({
+                ...place,
+                key: `${entry.day}-${place.id}`,
+                color: place.isDeparture ? DEPARTURE_PIN_COLOR : dayColor(dayIndex),
+              }))
+            : []
+        })()
 
   const routePoints = stops.map((stop) => getPinPosition(stop.id))
 
@@ -79,16 +102,20 @@ export function PlanRouteMap({ days, gatewayLabel }: PlanRouteMapProps) {
           </svg>
         ) : null}
 
-        {stops.map((stop, index) => {
+        {stops.map((stop) => {
           const pos = getPinPosition(stop.id)
           return (
             <span
-              key={stop.id}
+              key={stop.key}
               className={stopPinRecipe()}
-              style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
-              aria-label={stop.title}
+              style={{
+                left: `${pos.left}%`,
+                top: `${pos.top}%`,
+                ...(stop.color ? { backgroundColor: stop.color } : {}),
+              }}
+              aria-label={stop.isDeparture ? `출발지: ${stop.title}` : stop.title}
             >
-              {index + 1}
+              {stop.isDeparture ? <Flag size={12} /> : stop.number}
             </span>
           )
         })}
