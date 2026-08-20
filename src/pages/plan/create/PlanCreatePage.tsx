@@ -10,22 +10,20 @@ import { useCreatePlanMutation, usePlanQuery, useUpdatePlanInfoMutation } from '
 import type { CompanionType, DayItinerary, PlanDraft } from '@/features/plans/types'
 import { StepProgress } from './components/StepProgress'
 import { pageStyle, progressTrackStyle, skipLinkStyle, topBarStyle } from './PlanCreatePage.css.ts'
-import { BudgetStep } from './steps/BudgetStep'
 import { CompanionStep } from './steps/CompanionStep'
 import { DatesStep } from './steps/DatesStep'
 import { InterestsStep } from './steps/InterestsStep'
 import { TravelersStep } from './steps/TravelersStep'
 
-type WizardStepId = 'dates' | 'companion' | 'travelers' | 'budget' | 'interests'
+type WizardStepId = 'dates' | 'companion' | 'travelers' | 'interests'
 
 const STEP_PROGRESS_INDEX: Record<WizardStepId, number> = {
   dates: 0,
   companion: 1,
   travelers: 2,
-  budget: 3,
-  interests: 4,
+  interests: 3,
 }
-const TOTAL_PROGRESS_STEPS = 5
+const TOTAL_PROGRESS_STEPS = 4
 
 const DATE_FORMAT = 'yyyy.MM.dd'
 
@@ -119,11 +117,8 @@ export function PlanCreatePage() {
       case 'travelers':
         setStep('companion')
         return
-      case 'budget':
-        setStep(draft.companionType === 'solo' ? 'companion' : 'travelers')
-        return
       case 'interests':
-        setStep('budget')
+        setStep(draft.companionType === 'solo' ? 'companion' : 'travelers')
     }
   }
 
@@ -177,12 +172,9 @@ export function PlanCreatePage() {
         return
       }
       case 'companion':
-        setStep(draft.companionType === 'solo' ? 'budget' : 'travelers')
+        setStep(draft.companionType === 'solo' ? 'interests' : 'travelers')
         return
       case 'travelers':
-        setStep('budget')
-        return
-      case 'budget':
         setStep('interests')
         return
       case 'interests':
@@ -247,14 +239,6 @@ export function PlanCreatePage() {
           <TravelersStep
             travelerCount={draft.travelerCount}
             onChange={(travelerCount) => setDraft((prev) => ({ ...prev, travelerCount }))}
-            onNext={goNext}
-          />
-        ) : null}
-
-        {step === 'budget' ? (
-          <BudgetStep
-            budgetTier={draft.budgetTier}
-            onChange={(budgetTier) => setDraft((prev) => ({ ...prev, budgetTier }))}
             onNext={goNext}
           />
         ) : null}
