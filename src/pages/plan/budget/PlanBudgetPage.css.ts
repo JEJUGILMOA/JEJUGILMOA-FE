@@ -35,14 +35,6 @@ export const suggestionHintStyle = style({
   padding: `${vars.space[2]} ${vars.space[3]}`,
 })
 
-export const feeHintStyle = style({
-  fontSize: vars.fontSize.xs,
-  color: colors.text[2],
-  backgroundColor: colors.surface[4],
-  borderRadius: vars.radius.sm,
-  padding: `${vars.space[2]} ${vars.space[3]}`,
-})
-
 export const skipButtonStyle = style({
   border: 'none',
   background: 'transparent',

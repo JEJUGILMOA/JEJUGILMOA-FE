@@ -6,12 +6,10 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { TextField } from '@/components/ui/TextField/TextField'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
-import { MOCK_PLACES } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanBudgetMutation } from '@/features/plans/hooks'
 import type { BudgetCategory, BudgetTier } from '@/features/plans/types'
 import {
   descriptionStyle,
-  feeHintStyle,
   formStyle,
   headerBlockStyle,
   pageStyle,
@@ -91,27 +89,6 @@ export function PlanBudgetPage() {
   const suggestedTotal =
     plan && !plan.budgetDetail ? computeSuggestedTotal(plan.budgetTier, plan.travelerCount) : null
 
-  // itinerary에 실제로 배정된 장소(출발지·필수 장소·그 외 방문지) 전체에서 유료 입장료가 있는 곳만 추려낸다.
-  const allPlannedPlaceIds = plan
-    ? Array.from(
-        new Set(
-          Object.values(plan.itinerary).flatMap((day) => [
-            ...(day.departurePlaceId ? [day.departurePlaceId] : []),
-            ...day.mustVisitPlaceIds,
-            ...day.placeIds,
-          ]),
-        ),
-      )
-    : []
-
-  const paidPlaces = allPlannedPlaceIds.reduce<{ title: string; fee: string }[]>((list, placeId) => {
-    const place = MOCK_PLACES.find((item) => item.id === placeId)
-    if (place?.fee && place.fee !== '무료') {
-      list.push({ title: place.title, fee: place.fee })
-    }
-    return list
-  }, [])
-
   const goBack = () => navigate(-1)
 
   const handleAmountChange = (category: BudgetCategory, value: string) => {
@@ -190,13 +167,6 @@ export function PlanBudgetPage() {
                 suffix="만원"
               />
             ))}
-            {paidPlaces.length > 0 ? (
-              <p className={feeHintStyle}>
-                선택하신 장소 중 입장료가 있는 곳:{' '}
-                {paidPlaces.map((place) => `${place.title}(${place.fee})`).join(', ')} — 기타 항목에
-                반영해보세요.
-              </p>
-            ) : null}
           </div>
 
           <div className={totalCardStyle}>
