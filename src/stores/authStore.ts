@@ -7,6 +7,11 @@ export type AuthUser = {
   profileImageUrl?: string
 }
 
+const DEV_USER: AuthUser = {
+  id: '1',
+  nickname: '김여행',
+}
+
 type AuthState = {
   accessToken: string | null
   user: AuthUser | null
@@ -16,9 +21,9 @@ type AuthState = {
 }
 
 export const authStore = createStore<AuthState>()((set) => ({
-  accessToken: null,
-  user: null,
-  isAuthenticated: false,
+  accessToken: 'dev-token',
+  user: DEV_USER,
+  isAuthenticated: true,
   setAuth: ({ accessToken, user }) =>
     set({
       accessToken,

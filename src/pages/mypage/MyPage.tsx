@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router'
 import { BookOpen, ChevronRight, MapPin, Settings, Share2, Sparkles } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { ROUTES } from '@/constants'
-import { Button } from '@/components/ui/Button/Button'
 import { MenuListItem } from '@/pages/mypage/components/MenuListItem/MenuListItem'
 import { ProfileAvatar } from '@/pages/mypage/components/ProfileAvatar/ProfileAvatar'
 import { mockProfile } from '@/pages/mypage/data/mockMyPage'
@@ -15,7 +14,6 @@ import {
   profileButtonStyle,
   profileMetaStyle,
   profileRowStyle,
-  loginCardStyle,
 } from './MyPage.css.ts'
 
 const MENU_ITEMS = [
@@ -29,36 +27,10 @@ const MENU_ITEMS = [
 export function MyPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const setAuth = useAuthStore((s) => s.setAuth)
 
   const nickname = user?.nickname ?? mockProfile.nickname
   const email = mockProfile.email
   const imageUrl = user?.profileImageUrl
-
-  if (!isAuthenticated) {
-    return (
-      <div className={pageStyle}>
-        <div className={loginCardStyle}>
-          <p>로그인이 필요합니다.</p>
-          <Button
-            onClick={() =>
-              setAuth({
-                accessToken: 'dev-token',
-                user: {
-                  id: '1',
-                  nickname: mockProfile.nickname,
-                  profileImageUrl: undefined,
-                },
-              })
-            }
-          >
-            개발용 로그인
-          </Button>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className={pageStyle}>

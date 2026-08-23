@@ -13,16 +13,6 @@ export const pageStyle = style({
   backgroundColor: colors.surface[1],
 })
 
-export const loginCardStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[4],
-  alignItems: 'flex-start',
-  padding: vars.space[4],
-  borderRadius: vars.radius.lg,
-  backgroundColor: colors.surface[1],
-})
-
 export const profileButtonStyle = style({
   display: 'block',
   width: '100%',
