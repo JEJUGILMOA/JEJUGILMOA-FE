@@ -9,6 +9,16 @@ function isNativeWebView() {
   return typeof window !== 'undefined' && Boolean(window.ReactNativeWebView)
 }
 
+/** 브라우저에서 앱 셸(네이티브 탭바)을 가정하고 웹 하단 네비를 숨김 */
+function shouldHideWebBottomNav() {
+  if (typeof window === 'undefined') return false
+  if (isNativeWebView()) return true
+  if (import.meta.env.VITE_HIDE_WEB_NAV === 'true') return true
+  if (window.__GILMOA_HIDE_WEB_NAV__) return true
+  const nativeQuery = new URLSearchParams(window.location.search).get('native')
+  return nativeQuery === '1' || nativeQuery === 'true'
+}
+
 function shouldUseMockBridge() {
   if (typeof window === 'undefined') return false
   if (isNativeWebView()) return false
@@ -75,5 +85,6 @@ export const nativeBridge = {
   requestNativeLocation,
   notifyWebReady,
   isNativeWebView,
+  shouldHideWebBottomNav,
   shouldUseMockBridge,
 }

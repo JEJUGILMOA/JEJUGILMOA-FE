@@ -48,6 +48,7 @@ pnpm dev
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | API Base URL | `http://localhost:3000/api` |
 | `VITE_USE_MOCK_BRIDGE` | 브라우저에서 Native Bridge Mock 사용 | `true` |
+| `VITE_HIDE_WEB_NAV` | 브라우저에서 웹 하단 탭바 숨김 (앱 셸 미리보기) | `true` |
 
 ---
 

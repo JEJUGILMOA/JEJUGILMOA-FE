@@ -1,11 +1,12 @@
 import { style } from '@vanilla-extract/css'
+import { BOTTOM_NAV_OFFSET_VAR } from '@/components/layout/AppLayout/AppLayout.css.ts'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
 export const fabStyle = style({
   position: 'fixed',
   right: vars.space[4],
-  bottom: `calc(${vars.size.bottomNav} + env(safe-area-inset-bottom) + ${vars.space[4]})`,
+  bottom: `calc(var(${BOTTOM_NAV_OFFSET_VAR}, ${vars.size.bottomNav}) + env(safe-area-inset-bottom) + ${vars.space[4]})`,
   zIndex: vars.zIndex.sticky,
   display: 'inline-flex',
   alignItems: 'center',

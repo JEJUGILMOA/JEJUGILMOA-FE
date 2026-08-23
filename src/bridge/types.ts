@@ -28,6 +28,8 @@ declare global {
       postMessage: (message: string) => void
     }
     __GILMOA_BRIDGE_MOCK__?: boolean
+    /** 브라우저에서 네이티브 셸처럼 웹 하단 탭바 숨김 */
+    __GILMOA_HIDE_WEB_NAV__?: boolean
   }
 }
 
