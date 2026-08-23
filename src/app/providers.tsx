@@ -29,6 +29,7 @@ export function AppProviders({ children }: AppProvidersProps) {
           gap={8}
           toastOptions={{
             unstyled: true,
+            duration: 2000,
             classNames: {
               toast: 'jeju-toast',
             },
