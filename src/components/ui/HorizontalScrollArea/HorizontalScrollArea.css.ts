@@ -12,7 +12,7 @@ export const scrollAreaStyle = style({
   overflowX: 'auto',
   overflowY: 'hidden',
   WebkitOverflowScrolling: 'touch',
-  overscrollBehaviorX: 'contain',
+  overscrollBehavior: 'contain',
   scrollbarWidth: 'none',
   selectors: {
     '&::-webkit-scrollbar': {

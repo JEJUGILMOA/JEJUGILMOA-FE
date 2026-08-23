@@ -10,6 +10,9 @@ globalStyle('*', {
 
 globalStyle('html, body, #root', {
   height: '100%',
+  maxHeight: '100%',
+  overflow: 'hidden',
+  overscrollBehavior: 'none',
 })
 
 globalStyle('html', {
@@ -18,14 +21,6 @@ globalStyle('html', {
 })
 
 globalStyle('body', {
-  minHeight: '100vh',
-  '@supports': {
-    '(min-height: 100dvh)': {
-      minHeight: '100dvh',
-    },
-  },
-  overscrollBehavior: 'none',
-  WebkitOverflowScrolling: 'touch',
   WebkitTapHighlightColor: 'transparent',
 })
 

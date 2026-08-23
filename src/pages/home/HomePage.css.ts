@@ -135,7 +135,7 @@ export const travelPickRowStyle = style({
   scrollSnapType: 'x proximity',
   paddingBottom: vars.space[1],
   WebkitOverflowScrolling: 'touch',
-  overscrollBehaviorX: 'contain',
+  overscrollBehavior: 'contain',
   scrollbarWidth: 'none',
   selectors: {
     '&::-webkit-scrollbar': {
@@ -216,7 +216,7 @@ export const popularListStyle = style({
   overflowY: 'hidden',
   paddingBottom: vars.space[1],
   WebkitOverflowScrolling: 'touch',
-  overscrollBehaviorX: 'contain',
+  overscrollBehavior: 'contain',
   scrollbarWidth: 'none',
   selectors: {
     '&::-webkit-scrollbar': {
