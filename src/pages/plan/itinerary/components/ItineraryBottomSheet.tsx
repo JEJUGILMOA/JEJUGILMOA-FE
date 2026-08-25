@@ -48,7 +48,7 @@ function clamp(value: number, min: number, max: number) {
 export function ItineraryBottomSheet(props: ItineraryBottomSheetProps) {
   if (nativeBridge.isNativeWebView()) {
     return (
-      <div data-gilmoa-overlay className={nativeBodyStyle}>
+      <div data-gilmoa-overlay data-gilmoa-itinerary-sheet-body className={nativeBodyStyle}>
         {props.children}
       </div>
     )

@@ -7,4 +7,13 @@ globalStyle('html.gilmoa-native-map, html.gilmoa-native-map body, html.gilmoa-na
 
 globalStyle('html.gilmoa-native-map [data-gilmoa-shell], html.gilmoa-native-map main', {
   backgroundColor: 'transparent',
+  height: '100%',
+  overflow: 'hidden',
+})
+
+globalStyle('html.gilmoa-native-map [data-gilmoa-itinerary-sheet-body]', {
+  height: '100%',
+  maxHeight: '100%',
+  overflowY: 'auto',
+  WebkitOverflowScrolling: 'touch',
 })
