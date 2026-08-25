@@ -22,6 +22,23 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     style: z.enum(['light', 'medium', 'heavy']).optional(),
   }),
   z.object({ type: z.literal('CLOSE_WEBVIEW') }),
+  z.object({
+    type: z.literal('SET_HEADER'),
+    title: z.string().optional(),
+    showBack: z.boolean().optional(),
+    visible: z.boolean().optional(),
+    rightText: z.string().optional(),
+    actions: z
+      .array(
+        z.object({
+          id: z.string(),
+          label: z.string(),
+          tone: z.enum(['default', 'muted', 'primary']).optional(),
+          icon: z.enum(['more', 'bookmark']).optional(),
+        }),
+      )
+      .optional(),
+  }),
 ])
 
 export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
@@ -42,6 +59,11 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
     accessToken: z.string().min(1),
   }),
   z.object({ type: z.literal('ANDROID_BACK') }),
+  z.object({ type: z.literal('HEADER_BACK') }),
+  z.object({
+    type: z.literal('HEADER_ACTION'),
+    id: z.string(),
+  }),
   z.object({
     type: z.literal('KEYBOARD_VISIBLE'),
     visible: z.boolean(),

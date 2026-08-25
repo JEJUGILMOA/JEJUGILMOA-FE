@@ -10,7 +10,7 @@ import { DetailsStep } from './steps/DetailsStep'
 import { PhotosStep } from './steps/PhotosStep'
 import { TripSelectStep } from './steps/TripSelectStep'
 import { VisibilityStep } from './steps/VisibilityStep'
-import { pageStyle, stepIndicatorStyle } from './RecordCreatePage.css.ts'
+import { pageStyle } from './RecordCreatePage.css.ts'
 
 const TOTAL_STEPS = 4
 
@@ -89,11 +89,7 @@ export function RecordCreatePage() {
         title="기록 작성"
         showBack
         onBack={goBack}
-        rightSlot={
-          <span className={stepIndicatorStyle}>
-            {step} / {TOTAL_STEPS}
-          </span>
-        }
+        rightText={`${step} / ${TOTAL_STEPS}`}
       />
 
       <div className={pageStyle}>

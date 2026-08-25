@@ -16,7 +16,6 @@ import {
   fieldLabelStyle,
   pageStyle,
   readonlyFieldStyle,
-  saveButtonStyle,
 } from './ProfileEditPage.css.ts'
 
 export function ProfileEditPage() {
@@ -55,11 +54,7 @@ export function ProfileEditPage() {
         title="프로필 수정"
         showBack
         onBack={() => navigate(ROUTES.myProfile)}
-        rightSlot={
-          <button type="button" className={saveButtonStyle} onClick={handleSave}>
-            저장
-          </button>
-        }
+        actions={[{ id: 'save', label: '저장', tone: 'primary', onPress: handleSave }]}
       />
 
       <div className={avatarWrapStyle}>

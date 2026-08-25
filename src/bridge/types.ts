@@ -12,6 +12,19 @@ export type WebToNativeMessage =
   | { type: 'OPEN_EXTERNAL_URL'; url: string }
   | { type: 'HAPTIC'; style?: 'light' | 'medium' | 'heavy' }
   | { type: 'CLOSE_WEBVIEW' }
+  | {
+      type: 'SET_HEADER'
+      title?: string
+      showBack?: boolean
+      visible?: boolean
+      rightText?: string
+      actions?: {
+        id: string
+        label: string
+        tone?: 'default' | 'muted' | 'primary'
+        icon?: 'more' | 'bookmark'
+      }[]
+    }
 
 /** 네이티브 → 웹 */
 export type NativeToWebMessage =
@@ -20,6 +33,8 @@ export type NativeToWebMessage =
   | { type: 'LOCATION_ERROR'; message: string }
   | { type: 'AUTH_TOKEN'; accessToken: string }
   | { type: 'ANDROID_BACK' }
+  | { type: 'HEADER_BACK' }
+  | { type: 'HEADER_ACTION'; id: string }
   | { type: 'KEYBOARD_VISIBLE'; visible: boolean; height?: number }
 
 declare global {

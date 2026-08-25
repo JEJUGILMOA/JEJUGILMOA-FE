@@ -14,7 +14,6 @@ import {
   headerBlockStyle,
   pageStyle,
   perPersonStyle,
-  skipButtonStyle,
   suggestionHintStyle,
   titleStyle,
   totalCardRowStyle,
@@ -132,11 +131,7 @@ export function PlanBudgetPage() {
         title="예산 입력"
         showBack
         onBack={goBack}
-        rightSlot={
-          <button type="button" className={skipButtonStyle} onClick={handleSkip}>
-            건너뛰기
-          </button>
-        }
+        actions={[{ id: 'skip', label: '건너뛰기', tone: 'muted', onPress: handleSkip }]}
       />
 
       {isLoading || !plan ? (

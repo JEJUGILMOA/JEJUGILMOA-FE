@@ -40,7 +40,16 @@ function handleNativeMessage(data: unknown) {
       })
       break
     case 'ANDROID_BACK':
-      window.dispatchEvent(new CustomEvent('gilmoa:android-back'))
+    case 'HEADER_BACK': {
+      const headerBack = new CustomEvent('gilmoa:header-back', { cancelable: true })
+      window.dispatchEvent(headerBack)
+      if (!headerBack.defaultPrevented) {
+        window.dispatchEvent(new CustomEvent('gilmoa:android-back'))
+      }
+      break
+    }
+    case 'HEADER_ACTION':
+      window.dispatchEvent(new CustomEvent('gilmoa:header-action', { detail: { id: message.id } }))
       break
     case 'KEYBOARD_VISIBLE':
       document.documentElement.style.setProperty(
