@@ -30,7 +30,7 @@ export function AppLayout() {
     : cn(contentStyle, hideNav && contentFullBleedStyle)
 
   return (
-    <div className={cn(layoutStyle, hideNav && layoutHideNavStyle)}>
+    <div data-gilmoa-shell className={cn(layoutStyle, hideNav && layoutHideNavStyle)}>
       <main className={mainClassName}>
         <Outlet />
       </main>

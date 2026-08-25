@@ -51,6 +51,39 @@ function handleNativeMessage(data: unknown) {
     case 'HEADER_ACTION':
       window.dispatchEvent(new CustomEvent('gilmoa:header-action', { detail: { id: message.id } }))
       break
+    case 'MAP_ASSIGN_PLACE':
+      window.dispatchEvent(new CustomEvent('gilmoa:map-assign', { detail: { id: message.id } }))
+      break
+    case 'MAP_TAPPED':
+      window.dispatchEvent(new CustomEvent('gilmoa:map-tap'))
+      break
+    case 'MODAL_ACTION':
+      window.dispatchEvent(new CustomEvent('gilmoa:modal-action', { detail: { id: message.id } }))
+      break
+    case 'MODAL_DISMISS':
+      window.dispatchEvent(new CustomEvent('gilmoa:modal-dismiss'))
+      break
+    case 'TOAST_ACTION':
+      window.dispatchEvent(new CustomEvent('gilmoa:toast-action', { detail: { id: message.id } }))
+      break
+    case 'ITINERARY_DAY':
+      window.dispatchEvent(new CustomEvent('gilmoa:itinerary-day', { detail: { day: message.day } }))
+      break
+    case 'ITINERARY_SEARCH':
+      window.dispatchEvent(new CustomEvent('gilmoa:itinerary-search', { detail: { query: message.query } }))
+      break
+    case 'ITINERARY_NEXT':
+      window.dispatchEvent(new CustomEvent('gilmoa:itinerary-next'))
+      break
+    case 'ITINERARY_DEPARTURE_CANCEL':
+      window.dispatchEvent(new CustomEvent('gilmoa:itinerary-departure-cancel'))
+      break
+    case 'NATIVE_LAYOUT':
+      window.__GILMOA_SCREEN_HEIGHT__ = message.screenHeight
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:screen-height', { detail: { height: message.screenHeight } }),
+      )
+      break
     case 'KEYBOARD_VISIBLE':
       document.documentElement.style.setProperty(
         '--keyboard-inset',

@@ -56,3 +56,17 @@ export const PLACE_PIN_POSITIONS = computePinPositions(MOCK_PLACES.map((place) =
 export function getPinPosition(placeId: string) {
   return PLACE_PIN_POSITIONS.get(placeId) ?? { left: 50, top: 50 }
 }
+
+/** 자리표시 핀(%)을 제주 대략 영역 위경도로 변환 — 네이티브 지도 SDK용 */
+const JEJU_LAT_MAX = 33.56
+const JEJU_LAT_MIN = 33.2
+const JEJU_LNG_MIN = 126.16
+const JEJU_LNG_MAX = 126.95
+
+export function getPinLatLng(placeId: string) {
+  const { left, top } = getPinPosition(placeId)
+  return {
+    latitude: JEJU_LAT_MAX - (top / 100) * (JEJU_LAT_MAX - JEJU_LAT_MIN),
+    longitude: JEJU_LNG_MIN + (left / 100) * (JEJU_LNG_MAX - JEJU_LNG_MIN),
+  }
+}
