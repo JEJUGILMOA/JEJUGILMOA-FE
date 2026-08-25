@@ -53,7 +53,7 @@ export const router = createBrowserRouter([
       {
         index: true,
         Component: HomePage,
-        handle: { title: '홈' } satisfies RouteHandle,
+        handle: { title: '홈', flush: true } satisfies RouteHandle,
       },
       {
         path: ROUTES.map.slice(1),

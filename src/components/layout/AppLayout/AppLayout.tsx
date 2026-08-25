@@ -4,7 +4,7 @@ import { nativeBridge } from '@/bridge/nativeBridge'
 import { useNativeMessage } from '@/bridge/useNativeMessage'
 import { useAppBootstrap } from '@/hooks/useAppBootstrap'
 import { cn } from '@/utils/cn'
-import { layoutStyle, layoutHideNavStyle, contentStyle, contentFlushStyle, contentFullBleedStyle } from './AppLayout.css.ts'
+import { layoutStyle, layoutHideNavStyle, contentStyle, contentFlushStyle, contentFlushWithNavStyle, contentFlushNoNavStyle, contentFullBleedStyle } from './AppLayout.css.ts'
 
 export type RouteHandle = {
   title?: string
@@ -26,7 +26,7 @@ export function AppLayout() {
   const flush = handles.some((handle) => handle?.flush)
 
   const mainClassName = flush
-    ? contentFlushStyle
+    ? cn(contentFlushStyle, hideNav ? contentFlushNoNavStyle : contentFlushWithNavStyle)
     : cn(contentStyle, hideNav && contentFullBleedStyle)
 
   return (

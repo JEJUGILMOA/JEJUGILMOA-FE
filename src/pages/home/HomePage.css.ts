@@ -7,8 +7,6 @@ export const pageStyle = style({
   flexDirection: 'column',
   gap: vars.space[6],
   minWidth: 0,
-  marginInline: `calc(-1 * ${vars.space[4]})`,
-  marginTop: `calc(-1 * ${vars.space[4]})`,
   paddingBottom: vars.space[4],
   backgroundColor: colors.background[1],
   color: colors.text[1],
@@ -65,8 +63,8 @@ export const heroSubtitleStyle = style({
 
 export const searchWrapStyle = style({
   position: 'absolute',
-  left: '17px',
-  right: '17px',
+  left: vars.space[3],
+  right: vars.space[3],
   bottom: 0,
   zIndex: 2,
 })
@@ -85,7 +83,7 @@ export const sectionStyle = style({
   gap: vars.space[3],
   minWidth: 0,
   maxWidth: '100%',
-  paddingInline: '17px',
+  paddingInline: vars.space[3],
 })
 
 export const sectionHeaderStyle = style({
