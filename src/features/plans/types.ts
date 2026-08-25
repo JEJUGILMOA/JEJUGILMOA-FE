@@ -70,4 +70,6 @@ export type PlanDraft = {
   travelerCount: number
   budgetTier: BudgetTier
   interests: InterestTheme[]
+  /** 여행 제목. 비우면 날짜 기준으로 자동 생성 */
+  title: string
 }

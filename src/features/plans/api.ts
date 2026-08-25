@@ -13,6 +13,11 @@ function buildTitle(startDate: string, endDate: string): string {
   return `${DESTINATION} ${nights}박 ${nights + 1}일`
 }
 
+export function suggestPlanTitle(startDate: string | null, endDate: string | null): string {
+  if (!startDate || !endDate) return `${DESTINATION} 여행`
+  return buildTitle(startDate, endDate)
+}
+
 // STEP 01 입력 마법사는 어느 단계든 건너뛸 수 있어 draft 값이 비어 있을 수 있다.
 // 값을 강제로 요구하는 대신, 빠진 값은 fallback(신규 생성 시 오늘 날짜, 수정 시 기존 값)으로
 // 채워 계획 생성·수정이 항상 성공하도록 한다 — 세부 정보는 이후 계획 세우기
@@ -43,7 +48,7 @@ function toTravelPlan(draft: PlanDraft): TravelPlan {
 
   return {
     id: `plan-${Date.now()}`,
-    title: buildTitle(info.startDate, info.endDate),
+    title: draft.title.trim() || buildTitle(info.startDate, info.endDate),
     destination: DESTINATION,
     status: 'draft',
     ...info,
@@ -95,12 +100,12 @@ export async function updatePlanInfo(planId: string, draft: PlanDraft): Promise<
   }
   const current = mockPlans[index]
   const info = resolvePlanInfo(draft, { startDate: current.startDate, endDate: current.endDate })
-  // 날짜를 실제로 바꾼 경우에만 제목을 다시 만든다 — 그대로면 사용자가 붙인 제목을 유지한다.
   const dateChanged = info.startDate !== current.startDate || info.endDate !== current.endDate
+  const title = draft.title.trim() || (dateChanged ? buildTitle(info.startDate, info.endDate) : current.title)
   const updated: TravelPlan = {
     ...current,
     ...info,
-    title: dateChanged ? buildTitle(info.startDate, info.endDate) : current.title,
+    title,
   }
   mockPlans[index] = updated
   return updated
