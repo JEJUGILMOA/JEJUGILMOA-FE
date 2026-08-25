@@ -11,6 +11,10 @@ export const viewportStyle = style({
   touchAction: 'none',
 })
 
+export const viewportHidden = style({
+  display: 'none',
+})
+
 export const canvasStyle = style({
   position: 'absolute',
   inset: 0,

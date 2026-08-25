@@ -2,6 +2,11 @@ import { style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
+/** AppLayout 12px 거터 안에서, 헤더·스텝 컴포넌트에 좌우 8px을 더 준다 */
+export const pageShellStyle = style({
+  paddingInline: vars.space[2],
+})
+
 export const pageStyle = style({
   display: 'flex',
   flexDirection: 'column',
@@ -91,5 +96,9 @@ export const stepperCountStyle = style({
   fontSize: vars.fontSize['2xl'],
   fontWeight: vars.fontWeight.bold,
   color: colors.text[1],
+})
+
+export const datesNextButtonStyle = style({
+  fontSize: vars.fontSize.lg,
 })
 

@@ -11,6 +11,11 @@ export const pageHeaderRoot = style({
   padding: `${vars.space[2]} 0`,
 })
 
+/** 네이티브 셸이 헤더를 그릴 때 웹 헤더는 레이아웃에서 제거 */
+export const pageHeaderHidden = style({
+  display: 'none',
+})
+
 export const pageHeaderLeft = style({
   display: 'flex',
   alignItems: 'center',
@@ -61,4 +66,35 @@ export const pageHeaderRight = style({
   flexShrink: 0,
   alignItems: 'center',
   gap: vars.space[2],
+})
+
+export const pageHeaderRightText = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+  whiteSpace: 'nowrap',
+})
+
+export const pageHeaderAction = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minHeight: vars.size.touch,
+  padding: `0 ${vars.space[2]}`,
+  border: 'none',
+  borderRadius: vars.radius.sm,
+  backgroundColor: 'transparent',
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
+  fontSize: vars.fontSize.sm,
+  color: colors.text[1],
+})
+
+export const pageHeaderActionMuted = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})
+
+export const pageHeaderActionPrimary = style({
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.primary[700],
 })

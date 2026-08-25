@@ -1,7 +1,8 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Search, Star, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { nativeBridge } from '@/bridge/nativeBridge'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Chip } from '@/components/ui/Chip/Chip'
@@ -16,6 +17,7 @@ import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
 import {
   backButtonStyle,
   courseRowStyle,
+  courseSuggestTitleStyle,
   dayPagerFloatStyle,
   departureResultChevronStyle,
   departureResultRowStyle,
@@ -124,7 +126,7 @@ export function PlanItineraryPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { data: plan, isLoading } = usePlanQuery(planId)
+  const { data: plan, isPending, isError, refetch } = usePlanQuery(planId)
   const updateItineraryMutation = useUpdatePlanItineraryMutation()
 
   const [selectedDay, setSelectedDay] = useState(1)
@@ -144,10 +146,21 @@ export function PlanItineraryPage() {
 
   const goBack = () => navigate(-1)
 
-  if (isLoading || !plan) {
+  if (isPending) {
     return (
       <div className={pageRootStyle}>
         <Loading label="여행 계획을 불러오는 중…" />
+      </div>
+    )
+  }
+
+  if (isError || !plan) {
+    return (
+      <div className={pageRootStyle}>
+        <p className={emptyTextStyle}>계획을 불러오지 못했어요.</p>
+        <Button fullWidth onClick={() => void refetch()}>
+          다시 시도
+        </Button>
       </div>
     )
   }
@@ -496,19 +509,33 @@ export function PlanItineraryPage() {
         mustVisitIds={currentDayMustVisitIds}
         unassignedPlaces={unassignedPlacesForMap}
         unassignedPinKind={recommendMode}
+        cameraFitKey={`day-${selectedDay}`}
         onAssignPlace={handleAssign}
         onTapMap={handleTapMap}
       />
 
-      <button type="button" className={backButtonStyle} onClick={goBack} aria-label="뒤로 가기">
+      <button
+        type="button"
+        data-gilmoa-overlay
+        data-gilmoa-itinerary-float
+        className={backButtonStyle}
+        onClick={goBack}
+        aria-label="뒤로 가기"
+      >
         <ChevronLeft size={22} />
       </button>
 
-      <button type="button" className={nextButtonStyle} onClick={handleNext}>
+      <button
+        type="button"
+        data-gilmoa-overlay
+        data-gilmoa-itinerary-float
+        className={nextButtonStyle}
+        onClick={handleNext}
+      >
         {nextLabel}
       </button>
 
-      <div className={dayPagerFloatStyle}>
+      <div data-gilmoa-overlay data-gilmoa-itinerary-float className={dayPagerFloatStyle}>
         <DayPager
           day={selectedDay}
           totalDays={dayCount}
@@ -519,6 +546,8 @@ export function PlanItineraryPage() {
       </div>
 
       <div
+        data-gilmoa-overlay
+        data-gilmoa-itinerary-float
         className={
           isSelectingDeparture
             ? `${headerSearchBarStyle} ${headerSearchBarActiveStyle}`
@@ -606,10 +635,7 @@ export function PlanItineraryPage() {
 
             {scheduleItems.length === 0 && !hasMustVisitWithoutStops ? (
               <>
-                {!departurePlace ? (
-                  <p className={inlineHintTextStyle}>출발지를 먼저 선택해주세요.</p>
-                ) : null}
-                <span className={sectionMetaStyle}>이런 코스는 어때요?</span>
+                <span className={courseSuggestTitleStyle}>이런 코스는 어때요?</span>
                 <HorizontalScrollArea>
                   <div className={courseRowStyle}>
                     {MOCK_COURSES.map((course) => (
@@ -653,10 +679,6 @@ export function PlanItineraryPage() {
                 ? `탭하면 Day ${selectedDay}의 출발지로 설정돼요`
                 : `고르면 바로 Day ${selectedDay}에 담겨요`}
             </span>
-
-            {!trimmedRecommendQuery && !isSelectingDeparture && recommendMode === 'popular' && !departurePlace ? (
-              <p className={inlineHintTextStyle}>출발지를 먼저 선택해주세요.</p>
-            ) : null}
 
             {!trimmedRecommendQuery &&
             !isSelectingDeparture &&
@@ -767,6 +789,25 @@ export function PlanItineraryPage() {
         </Button>
       </ItineraryBottomSheet>
 
+      <ItineraryNativeChromeSync
+        selectedDay={selectedDay}
+        dayCount={dayCount}
+        dateLabel={dayDateLabel}
+        searchQuery={recommendQuery}
+        isSelectingDeparture={isSelectingDeparture}
+        nextLabel={nextLabel}
+        sheetTitle={
+          isSelectingDeparture
+            ? `Day ${selectedDay} 출발지 검색`
+            : `Day ${selectedDay} 일정 (${stops.length}/${MAX_DAY_PLACES}곳)`
+        }
+        goBack={goBack}
+        handleNext={handleNext}
+        changeDay={changeDay}
+        handleRecommendQueryChange={handleRecommendQueryChange}
+        handleCancelDeparture={handleCancelDeparture}
+      />
+
       <Modal
         open={pendingCourse !== null}
         title={pendingCourse ? `${pendingCourse.title}의 경유지를 모두 담을까요?` : ''}
@@ -790,4 +831,102 @@ export function PlanItineraryPage() {
       />
     </div>
   )
+}
+
+function ItineraryNativeChromeSync({
+  selectedDay,
+  dayCount,
+  dateLabel,
+  searchQuery,
+  isSelectingDeparture,
+  nextLabel,
+  sheetTitle,
+  goBack,
+  handleNext,
+  changeDay,
+  handleRecommendQueryChange,
+  handleCancelDeparture,
+}: {
+  selectedDay: number
+  dayCount: number
+  dateLabel: string
+  searchQuery: string
+  isSelectingDeparture: boolean
+  nextLabel: string
+  sheetTitle: string
+  goBack: () => void
+  handleNext: () => void
+  changeDay: (day: number) => void
+  handleRecommendQueryChange: (value: string) => void
+  handleCancelDeparture: () => void
+}) {
+  const goBackRef = useRef(goBack)
+  const handleNextRef = useRef(handleNext)
+  const changeDayRef = useRef(changeDay)
+  const searchRef = useRef(handleRecommendQueryChange)
+  const cancelRef = useRef(handleCancelDeparture)
+  goBackRef.current = goBack
+  handleNextRef.current = handleNext
+  changeDayRef.current = changeDay
+  searchRef.current = handleRecommendQueryChange
+  cancelRef.current = handleCancelDeparture
+
+  useEffect(() => {
+    if (!nativeBridge.isNativeWebView()) return
+    nativeBridge.postToNative({
+      type: 'SET_HEADER',
+      visible: false,
+    })
+    nativeBridge.postToNative({
+      type: 'SET_ITINERARY_CHROME',
+      visible: true,
+      day: selectedDay,
+      totalDays: dayCount,
+      dateLabel,
+      searchQuery,
+      searchPlaceholder: isSelectingDeparture ? '출발지를 검색해보세요' : '장소를 검색해보세요',
+      isSelectingDeparture,
+      nextLabel,
+      sheetTitle,
+    })
+  }, [selectedDay, dayCount, dateLabel, searchQuery, isSelectingDeparture, nextLabel, sheetTitle])
+
+  useEffect(() => {
+    if (!nativeBridge.isNativeWebView()) return
+    return () => {
+      nativeBridge.postToNative({ type: 'SET_ITINERARY_CHROME', visible: false })
+    }
+  }, [])
+
+  useEffect(() => {
+    const onBack = (event: Event) => {
+      event.preventDefault()
+      goBackRef.current()
+    }
+    const onNext = () => handleNextRef.current()
+    const onDay = (event: Event) => {
+      const day = (event as CustomEvent<{ day?: number }>).detail?.day
+      if (typeof day !== 'number') return
+      changeDayRef.current(day)
+    }
+    const onSearch = (event: Event) => {
+      const query = (event as CustomEvent<{ query?: string }>).detail?.query
+      if (typeof query === 'string') searchRef.current(query)
+    }
+    const onCancel = () => cancelRef.current()
+    window.addEventListener('gilmoa:header-back', onBack)
+    window.addEventListener('gilmoa:itinerary-next', onNext)
+    window.addEventListener('gilmoa:itinerary-day', onDay)
+    window.addEventListener('gilmoa:itinerary-search', onSearch)
+    window.addEventListener('gilmoa:itinerary-departure-cancel', onCancel)
+    return () => {
+      window.removeEventListener('gilmoa:header-back', onBack)
+      window.removeEventListener('gilmoa:itinerary-next', onNext)
+      window.removeEventListener('gilmoa:itinerary-day', onDay)
+      window.removeEventListener('gilmoa:itinerary-search', onSearch)
+      window.removeEventListener('gilmoa:itinerary-departure-cancel', onCancel)
+    }
+  }, [])
+
+  return null
 }

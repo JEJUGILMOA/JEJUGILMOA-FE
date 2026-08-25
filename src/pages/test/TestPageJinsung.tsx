@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bookmark, MoreVertical } from 'lucide-react'
+import { Bookmark } from 'lucide-react'
 import { Button } from '@/components/ui/Button/Button'
 import { IconButton } from '@/components/ui/IconButton/IconButton'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
@@ -115,18 +115,21 @@ export function TestPageJinsung() {
 
       <section className={sectionStyle}>
         <h2 className={sectionTitleStyle}>PageHeader</h2>
-        <PageHeader title="코스 추천" rightSlot={<MoreVertical size={16} />} />
         <PageHeader
           title="코스 추천"
-          showBack
-          onBack={() => undefined}
-          rightSlot={<MoreVertical size={16} />}
+          actions={[{ id: 'more', label: '더보기', icon: 'more', onPress: () => undefined }]}
         />
         <PageHeader
           title="코스 추천"
           showBack
           onBack={() => undefined}
-          rightSlot={<Bookmark size={20} />}
+          actions={[{ id: 'more', label: '더보기', icon: 'more', onPress: () => undefined }]}
+        />
+        <PageHeader
+          title="코스 추천"
+          showBack
+          onBack={() => undefined}
+          actions={[{ id: 'bookmark', label: '북마크', icon: 'bookmark', onPress: () => undefined }]}
         />
       </section>
 

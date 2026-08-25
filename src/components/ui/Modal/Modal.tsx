@@ -1,4 +1,7 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { nativeBridge } from '@/bridge/nativeBridge'
+import { Button, type ButtonVariant } from '@/components/ui/Button/Button'
+import { cn } from '@/utils/cn'
+import { useEffect, useId, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import {
   actionFixedStyle,
@@ -10,8 +13,6 @@ import {
   panelStyle,
   titleStyle,
 } from './Modal.css.ts'
-import { Button, type ButtonVariant } from '@/components/ui/Button/Button'
-import { cn } from '@/utils/cn'
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -50,9 +51,7 @@ type ModalProps = {
 
 /**
  * 포커스 트랩·Esc 닫기를 지원하는 중앙 모달 다이얼로그.
- *
- * @example
- * <Modal open={open} title="삭제할까요?" onClose={close} actions={[{ label: '삭제', onClick: remove, variant: 'danger' }]} />
+ * 네이티브 웹뷰에서는 지도 위에 올라오도록 SET_MODAL로 네이티브 창을 띄운다.
  */
 export function Modal({
   open,
@@ -63,11 +62,66 @@ export function Modal({
   onClose,
 }: ModalProps) {
   const titleId = useId()
+  const modalId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+  const actionsRef = useRef<ModalAction[]>([])
+
+  const resolvedActions =
+    actions ??
+    ([
+      {
+        label: '닫기',
+        onClick: onClose,
+        variant: 'ghost' as const,
+        grow: true,
+      },
+    ] satisfies ModalAction[])
+  actionsRef.current = resolvedActions
+
+  const isNative = nativeBridge.isNativeWebView()
+
+  useLayoutEffect(() => {
+    if (!isNative) return
+    if (open) {
+      nativeBridge.postToNative({
+        type: 'SET_MODAL',
+        visible: true,
+        id: modalId,
+        title,
+        description,
+        actions: resolvedActions.map((action, index) => ({
+          id: `${modalId}#${index}`,
+          label: action.label,
+          variant: action.variant ?? 'primary',
+        })),
+      })
+      return
+    }
+    nativeBridge.postToNative({ type: 'SET_MODAL', visible: false, id: modalId })
+  }, [isNative, open, modalId, title, description, actions])
 
   useEffect(() => {
-    if (!open) return
+    if (!isNative || !open) return
+    const onAction = (event: Event) => {
+      const id = (event as CustomEvent<{ id: string }>).detail?.id
+      if (!id?.startsWith(`${modalId}#`)) return
+      const index = Number(id.slice(id.lastIndexOf('#') + 1))
+      actionsRef.current[index]?.onClick()
+    }
+    const onDismiss = () => onCloseRef.current()
+    window.addEventListener('gilmoa:modal-action', onAction)
+    window.addEventListener('gilmoa:modal-dismiss', onDismiss)
+    return () => {
+      window.removeEventListener('gilmoa:modal-action', onAction)
+      window.removeEventListener('gilmoa:modal-dismiss', onDismiss)
+    }
+  }, [isNative, open, modalId])
+
+  useEffect(() => {
+    if (!open || isNative) return
 
     previousFocusRef.current = document.activeElement as HTMLElement | null
     const previousOverflow = document.body.style.overflow
@@ -117,20 +171,9 @@ export function Modal({
       document.body.style.overflow = previousOverflow
       previousFocusRef.current?.focus?.()
     }
-  }, [open, onClose])
+  }, [open, onClose, isNative])
 
-  if (!open) return null
-
-  const resolvedActions =
-    actions ??
-    ([
-      {
-        label: '??',
-        onClick: onClose,
-        variant: 'ghost' as const,
-        grow: true,
-      },
-    ] satisfies ModalAction[])
+  if (isNative || !open) return null
 
   return createPortal(
     <div className={overlayStyle} role="presentation" onClick={onClose}>

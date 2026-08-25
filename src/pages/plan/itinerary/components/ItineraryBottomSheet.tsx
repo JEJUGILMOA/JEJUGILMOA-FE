@@ -5,6 +5,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
+import { nativeBridge } from '@/bridge/nativeBridge'
 import { ChevronUp } from 'lucide-react'
 import {
   bodyStyle,
@@ -12,6 +13,7 @@ import {
   expandButtonStyle,
   handleStyle,
   handleWrapStyle,
+  nativeBodyStyle,
   titleStyle,
 } from './ItineraryBottomSheet.css.ts'
 
@@ -43,15 +45,37 @@ function clamp(value: number, min: number, max: number) {
  * 의존하면 캡처가 실패하는 환경(또는 손잡이가 작아 빠르게 벗어나는 제스처)에서
  * 드래그가 중간에 끊기는 문제가 있었다.
  */
-export function ItineraryBottomSheet({ title, children, expandTrigger = false }: ItineraryBottomSheetProps) {
+export function ItineraryBottomSheet(props: ItineraryBottomSheetProps) {
+  if (nativeBridge.isNativeWebView()) {
+    return (
+      <div data-gilmoa-overlay data-gilmoa-itinerary-sheet-body className={nativeBodyStyle}>
+        {props.children}
+      </div>
+    )
+  }
+  return <BrowserItineraryBottomSheet {...props} />
+}
+
+function BrowserItineraryBottomSheet({ title, children, expandTrigger = false }: ItineraryBottomSheetProps) {
   const [viewportHeight, setViewportHeight] = useState(() =>
-    typeof window === 'undefined' ? 800 : window.innerHeight,
+    typeof window === 'undefined'
+      ? 800
+      : window.__GILMOA_SCREEN_HEIGHT__ ?? window.innerHeight,
   )
 
   useEffect(() => {
-    const handleResize = () => setViewportHeight(window.innerHeight)
+    const applyHeight = (height: number) => setViewportHeight(height)
+    const handleResize = () => applyHeight(window.__GILMOA_SCREEN_HEIGHT__ ?? window.innerHeight)
+    const onNative = (event: Event) => {
+      const height = (event as CustomEvent<{ height?: number }>).detail?.height
+      if (height) applyHeight(height)
+    }
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    window.addEventListener('gilmoa:screen-height', onNative)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('gilmoa:screen-height', onNative)
+    }
   }, [])
 
   const maxAllowedHeight = Math.max(viewportHeight - RESERVED_TOP_SPACE, Math.round(viewportHeight * SNAP_FRACTIONS[0]))
@@ -77,6 +101,15 @@ export function ItineraryBottomSheet({ title, children, expandTrigger = false }:
   }
 
   const expand = () => setHeight(lastExpandedHeightRef.current)
+
+  useEffect(() => {
+    const reported = height <= COLLAPSED_HEIGHT ? 72 : height
+    window.dispatchEvent(
+      new CustomEvent('gilmoa:sheet-height', {
+        detail: { height: reported, overlayTop: RESERVED_TOP_SPACE },
+      }),
+    )
+  }, [height])
 
   // 검색을 시작하면 결과가 잘 보이도록 최소 중간 스냅 높이까지는 올라오게 한다 —
   // 접혀 있었든, 가장 낮은 스냅(28%)에 있었든 검색 결과를 보기엔 부족하니 그보다는 올려준다.
@@ -132,6 +165,7 @@ export function ItineraryBottomSheet({ title, children, expandTrigger = false }:
   return (
     <>
       <div
+        data-gilmoa-overlay
         className={contentStyle}
         style={{ height, transition: isDragging ? 'none' : 'height 220ms ease' }}
       >
@@ -144,7 +178,7 @@ export function ItineraryBottomSheet({ title, children, expandTrigger = false }:
       </div>
 
       {showExpandButton ? (
-        <button type="button" className={expandButtonStyle} onClick={expand}>
+        <button type="button" data-gilmoa-overlay className={expandButtonStyle} onClick={expand}>
           <ChevronUp size={16} aria-hidden />
           {title}
         </button>

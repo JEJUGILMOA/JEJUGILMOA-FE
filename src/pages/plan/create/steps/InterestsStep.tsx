@@ -18,12 +18,10 @@ export type InterestsStepProps = {
   interests: InterestTheme[]
   onToggle: (theme: InterestTheme) => void
   onNext: () => void
-  /** 관심사가 마지막 입력 항목이라 '다음'을 누르면 바로 계획을 생성/수정한다 */
-  isSubmitting?: boolean
 }
 
-/** STEP 01-6: 관심사 다중 선택 (마지막 단계 — 다음을 누르면 바로 계획을 완성한다) */
-export function InterestsStep({ interests, onToggle, onNext, isSubmitting }: InterestsStepProps) {
+/** STEP 01-6: 관심사 다중 선택 */
+export function InterestsStep({ interests, onToggle, onNext }: InterestsStepProps) {
   return (
     <>
       <div className={stepHeaderStyle}>
@@ -48,7 +46,6 @@ export function InterestsStep({ interests, onToggle, onNext, isSubmitting }: Int
         fullWidth
         size="lg"
         disabled={interests.length === 0}
-        isLoading={isSubmitting}
         onClick={onNext}
       >
         다음

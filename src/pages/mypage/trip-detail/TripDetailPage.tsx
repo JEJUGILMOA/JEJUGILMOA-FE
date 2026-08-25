@@ -37,11 +37,9 @@ export function TripDetailPage() {
         title="진행중 여행"
         showBack
         onBack={() => navigate(ROUTES.myTrips)}
-        rightSlot={
-          <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.plan)}>
-            일정 수정
-          </Button>
-        }
+        actions={[
+          { id: 'edit-plan', label: '일정 수정', onPress: () => navigate(ROUTES.plan) },
+        ]}
       />
 
       <h2 className={titleStyle}>{trip.title}</h2>

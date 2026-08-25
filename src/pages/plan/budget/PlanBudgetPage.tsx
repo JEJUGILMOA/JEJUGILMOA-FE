@@ -14,7 +14,6 @@ import {
   headerBlockStyle,
   pageStyle,
   perPersonStyle,
-  skipButtonStyle,
   suggestionHintStyle,
   titleStyle,
   totalCardRowStyle,
@@ -61,7 +60,7 @@ export function PlanBudgetPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { data: plan, isLoading } = usePlanQuery(planId)
+  const { data: plan, isPending } = usePlanQuery(planId)
   const updateBudgetMutation = useUpdatePlanBudgetMutation()
 
   // 미리보기의 연필 아이콘으로 들어왔으면 버튼 라벨을 "다음"이 아니라 "저장하기"로 보여준다.
@@ -132,15 +131,13 @@ export function PlanBudgetPage() {
         title="예산 입력"
         showBack
         onBack={goBack}
-        rightSlot={
-          <button type="button" className={skipButtonStyle} onClick={handleSkip}>
-            건너뛰기
-          </button>
-        }
+        actions={[{ id: 'skip', label: '건너뛰기', tone: 'muted', onPress: handleSkip }]}
       />
 
-      {isLoading || !plan ? (
+      {isPending ? (
         <Loading label="여행 계획을 불러오는 중…" />
+      ) : !plan ? (
+        <p className={descriptionStyle}>계획을 불러오지 못했어요.</p>
       ) : (
         <div className={pageStyle}>
           <div className={headerBlockStyle}>

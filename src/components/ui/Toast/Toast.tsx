@@ -1,3 +1,4 @@
+import { nativeBridge } from '@/bridge/nativeBridge'
 import { CheckCircle2, Info, XCircle } from 'lucide-react'
 import { toast as sonnerToast } from 'sonner'
 import { cn, assertNever } from '@/utils/cn'
@@ -87,7 +88,46 @@ export type ShowToastOptions = {
   duration?: number
 }
 
+let nativeToastSeq = 0
+const nativeToastActions = new Map<string, ToastAction[]>()
+let toastActionBound = false
+
+function bindNativeToastActions() {
+  if (toastActionBound || typeof window === 'undefined') return
+  toastActionBound = true
+  window.addEventListener('gilmoa:toast-action', (event: Event) => {
+    const id = (event as CustomEvent<{ id: string }>).detail?.id
+    if (!id) return
+    const sep = id.lastIndexOf('#')
+    if (sep < 0) return
+    const toastId = id.slice(0, sep)
+    const index = Number(id.slice(sep + 1))
+    nativeToastActions.get(toastId)?.[index]?.onClick()
+    nativeToastActions.delete(toastId)
+  })
+}
+
 function showToast({ type = 'info', message, actions, duration }: ShowToastOptions) {
+  if (nativeBridge.isNativeWebView()) {
+    bindNativeToastActions()
+    const id = `toast-${++nativeToastSeq}`
+    nativeToastActions.set(id, actions ?? [])
+    nativeBridge.postToNative({
+      type: 'SET_TOAST',
+      visible: true,
+      id,
+      kind: type,
+      message,
+      duration: duration ?? 2000,
+      actions: actions?.map((action, index) => ({
+        id: `${id}#${index}`,
+        label: action.label,
+        tone: action.tone ?? 'default',
+      })),
+    })
+    return id
+  }
+
   return sonnerToast.custom(
     (id) => (
       <Toast
@@ -127,5 +167,12 @@ export const toast = {
   info: (message: string, options?: Omit<ShowToastOptions, 'type' | 'message'>) =>
     showToast({ ...options, type: 'info', message }),
   /** 토스트를 닫습니다. id 없이 호출하면 모두 닫힙니다. */
-  dismiss: sonnerToast.dismiss,
+  dismiss: (id?: string | number) => {
+    if (nativeBridge.isNativeWebView()) {
+      nativeBridge.postToNative({ type: 'SET_TOAST', visible: false, id: id != null ? String(id) : undefined })
+      if (id != null) nativeToastActions.delete(String(id))
+      else nativeToastActions.clear()
+    }
+    return sonnerToast.dismiss(id)
+  },
 }

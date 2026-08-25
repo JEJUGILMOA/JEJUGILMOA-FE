@@ -1,14 +1,15 @@
 import { Button } from '@/components/ui/Button/Button'
+import { Briefcase, Heart, User, Users, UsersRound } from 'lucide-react'
 import type { CompanionType } from '@/features/plans/types'
 import { CompanionCardGrid, type CompanionOption } from '../components/CompanionCard'
 import { stepDescriptionStyle, stepHeaderStyle, stepTitleStyle } from '../PlanCreatePage.css.ts'
 
 const COMPANION_OPTIONS: (CompanionOption & { key: CompanionType })[] = [
-  { key: 'solo', label: '혼자', description: '나만의 힐링 여행' },
-  { key: 'couple', label: '연인과', description: '둘만의 특별한 시간' },
-  { key: 'family', label: '가족과', description: '온 가족이 함께' },
-  { key: 'friends', label: '친구와', description: '즐거운 우정 여행' },
-  { key: 'colleague', label: '동료와', description: '워크샵 & 회식' },
+  { key: 'solo', label: '혼자', description: '나만의 힐링 여행', icon: User },
+  { key: 'couple', label: '연인과', description: '둘만의 특별한 시간', icon: Heart },
+  { key: 'family', label: '가족과', description: '온 가족이 함께', icon: Users },
+  { key: 'friends', label: '친구와', description: '즐거운 우정 여행', icon: UsersRound },
+  { key: 'colleague', label: '동료와', description: '워크샵 & 회식', icon: Briefcase },
 ]
 
 export type CompanionStepProps = {

@@ -56,7 +56,6 @@ export const contentFlushStyle = style({
   minHeight: 0,
   marginInline: 'auto',
   padding: 0,
-  paddingBottom: `calc(env(safe-area-inset-bottom) + ${vars.space[4]})`,
   overflowY: 'auto',
   overflowX: 'hidden',
   overscrollBehavior: 'contain',
@@ -68,6 +67,16 @@ export const contentFlushStyle = style({
       display: 'none',
     },
   },
+})
+
+/** flush + 하단 탭이 있을 때 */
+export const contentFlushWithNavStyle = style({
+  paddingBottom: `calc(${vars.size.bottomNav} + env(safe-area-inset-bottom))`,
+})
+
+/** flush + 하단 탭이 없을 때 */
+export const contentFlushNoNavStyle = style({
+  paddingBottom: `calc(env(safe-area-inset-bottom) + ${vars.space[4]})`,
 })
 
 /** 하단 네비 없는 서브페이지용 — bottomNav 여백 제거 */

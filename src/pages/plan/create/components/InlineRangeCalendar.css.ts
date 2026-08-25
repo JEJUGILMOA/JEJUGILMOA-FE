@@ -16,7 +16,7 @@ export const monthHeaderStyle = style({
 })
 
 export const monthTitleStyle = style({
-  fontSize: vars.fontSize.sm,
+  fontSize: vars.fontSize.lg,
   fontWeight: vars.fontWeight.bold,
   color: colors.text[1],
   textAlign: 'center',
@@ -47,9 +47,9 @@ export const weekdayRowStyle = style({
 
 export const weekdayStyle = style({
   textAlign: 'center',
-  fontSize: '10px',
+  fontSize: vars.fontSize.sm,
   color: colors.text[4],
-  padding: '2px 0',
+  padding: '4px 0',
 })
 
 export const dayGridStyle = style({
@@ -64,7 +64,7 @@ export const dayCellRecipe = recipe({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-    height: '32px',
+    height: '36px',
   },
   variants: {
     inRange: {
@@ -87,14 +87,14 @@ export const dayButtonRecipe = recipe({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    width: '28px',
-    height: '28px',
+    width: '32px',
+    height: '32px',
     margin: '0 auto',
     padding: 0,
     border: 'none',
     borderRadius: vars.radius.full,
     backgroundColor: 'transparent',
-    fontSize: '11.5px',
+    fontSize: vars.fontSize.sm,
     color: colors.text[1],
     cursor: 'pointer',
   },
@@ -119,7 +119,7 @@ export const summaryBoxStyle = style({
   borderRadius: vars.radius.md,
   padding: vars.space[3],
   textAlign: 'center',
-  fontSize: vars.fontSize.sm,
+  fontSize: vars.fontSize.md,
   fontWeight: vars.fontWeight.bold,
   color: colors.text[1],
 })

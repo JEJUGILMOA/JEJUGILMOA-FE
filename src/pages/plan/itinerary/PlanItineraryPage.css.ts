@@ -199,6 +199,13 @@ export const sectionMetaStyle = style({
   color: colors.text[4],
 })
 
+export const courseSuggestTitleStyle = style({
+  paddingTop: vars.space[3],
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.text[4],
+})
+
 export const emptyTextStyle = style({
   padding: `${vars.space[4]} 0`,
   textAlign: 'center',

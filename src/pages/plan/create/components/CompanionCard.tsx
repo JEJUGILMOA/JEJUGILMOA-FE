@@ -1,9 +1,11 @@
+import type { LucideIcon } from 'lucide-react'
 import { badgeRecipe, cardRecipe, descStyle, gridStyle, labelStyle } from './CompanionCard.css.ts'
 
 export type CompanionOption = {
   key: string
   label: string
   description: string
+  icon: LucideIcon
 }
 
 export type CompanionCardGridProps = {
@@ -18,6 +20,7 @@ export function CompanionCardGrid({ options, selectedKey, onSelect }: CompanionC
     <div className={gridStyle} role="radiogroup" aria-label="동행 유형">
       {options.map((option, index) => {
         const selected = option.key === selectedKey
+        const Icon = option.icon
         return (
           <button
             key={option.key}
@@ -28,7 +31,7 @@ export function CompanionCardGrid({ options, selectedKey, onSelect }: CompanionC
             onClick={() => onSelect(option.key)}
           >
             <span className={badgeRecipe({ selected })} aria-hidden>
-              {option.label.slice(0, 1)}
+              <Icon size={16} strokeWidth={2} />
             </span>
             <span className={labelStyle}>{option.label}</span>
             <span className={descStyle}>{option.description}</span>

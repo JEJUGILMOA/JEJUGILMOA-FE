@@ -7,23 +7,26 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { useCreatePlanMutation, usePlanQuery, useUpdatePlanInfoMutation } from '@/features/plans/hooks'
+import { suggestPlanTitle } from '@/features/plans/api'
 import type { CompanionType, DayItinerary, PlanDraft } from '@/features/plans/types'
 import { StepProgress } from './components/StepProgress'
-import { pageStyle, progressTrackStyle, skipLinkStyle, topBarStyle } from './PlanCreatePage.css.ts'
+import { pageShellStyle, pageStyle, progressTrackStyle, topBarStyle } from './PlanCreatePage.css.ts'
 import { CompanionStep } from './steps/CompanionStep'
 import { DatesStep } from './steps/DatesStep'
 import { InterestsStep } from './steps/InterestsStep'
+import { TitleStep } from './steps/TitleStep'
 import { TravelersStep } from './steps/TravelersStep'
 
-type WizardStepId = 'dates' | 'companion' | 'travelers' | 'interests'
+type WizardStepId = 'dates' | 'companion' | 'travelers' | 'interests' | 'title'
 
 const STEP_PROGRESS_INDEX: Record<WizardStepId, number> = {
   dates: 0,
   companion: 1,
   travelers: 2,
   interests: 3,
+  title: 4,
 }
-const TOTAL_PROGRESS_STEPS = 4
+const TOTAL_PROGRESS_STEPS = 5
 
 const DATE_FORMAT = 'yyyy.MM.dd'
 
@@ -67,6 +70,7 @@ const initialDraft: PlanDraft = {
   travelerCount: defaultTravelerCount(DEFAULT_COMPANION_TYPE),
   budgetTier: 'mid',
   interests: ['맛집 탐방', '자연/힐링'],
+  title: '',
 }
 
 export function PlanCreatePage() {
@@ -102,6 +106,7 @@ export function PlanCreatePage() {
       travelerCount: existingPlan.travelerCount,
       budgetTier: existingPlan.budgetTier,
       interests: existingPlan.interests,
+      title: existingPlan.title,
     })
     hasSyncedEditDraftRef.current = true
   }, [isEditMode, existingPlan])
@@ -119,6 +124,9 @@ export function PlanCreatePage() {
         return
       case 'interests':
         setStep(draft.companionType === 'solo' ? 'companion' : 'travelers')
+        return
+      case 'title':
+        setStep('interests')
     }
   }
 
@@ -154,8 +162,7 @@ export function PlanCreatePage() {
     })
   }
 
-  // 관심사가 마지막 입력 항목이라, 여기서 다음으로 넘어가면 바로 계획을 완성한다
-  // (중간 확인 화면 없이).
+  // 제목 입력이 마지막 단계라, 여기서 다음으로 넘어가면 바로 계획을 완성한다.
   const goNext = () => {
     switch (step) {
       case 'dates': {
@@ -178,13 +185,16 @@ export function PlanCreatePage() {
         setStep('interests')
         return
       case 'interests':
+        setStep('title')
+        return
+      case 'title':
         handleComplete()
     }
   }
 
   if (isEditMode && (isExistingPlanLoading || !existingPlan)) {
     return (
-      <div>
+      <div className={pageShellStyle}>
         <PageHeader title="여행 정보 수정" showBack onBack={() => navigate(-1)} />
         <Loading label="여행 계획을 불러오는 중…" />
       </div>
@@ -192,16 +202,12 @@ export function PlanCreatePage() {
   }
 
   return (
-    <div>
+    <div className={pageShellStyle}>
       <PageHeader
         title={isEditMode ? '여행 정보 수정' : '여행 계획 만들기'}
         showBack
         onBack={goBack}
-        rightSlot={
-          <button type="button" className={skipLinkStyle} onClick={goNext}>
-            건너뛰기
-          </button>
-        }
+        actions={[{ id: 'skip', label: '건너뛰기', tone: 'muted', onPress: goNext }]}
       />
 
       <div className={pageStyle}>
@@ -255,6 +261,15 @@ export function PlanCreatePage() {
               }))
             }
             onNext={goNext}
+          />
+        ) : null}
+
+        {step === 'title' ? (
+          <TitleStep
+            title={draft.title}
+            onChange={(title) => setDraft((prev) => ({ ...prev, title }))}
+            onNext={goNext}
+            suggestedTitle={suggestPlanTitle(draft.startDate, draft.endDate)}
             isSubmitting={isEditMode ? updatePlanInfoMutation.isPending : createPlanMutation.isPending}
           />
         ) : null}

@@ -2,6 +2,24 @@ import { style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
+export const nativeBodyStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[4],
+  height: '100%',
+  maxHeight: '100%',
+  minHeight: 0,
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  WebkitOverflowScrolling: 'touch',
+  overscrollBehavior: 'contain',
+  touchAction: 'pan-y',
+  padding: vars.space[4],
+  paddingTop: vars.space[2],
+  paddingBottom: `calc(${vars.space[6]} + env(safe-area-inset-bottom))`,
+  backgroundColor: 'transparent',
+})
+
 export const contentStyle = style({
   position: 'fixed',
   left: 0,

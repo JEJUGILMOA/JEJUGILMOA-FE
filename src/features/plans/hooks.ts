@@ -11,7 +11,7 @@ import {
   updatePlanItinerary,
   updatePlanTitle,
 } from './api'
-import type { BudgetCategory, DayItinerary, PlanDraft } from './types'
+import type { BudgetCategory, DayItinerary, PlanDraft, TravelPlan } from './types'
 
 export function usePlansQuery() {
   return useQuery({
@@ -23,8 +23,17 @@ export function usePlansQuery() {
 export function usePlanQuery(planId: string) {
   return useQuery({
     queryKey: QUERY_KEYS.plan(planId),
-    queryFn: () => fetchPlanById(planId),
+    enabled: Boolean(planId),
+    queryFn: async () => {
+      const plan = await fetchPlanById(planId)
+      if (!plan) throw new Error('계획을 찾을 수 없어요.')
+      return plan
+    },
   })
+}
+
+function rememberPlan(queryClient: ReturnType<typeof useQueryClient>, plan: TravelPlan) {
+  queryClient.setQueryData(QUERY_KEYS.plan(plan.id), plan)
 }
 
 export function useCreatePlanMutation() {
@@ -32,7 +41,8 @@ export function useCreatePlanMutation() {
 
   return useMutation({
     mutationFn: createPlan,
-    onSuccess: () => {
+    onSuccess: (plan) => {
+      rememberPlan(queryClient, plan)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
     },
   })
@@ -44,8 +54,8 @@ export function useUpdatePlanInfoMutation() {
   return useMutation({
     mutationFn: ({ planId, draft }: { planId: string; draft: PlanDraft }) => updatePlanInfo(planId, draft),
     onSuccess: (plan) => {
+      rememberPlan(queryClient, plan)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
     },
   })
 }
@@ -56,8 +66,8 @@ export function useUpdatePlanTitleMutation() {
   return useMutation({
     mutationFn: ({ planId, title }: { planId: string; title: string }) => updatePlanTitle(planId, title),
     onSuccess: (plan) => {
+      rememberPlan(queryClient, plan)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
     },
   })
 }
@@ -69,8 +79,8 @@ export function useUpdatePlanItineraryMutation() {
     mutationFn: ({ planId, itinerary }: { planId: string; itinerary: Record<number, DayItinerary> }) =>
       updatePlanItinerary(planId, itinerary),
     onSuccess: (plan) => {
+      rememberPlan(queryClient, plan)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
     },
   })
 }
@@ -87,8 +97,8 @@ export function useUpdatePlanBudgetMutation() {
       budgetDetail: Record<BudgetCategory, number> | null
     }) => updatePlanBudget(planId, budgetDetail),
     onSuccess: (plan) => {
+      rememberPlan(queryClient, plan)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
     },
   })
 }
@@ -99,8 +109,8 @@ export function useConfirmPlanMutation() {
   return useMutation({
     mutationFn: confirmPlan,
     onSuccess: (plan) => {
+      rememberPlan(queryClient, plan)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(plan.id) })
     },
   })
 }
