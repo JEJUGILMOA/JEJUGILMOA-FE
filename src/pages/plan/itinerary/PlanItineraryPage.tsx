@@ -16,6 +16,7 @@ import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
 import {
   backButtonStyle,
   courseRowStyle,
+  courseSuggestTitleStyle,
   dayPagerFloatStyle,
   departureResultChevronStyle,
   departureResultRowStyle,
@@ -606,10 +607,7 @@ export function PlanItineraryPage() {
 
             {scheduleItems.length === 0 && !hasMustVisitWithoutStops ? (
               <>
-                {!departurePlace ? (
-                  <p className={inlineHintTextStyle}>출발지를 먼저 선택해주세요.</p>
-                ) : null}
-                <span className={sectionMetaStyle}>이런 코스는 어때요?</span>
+                <span className={courseSuggestTitleStyle}>이런 코스는 어때요?</span>
                 <HorizontalScrollArea>
                   <div className={courseRowStyle}>
                     {MOCK_COURSES.map((course) => (
@@ -653,10 +651,6 @@ export function PlanItineraryPage() {
                 ? `탭하면 Day ${selectedDay}의 출발지로 설정돼요`
                 : `고르면 바로 Day ${selectedDay}에 담겨요`}
             </span>
-
-            {!trimmedRecommendQuery && !isSelectingDeparture && recommendMode === 'popular' && !departurePlace ? (
-              <p className={inlineHintTextStyle}>출발지를 먼저 선택해주세요.</p>
-            ) : null}
 
             {!trimmedRecommendQuery &&
             !isSelectingDeparture &&
