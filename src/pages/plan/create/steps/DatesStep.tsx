@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/Button/Button'
 import { InlineRangeCalendar } from '../components/InlineRangeCalendar'
-import { stepDescriptionStyle, stepHeaderStyle, stepTitleStyle } from '../PlanCreatePage.css.ts'
+import { stepDescriptionStyle, stepHeaderStyle, stepTitleStyle, datesNextButtonStyle } from '../PlanCreatePage.css.ts'
 
 export type DatesStepProps = {
   startDate: string | null
@@ -31,7 +31,7 @@ export function DatesStep({ startDate, endDate, onChange, onNext, readOnly = fal
         readOnly={readOnly}
       />
 
-      <Button fullWidth size="lg" disabled={!startDate || !endDate} onClick={onNext}>
+      <Button fullWidth size="lg" className={datesNextButtonStyle} disabled={!startDate || !endDate} onClick={onNext}>
         다음
       </Button>
     </>

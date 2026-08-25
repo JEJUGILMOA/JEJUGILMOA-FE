@@ -96,7 +96,7 @@ export function InlineRangeCalendar({
           onClick={() => setViewMonth((month) => subMonths(month, 1))}
           aria-label="이전 달"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={18} />
         </button>
         <span className={monthTitleStyle}>{format(viewMonth, 'yyyy년 M월', { locale: ko })}</span>
         <button
@@ -105,7 +105,7 @@ export function InlineRangeCalendar({
           onClick={() => setViewMonth((month) => addMonths(month, 1))}
           aria-label="다음 달"
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={18} />
         </button>
       </div>
 
