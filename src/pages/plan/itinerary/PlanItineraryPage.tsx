@@ -126,7 +126,7 @@ export function PlanItineraryPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { data: plan, isLoading } = usePlanQuery(planId)
+  const { data: plan, isPending, isError, refetch } = usePlanQuery(planId)
   const updateItineraryMutation = useUpdatePlanItineraryMutation()
 
   const [selectedDay, setSelectedDay] = useState(1)
@@ -146,10 +146,21 @@ export function PlanItineraryPage() {
 
   const goBack = () => navigate(-1)
 
-  if (isLoading || !plan) {
+  if (isPending) {
     return (
       <div className={pageRootStyle}>
         <Loading label="여행 계획을 불러오는 중…" />
+      </div>
+    )
+  }
+
+  if (isError || !plan) {
+    return (
+      <div className={pageRootStyle}>
+        <p className={emptyTextStyle}>계획을 불러오지 못했어요.</p>
+        <Button fullWidth onClick={() => void refetch()}>
+          다시 시도
+        </Button>
       </div>
     )
   }
@@ -884,7 +895,6 @@ function ItineraryNativeChromeSync({
     if (!nativeBridge.isNativeWebView()) return
     return () => {
       nativeBridge.postToNative({ type: 'SET_ITINERARY_CHROME', visible: false })
-      nativeBridge.postToNative({ type: 'SET_MAP', visible: false })
     }
   }, [])
 

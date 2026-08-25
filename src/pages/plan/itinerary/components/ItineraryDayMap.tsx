@@ -39,6 +39,8 @@ export type ItineraryDayMapProps = {
   cameraFitKey?: string
 }
 
+let hideNativeMapTimer: ReturnType<typeof setTimeout> | null = null
+
 /** 이 거리(px) 이하로 움직였으면 드래그(지도 이동)가 아니라 탭으로 본다 */
 const TAP_MOVE_THRESHOLD = 6
 
@@ -138,10 +140,17 @@ export function ItineraryDayMap({
 
   useEffect(() => {
     if (!nativeBridge.isNativeWebView()) return
+    if (hideNativeMapTimer) {
+      clearTimeout(hideNativeMapTimer)
+      hideNativeMapTimer = null
+    }
     document.documentElement.classList.add('gilmoa-native-map')
     return () => {
       document.documentElement.classList.remove('gilmoa-native-map')
-      nativeBridge.postToNative({ type: 'SET_MAP', visible: false })
+      hideNativeMapTimer = setTimeout(() => {
+        hideNativeMapTimer = null
+        nativeBridge.postToNative({ type: 'SET_MAP', visible: false })
+      }, 120)
     }
   }, [])
 

@@ -56,7 +56,7 @@ function placeTitle(placeId: string) {
 export function PlanPreviewPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
-  const { data: plan, isLoading } = usePlanQuery(planId)
+  const { data: plan, isPending, isError } = usePlanQuery(planId)
   const updateTitleMutation = useUpdatePlanTitleMutation()
   const confirmPlanMutation = useConfirmPlanMutation()
 
@@ -101,11 +101,20 @@ export function PlanPreviewPage() {
     )
   }
 
-  if (isLoading || !plan) {
+  if (isPending) {
     return (
       <div>
         <PageHeader title="계획 미리보기" showBack onBack={goBack} />
         <Loading label="여행 계획을 불러오는 중…" />
+      </div>
+    )
+  }
+
+  if (isError || !plan) {
+    return (
+      <div>
+        <PageHeader title="계획 미리보기" showBack onBack={goBack} />
+        <p className={emptyHintStyle}>계획을 불러오지 못했어요.</p>
       </div>
     )
   }
