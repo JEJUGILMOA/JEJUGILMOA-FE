@@ -30,6 +30,30 @@ type ErrorBody = {
   result?: unknown
 }
 
+type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean }
+
+const AUTH_CALL_PATTERN = /\/auth\/oauth\/|\/auth\/reissue|\/auth\/logout|\/dev\/auth\//
+
+/** 동시에 401이 여러 개 나도 재발급 요청은 한 번만 나가도록 진행 중인 Promise를 공유 */
+let reissuePromise: Promise<void> | null = null
+
+function reissueTokens(): Promise<void> {
+  if (!reissuePromise) {
+    reissuePromise = apiClient
+      .post('/auth/reissue')
+      .then(() => undefined)
+      .finally(() => {
+        reissuePromise = null
+      })
+  }
+  return reissuePromise
+}
+
+function toApiError(error: AxiosError<ErrorBody>) {
+  const { status, data } = error.response ?? {}
+  return new ApiError(data?.message ?? error.message, status ?? 0, data?.code ?? 'HTTP_ERROR', data)
+}
+
 apiClient.interceptors.response.use(
   (response) => {
     const payload = response.data
@@ -45,20 +69,28 @@ apiClient.interceptors.response.use(
   },
   (error: AxiosError<ErrorBody>) => {
     if (error.response) {
-      const { status, data, config } = error.response
+      const { status, config } = error.response
       const url = `${config?.baseURL ?? ''}${config?.url ?? ''}`
-      const isAuthCall = /\/auth\/oauth\/|\/auth\/reissue|\/auth\/logout|\/dev\/auth\//.test(url)
+      const isAuthCall = AUTH_CALL_PATTERN.test(url)
+      const originalConfig = config as RetriableConfig | undefined
+
+      // refresh token 쿠키가 살아있으면 한 번만 재발급을 시도하고 원래 요청을 재시도한다.
+      if (status === 401 && !isAuthCall && originalConfig && !originalConfig._retry) {
+        originalConfig._retry = true
+        return reissueTokens().then(
+          () => apiClient(originalConfig),
+          () => {
+            authStore.getState().clearAuth()
+            throw toApiError(error)
+          },
+        )
+      }
 
       if (status === 401 && !isAuthCall) {
         authStore.getState().clearAuth()
       }
 
-      throw new ApiError(
-        data?.message ?? error.message,
-        status,
-        data?.code ?? 'HTTP_ERROR',
-        data,
-      )
+      throw toApiError(error)
     }
 
     if (error.request) {
