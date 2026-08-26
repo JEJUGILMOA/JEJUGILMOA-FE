@@ -3,12 +3,11 @@ import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
 /**
- * 좌우로 화면 끝까지 이어붙임. 위쪽 여백은 이미 RecordDetailPage의 subHeaderStyle이
- * 취소해뒀으므로 여기서 또 marginTop을 걸면 헤더 쪽으로 파고들어 겹친다.
+ * 부모 pageStyle이 레이아웃 패딩을 이미 취소하므로 풀블리드.
+ * 위쪽 여백은 RecordDetailPage의 subHeaderStyle이 처리한다.
  */
 export const wrapStyle = style({
   position: 'relative',
-  marginInline: `calc(-1 * ${vars.space[4]})`,
   aspectRatio: '1 / 1',
   overflow: 'hidden',
   backgroundColor: colors.surface[4],

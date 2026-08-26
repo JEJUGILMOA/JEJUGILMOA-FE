@@ -30,6 +30,7 @@ import {
   avatarStyle,
   backButtonStyle,
   badgeRowStyle,
+  bodyStyle,
   createdAtStyle,
   dateRangeStyle,
   infoStyle,
@@ -162,7 +163,7 @@ export function RecordDetailPage() {
   const header = (
     <div className={subHeaderStyle}>
       <button type="button" className={backButtonStyle} onClick={goBack} aria-label="뒤로 가기">
-        <ChevronLeft size={24} strokeWidth={2} />
+        <ChevronLeft size={22} strokeWidth={2} />
       </button>
       {ownRecord ? <RecordManageSheet record={ownRecord} inline onDeleted={goBack} /> : null}
     </div>
@@ -197,84 +198,86 @@ export function RecordDetailPage() {
           onToggleBookmark={handleToggleBookmark}
         />
 
-        <div className={infoStyle}>
-          <div className={badgeRowStyle}>
-            <Badge status={view.visibilityLabel === '전체 공개' ? 'success' : 'neutral'}>
-              {view.visibilityLabel}
-            </Badge>
-            <span className={createdAtStyle}>
-              {format(new Date(view.createdAt), 'yyyy.MM.dd')} 작성
-            </span>
-          </div>
+        <div className={bodyStyle}>
+          <div className={infoStyle}>
+            <div className={badgeRowStyle}>
+              <Badge status={view.visibilityLabel === '전체 공개' ? 'success' : 'neutral'}>
+                {view.visibilityLabel}
+              </Badge>
+              <span className={createdAtStyle}>
+                {format(new Date(view.createdAt), 'yyyy.MM.dd')} 작성
+              </span>
+            </div>
 
-          <div className={titleGroupStyle}>
-            <h1 className={titleStyle}>{view.title}</h1>
-            {view.tripDateRangeLabel ? (
-              <p className={dateRangeStyle}>{view.tripDateRangeLabel}</p>
+            <div className={titleGroupStyle}>
+              <h1 className={titleStyle}>{view.title}</h1>
+              {view.tripDateRangeLabel ? (
+                <p className={dateRangeStyle}>{view.tripDateRangeLabel}</p>
+              ) : null}
+            </div>
+
+            {view.linkedPlanLabel ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={linkedPlanButtonStyle}
+                onClick={() => navigate(ROUTES.recordPlan(view.id))}
+              >
+                {view.linkedPlanLabel} <ChevronRight size={14} aria-hidden />
+              </Button>
             ) : null}
+
+            <p className={summaryStyle}>{view.summary}</p>
+
+            <div className={authorRowStyle}>
+              <span className={avatarStyle} aria-hidden>
+                {view.authorName[0]}
+              </span>
+              <span className={authorNameStyle}>{view.authorName}</span>
+              <span className={authorTimeStyle}>
+                {formatDistanceToNow(new Date(view.createdAt), { locale: ko, addSuffix: true })}
+              </span>
+            </div>
+
+            <p className={metaStyle}>
+              방문 장소 {view.visitedPlaces.length}곳 · 사진 {view.photoUrls.length}장
+            </p>
+
+            <div className={actionRowStyle}>
+              <button
+                type="button"
+                className={reactionButtonRecipe({
+                  tone: 'like',
+                  active: view.myReaction === 'like',
+                })}
+                aria-pressed={view.myReaction === 'like'}
+                onClick={() => handleReact('like')}
+              >
+                <ThumbsUp size={14} aria-hidden />
+                좋아요 {view.likeCount}
+              </button>
+              <button
+                type="button"
+                className={reactionButtonRecipe({
+                  tone: 'dislike',
+                  active: view.myReaction === 'dislike',
+                })}
+                aria-pressed={view.myReaction === 'dislike'}
+                onClick={() => handleReact('dislike')}
+              >
+                <ThumbsDown size={14} aria-hidden />
+                싫어요 {view.dislikeCount}
+              </button>
+              <button type="button" className={shareButtonStyle} onClick={handleShare}>
+                <Share2 size={14} aria-hidden />
+                공유
+              </button>
+            </div>
           </div>
 
-          {view.linkedPlanLabel ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className={linkedPlanButtonStyle}
-              onClick={() => navigate(ROUTES.recordPlan(view.id))}
-            >
-              {view.linkedPlanLabel} <ChevronRight size={14} aria-hidden />
-            </Button>
-          ) : null}
-
-          <p className={summaryStyle}>{view.summary}</p>
-
-          <div className={authorRowStyle}>
-            <span className={avatarStyle} aria-hidden>
-              {view.authorName[0]}
-            </span>
-            <span className={authorNameStyle}>{view.authorName}</span>
-            <span className={authorTimeStyle}>
-              {formatDistanceToNow(new Date(view.createdAt), { locale: ko, addSuffix: true })}
-            </span>
-          </div>
-
-          <p className={metaStyle}>
-            방문 장소 {view.visitedPlaces.length}곳 · 사진 {view.photoUrls.length}장
-          </p>
-
-          <div className={actionRowStyle}>
-            <button
-              type="button"
-              className={reactionButtonRecipe({
-                tone: 'like',
-                active: view.myReaction === 'like',
-              })}
-              aria-pressed={view.myReaction === 'like'}
-              onClick={() => handleReact('like')}
-            >
-              <ThumbsUp size={14} aria-hidden />
-              좋아요 {view.likeCount}
-            </button>
-            <button
-              type="button"
-              className={reactionButtonRecipe({
-                tone: 'dislike',
-                active: view.myReaction === 'dislike',
-              })}
-              aria-pressed={view.myReaction === 'dislike'}
-              onClick={() => handleReact('dislike')}
-            >
-              <ThumbsDown size={14} aria-hidden />
-              싫어요 {view.dislikeCount}
-            </button>
-            <button type="button" className={shareButtonStyle} onClick={handleShare}>
-              <Share2 size={14} aria-hidden />
-              공유
-            </button>
-          </div>
+          <VisitedPlaceList places={view.visitedPlaces} />
+          <RoutePreview places={view.visitedPlaces} />
         </div>
-
-        <VisitedPlaceList places={view.visitedPlaces} />
-        <RoutePreview places={view.visitedPlaces} />
       </div>
     </div>
   )

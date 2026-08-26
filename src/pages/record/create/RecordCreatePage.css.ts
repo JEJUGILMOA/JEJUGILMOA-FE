@@ -6,6 +6,7 @@ export const pageStyle = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[6],
+  paddingInline: vars.space[2],
   paddingBottom: vars.space[8],
 })
 
