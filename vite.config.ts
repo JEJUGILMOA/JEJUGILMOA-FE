@@ -15,8 +15,16 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 3000,
     host: true,
+    proxy: {
+      // VITE_API_BASE_URL=/api 일 때 로컬에서 쿠키·CORS 이슈를 피한다.
+      '/api': {
+        target: 'https://gilmoa-dev.gyeonseo.com',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
   test: {
     globals: true,

@@ -84,7 +84,11 @@ export type NativeToWebMessage =
   | { type: 'NATIVE_READY'; platform: 'ios' | 'android' }
   | { type: 'LOCATION_UPDATE'; location: GeoCoords }
   | { type: 'LOCATION_ERROR'; message: string }
-  | { type: 'AUTH_TOKEN'; accessToken: string }
+  | {
+      type: 'AUTH_TOKEN'
+      accessToken: string
+      user?: { id: string; nickname: string; profileImageUrl?: string }
+    }
   | { type: 'ANDROID_BACK' }
   | { type: 'HEADER_BACK' }
   | { type: 'HEADER_ACTION'; id: string }

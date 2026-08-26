@@ -6,7 +6,13 @@ import { TravelPickCard } from './components/TravelPickCard/TravelPickCard'
 import { CourseRecommendCard } from './components/CourseRecommendCard/CourseRecommendCard'
 import { PopularPlaceCard } from './components/PopularPlaceCard/PopularPlaceCard'
 import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
-import { MOCK_COURSES, MOCK_PLACES, MOCK_TRAVEL_PICKS, getCoursePreviewSteps, getPlaceImageUrls } from '@/data/mockExplore'
+import {
+  MOCK_COURSES,
+  MOCK_PLACES,
+  MOCK_TRAVEL_PICKS,
+  getCoursePreviewSteps,
+  getPlaceImageUrls,
+} from '@/data/mockExplore'
 import {
   categoryIconStyle,
   categoryItemStyle,
@@ -91,11 +97,7 @@ export function HomePage() {
           actionLabel="전체보기 >"
           onAction={() => navigate(ROUTES.placesPopular)}
         />
-        <HorizontalScrollArea
-          as="ul"
-          className={categoryListStyle}
-          aria-label="카테고리 목록"
-        >
+        <HorizontalScrollArea as="ul" className={categoryListStyle} aria-label="카테고리 목록">
           {PLACE_CATEGORIES.map((category) => {
             const Icon = category.icon
             return (
