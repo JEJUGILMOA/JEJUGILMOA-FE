@@ -19,6 +19,19 @@ const mockPlaces = [
   },
 ]
 
+const mockProfile = {
+  nickname: '김여행',
+  profileImageUrl: undefined,
+  bio: '제주를 사랑하는 여행자',
+  completedTripCount: 3,
+  favoriteCount: 12,
+  badgeCount: 2,
+}
+
+function envelope<T>(result: T) {
+  return { isSuccess: true, code: 'COMMON200', message: 'OK', result }
+}
+
 export const handlers = [
   http.get('*/places', () => HttpResponse.json(mockPlaces)),
   http.get('*/places/:placeId', ({ params }) => {
@@ -28,4 +41,18 @@ export const handlers = [
     }
     return HttpResponse.json(place)
   }),
+
+  http.get('*/users/me', () => HttpResponse.json(envelope(mockProfile))),
+  http.post('*/auth/oauth/:provider/login', () =>
+    HttpResponse.json(
+      envelope({
+        userId: 1,
+        nickname: mockProfile.nickname,
+        role: 'USER' as const,
+        newUser: false,
+      }),
+    ),
+  ),
+  http.post('*/auth/reissue', () => HttpResponse.json(envelope(null))),
+  http.post('*/auth/logout', () => HttpResponse.json(envelope(null))),
 ]
