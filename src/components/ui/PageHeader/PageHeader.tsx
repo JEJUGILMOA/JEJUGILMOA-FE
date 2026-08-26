@@ -132,7 +132,7 @@ export function PageHeader({
       <div className={pageHeaderLeft}>
         {showBack ? (
           <button type="button" className={backButton} onClick={onBack} aria-label="뒤로 가기">
-            <ChevronLeft size={24} strokeWidth={2} />
+            <ChevronLeft size={22} strokeWidth={2} />
           </button>
         ) : null}
         <h1 className={cn(heading2, pageHeaderTitle)}>{title}</h1>

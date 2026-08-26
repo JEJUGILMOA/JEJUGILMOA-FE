@@ -1,17 +1,22 @@
 import { style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
+import { PAGE_HEADER_BLEED_VAR } from '@/components/ui/PageHeader/PageHeader.css.ts'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
-/** 상단 앱 헤더 바로 아래에 이어붙여 한 헤더처럼 보이게 함 (뒤로가기 + 관리 메뉴) */
+/** 네이티브 PageHeader와 같은 패딩·크기의 뒤로가기 + 관리 메뉴 */
 export const subHeaderStyle = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  marginTop: `calc(-1 * ${vars.space[4]})`,
-  marginInline: `calc(-1 * ${vars.space[4]})`,
-  padding: `${vars.space[1]} ${vars.space[4]}`,
+  minHeight: vars.size.header,
+  marginTop: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, ${vars.space[3]}))`,
+  marginInline: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, ${vars.space[3]}))`,
+  padding: `${vars.space[2]} 4px ${vars.space[2]} 10px`,
   backgroundColor: colors.surface[1],
+  position: 'sticky',
+  top: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, ${vars.space[3]}))`,
+  zIndex: vars.zIndex.sticky,
 })
 
 export const backButtonStyle = style({
@@ -19,9 +24,9 @@ export const backButtonStyle = style({
   flexShrink: 0,
   alignItems: 'center',
   justifyContent: 'center',
-  width: vars.size.touch,
-  height: vars.size.touch,
-  margin: `0 -${vars.space[2]}`,
+  width: 36,
+  height: 36,
+  margin: 0,
   padding: 0,
   border: 'none',
   borderRadius: vars.radius.sm,
@@ -33,7 +38,7 @@ export const backButtonStyle = style({
       backgroundColor: colors.surface[4],
     },
     '&:active': {
-      backgroundColor: colors.surface[5],
+      backgroundColor: colors.surface[4],
     },
   },
 })
@@ -42,7 +47,16 @@ export const pageStyle = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[6],
+  marginInline: `calc(-1 * ${vars.space[3]})`,
   paddingBottom: vars.space[8],
+})
+
+/** 사진 아래 본문 — 좌우 패딩 */
+export const bodyStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[6],
+  paddingInline: vars.space[4],
 })
 
 export const infoStyle = style({

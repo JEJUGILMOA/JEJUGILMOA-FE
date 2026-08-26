@@ -1,4 +1,5 @@
 import { style } from '@vanilla-extract/css'
+import { PAGE_HEADER_BLEED_VAR } from '@/components/ui/PageHeader/PageHeader.css.ts'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
@@ -40,6 +41,9 @@ export const contentStyle = style({
   overflowX: 'hidden',
   overscrollBehavior: 'contain',
   WebkitOverflowScrolling: 'touch',
+  vars: {
+    [PAGE_HEADER_BLEED_VAR]: vars.space[3],
+  },
   scrollbarWidth: 'none',
   selectors: {
     '&::-webkit-scrollbar': {
@@ -61,6 +65,9 @@ export const contentFlushStyle = style({
   overscrollBehavior: 'contain',
   WebkitOverflowScrolling: 'touch',
   backgroundColor: colors.background[1],
+  vars: {
+    [PAGE_HEADER_BLEED_VAR]: '0px',
+  },
   scrollbarWidth: 'none',
   selectors: {
     '&::-webkit-scrollbar': {

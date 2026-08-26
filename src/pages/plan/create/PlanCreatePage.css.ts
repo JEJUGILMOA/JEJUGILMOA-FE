@@ -2,15 +2,16 @@ import { style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
-/** AppLayout 12px 거터 안에서, 헤더·스텝 컴포넌트에 좌우 8px을 더 준다 */
 export const pageShellStyle = style({
-  paddingInline: vars.space[2],
+  display: 'flex',
+  flexDirection: 'column',
 })
 
 export const pageStyle = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[6],
+  paddingInline: vars.space[2],
   paddingBottom: vars.space[8],
 })
 
