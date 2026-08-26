@@ -145,6 +145,13 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('AUTH_TOKEN'),
     accessToken: z.string().min(1),
+    user: z
+      .object({
+        id: z.string(),
+        nickname: z.string(),
+        profileImageUrl: z.string().optional(),
+      })
+      .optional(),
   }),
   z.object({ type: z.literal('ANDROID_BACK') }),
   z.object({ type: z.literal('HEADER_BACK') }),

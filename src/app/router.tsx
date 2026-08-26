@@ -1,6 +1,8 @@
 import { createBrowserRouter } from 'react-router'
 import { AppLayout, type RouteHandle } from '@/components/layout/AppLayout/AppLayout'
 import { HomePage } from '@/pages/home/HomePage'
+import { LoginPage } from '@/pages/login/LoginPage'
+import { OAuthCallbackPage } from '@/pages/login/OAuthCallbackPage'
 import { MapPage } from '@/pages/map/MapPage'
 import { PlacePage } from '@/pages/place/PlacePage'
 import { PopularPlacesPage } from '@/pages/places/PopularPlacesPage'
@@ -45,6 +47,12 @@ const mySubPageHandle = {
   flush: true,
 } as const satisfies Partial<RouteHandle>
 
+const authPageHandle = {
+  title: '로그인',
+  hideNav: true,
+  flush: true,
+} as const satisfies RouteHandle
+
 export const router = createBrowserRouter([
   {
     path: '/',
@@ -54,6 +62,16 @@ export const router = createBrowserRouter([
         index: true,
         Component: HomePage,
         handle: { title: '홈', flush: true } satisfies RouteHandle,
+      },
+      {
+        path: ROUTES.login.slice(1),
+        Component: LoginPage,
+        handle: authPageHandle,
+      },
+      {
+        path: 'oauth/:provider/callback',
+        Component: OAuthCallbackPage,
+        handle: { ...authPageHandle, title: '로그인 처리' } satisfies RouteHandle,
       },
       {
         path: ROUTES.map.slice(1),

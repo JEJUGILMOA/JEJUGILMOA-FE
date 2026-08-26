@@ -33,10 +33,12 @@ function handleNativeMessage(data: unknown) {
     case 'AUTH_TOKEN':
       authStore.getState().setAuth({
         accessToken: message.accessToken,
-        user: authStore.getState().user ?? {
-          id: 'native-user',
-          nickname: '길모아 사용자',
-        },
+        user:
+          message.user ??
+          authStore.getState().user ?? {
+            id: 'native-user',
+            nickname: '길모아 사용자',
+          },
       })
       break
     case 'ANDROID_BACK':

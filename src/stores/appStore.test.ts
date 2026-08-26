@@ -43,4 +43,14 @@ describe('authStore', () => {
     expect(authStore.getState().isAuthenticated).toBe(false)
     expect(authStore.getState().accessToken).toBeNull()
   })
+
+  it('accepts cookie session without accessToken', () => {
+    authStore.getState().setAuth({
+      user: { id: '2', nickname: '쿠키유저' },
+    })
+
+    expect(authStore.getState().isAuthenticated).toBe(true)
+    expect(authStore.getState().accessToken).toBeNull()
+    expect(authStore.getState().user?.id).toBe('2')
+  })
 })

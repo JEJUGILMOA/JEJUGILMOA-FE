@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { toast } from '@/components/ui/Toast/Toast'
+import { logoutAuth } from '@/features/auth/api'
 import { useAuthStore } from '@/stores/authStore'
-import { ROUTES } from '@/constants'
+import { QUERY_KEYS, ROUTES } from '@/constants'
 import { cn } from '@/utils/cn'
 import {
   dangerTextStyle,
@@ -22,6 +24,7 @@ type NotiKey = 'all' | 'schedule' | 'marketing'
 
 export function SettingsPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const clearAuth = useAuthStore((s) => s.clearAuth)
   const [noti, setNoti] = useState<Record<NotiKey, boolean>>({
     all: true,
@@ -35,11 +38,18 @@ export function SettingsPage() {
     setNoti((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
-  const handleLogout = () => {
-    clearAuth()
-    setLogoutOpen(false)
-    toast.success('로그아웃되었어요.')
-    navigate(ROUTES.my)
+  const handleLogout = async () => {
+    try {
+      await logoutAuth()
+    } catch {
+      // 쿠키가 이미 만료된 경우에도 로컬 세션은 정리한다.
+    } finally {
+      clearAuth()
+      void queryClient.removeQueries({ queryKey: QUERY_KEYS.myProfile })
+      setLogoutOpen(false)
+      toast.success('로그아웃되었어요.')
+      navigate(ROUTES.login)
+    }
   }
 
   const handleWithdraw = () => {

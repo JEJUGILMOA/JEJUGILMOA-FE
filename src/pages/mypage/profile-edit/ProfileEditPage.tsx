@@ -34,7 +34,7 @@ export function ProfileEditPage() {
       return
     }
 
-    if (user && accessToken) {
+    if (user) {
       setAuth({
         accessToken,
         user: {

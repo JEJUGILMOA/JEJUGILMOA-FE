@@ -11,6 +11,8 @@ export {
 
 export const ROUTES = {
   home: '/',
+  login: '/login',
+  oauthCallback: (provider: string) => `/oauth/${provider}/callback`,
   map: '/map',
   search: '/search',
   place: '/place/:placeId',
@@ -63,4 +65,5 @@ export const QUERY_KEYS = {
   completedTrips: ['records', 'completedTrips'] as const,
   myRecords: ['records', 'my'] as const,
   exploreRecords: ['records', 'explore'] as const,
+  myProfile: ['users', 'me'] as const,
 } as const
