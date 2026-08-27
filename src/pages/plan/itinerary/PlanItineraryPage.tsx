@@ -337,7 +337,13 @@ export function PlanItineraryPage() {
     )
   })
 
-  type DisplayPlace = { id: string; title: string; categoryLabel: string; addable: boolean }
+  type DisplayPlace = {
+    id: string
+    title: string
+    categoryLabel: string
+    imageUrl: string | null
+    addable: boolean
+  }
 
   const searchDisplayPlaces: DisplayPlace[] = (placeSearchQuery.data?.content ?? [])
     .filter((item) => !assignedEverywhere.has(String(item.id)))
@@ -345,6 +351,7 @@ export function PlanItineraryPage() {
       id: String(item.id),
       title: item.name,
       categoryLabel: item.categoryName ?? '',
+      imageUrl: item.imageUrl,
       addable: true,
     }))
 
@@ -352,11 +359,18 @@ export function PlanItineraryPage() {
   // 목록엔 보여주되 담기·별표를 비활성화한다.
   const recommendDisplayPlaces: DisplayPlace[] = (recommendationsQuery.data?.items ?? []).map((item) =>
     item.placeId !== null
-      ? { id: String(item.placeId), title: item.name, categoryLabel: item.categoryName ?? '', addable: true }
+      ? {
+          id: String(item.placeId),
+          title: item.name,
+          categoryLabel: item.categoryName ?? '',
+          imageUrl: item.imageUrl,
+          addable: true,
+        }
       : {
           id: `tourapi-${item.contentId}`,
           title: item.name,
           categoryLabel: item.categoryName ?? '',
+          imageUrl: item.imageUrl,
           addable: false,
         },
   )
@@ -897,6 +911,7 @@ export function PlanItineraryPage() {
                     key={place.id}
                     title={place.title}
                     category={place.categoryLabel}
+                    imageUrl={place.imageUrl}
                     added={false}
                     onToggle={() => (place.addable ? handleAssign(place.id) : undefined)}
                     isMustVisit={currentDayMustVisitIds.includes(place.id)}

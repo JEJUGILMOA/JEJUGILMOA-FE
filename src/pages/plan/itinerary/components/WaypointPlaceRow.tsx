@@ -5,6 +5,7 @@ import {
   infoColumnStyle,
   mustVisitButtonRecipe,
   rowStyle,
+  thumbnailImageStyle,
   thumbnailStyle,
   titleStyle,
   toggleButtonStyle,
@@ -13,6 +14,7 @@ import {
 export type WaypointPlaceRowProps = {
   title: string
   category: string
+  imageUrl?: string | null
   added: boolean
   onToggle: () => void
   /** 이 장소가 그 Day의 "꼭 가고 싶은 장소"로 정해져 있는지 */
@@ -27,6 +29,7 @@ export type WaypointPlaceRowProps = {
 export function WaypointPlaceRow({
   title,
   category,
+  imageUrl,
   added,
   onToggle,
   isMustVisit,
@@ -35,7 +38,11 @@ export function WaypointPlaceRow({
 }: WaypointPlaceRowProps) {
   return (
     <div className={rowStyle}>
-      <div className={thumbnailStyle} aria-hidden />
+      {imageUrl ? (
+        <img src={imageUrl} alt="" className={thumbnailImageStyle} />
+      ) : (
+        <div className={thumbnailStyle} aria-hidden />
+      )}
       <div className={infoColumnStyle}>
         <span className={titleStyle}>{title}</span>
         <span className={categoryStyle}>{disabled ? '아직 담을 수 없는 장소예요' : category}</span>
