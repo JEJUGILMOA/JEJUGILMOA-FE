@@ -370,6 +370,7 @@ export function PlanItineraryPage() {
   const isLoadingDisplayPlaces = trimmedRecommendQuery
     ? placeSearchQuery.isLoading
     : recommendationsQuery.isLoading
+  const hasDisplayPlacesError = trimmedRecommendQuery ? placeSearchQuery.isError : recommendationsQuery.isError
   const recommendHasMore = !trimmedRecommendQuery && (recommendationsQuery.data?.hasMore ?? false)
 
   const handleRefreshRecommendations = () => {
@@ -878,6 +879,21 @@ export function PlanItineraryPage() {
               </p>
             ) : isLoadingDisplayPlaces ? (
               <p className={emptyTextStyle}>불러오는 중…</p>
+            ) : hasDisplayPlacesError ? (
+              <>
+                <p className={emptyTextStyle}>
+                  {trimmedRecommendQuery ? '검색' : '추천'}을 불러오지 못했어요. 다시 시도해 주세요.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    void (trimmedRecommendQuery ? placeSearchQuery.refetch() : recommendationsQuery.refetch())
+                  }
+                >
+                  다시 시도
+                </Button>
+              </>
             ) : displayPlaces.length === 0 ? (
               <p className={emptyTextStyle}>표시할 장소가 없어요.</p>
             ) : (
