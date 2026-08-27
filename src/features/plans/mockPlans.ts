@@ -28,13 +28,24 @@ const demoPlan: TravelPlan = {
     'dongmun',
   ],
   itinerary: {
-    1: { departurePlaceId: 'aewol-stay', mustVisitPlaceIds: [], placeIds: ['hyeopjae-beach', 'hallim-cafe'] },
+    1: {
+      departurePlaceId: 'aewol-stay',
+      waypoints: [
+        { placeId: 'hyeopjae-beach', isPreferred: false },
+        { placeId: 'hallim-cafe', isPreferred: false },
+      ],
+    },
     2: {
       departurePlaceId: null,
-      mustVisitPlaceIds: [],
-      placeIds: ['seongsan-ilchulbong', 'seopjikoji-cafe'],
+      waypoints: [
+        { placeId: 'seongsan-ilchulbong', isPreferred: false },
+        { placeId: 'seopjikoji-cafe', isPreferred: false },
+      ],
     },
-    3: { departurePlaceId: 'aewol-stay', mustVisitPlaceIds: [], placeIds: ['dongmun'] },
+    3: {
+      departurePlaceId: 'aewol-stay',
+      waypoints: [{ placeId: 'dongmun', isPreferred: false }],
+    },
   },
   budgetDetail: {
     transport: 150_000,

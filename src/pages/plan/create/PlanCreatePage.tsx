@@ -32,7 +32,7 @@ const DATE_FORMAT = 'yyyy.MM.dd'
 
 function hasDayContent(day: DayItinerary | undefined): boolean {
   if (!day) return false
-  return Boolean(day.departurePlaceId) || day.mustVisitPlaceIds.length > 0 || day.placeIds.length > 0
+  return Boolean(day.departurePlaceId) || day.waypoints.length > 0
 }
 
 /** 실제로 장소가 배정된 Day 중 가장 늦은 번호. 아무 Day에도 아직 아무것도 안 담았으면 0. */

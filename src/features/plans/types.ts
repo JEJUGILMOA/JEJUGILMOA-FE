@@ -6,14 +6,18 @@ export type BudgetTier = 'low' | 'mid' | 'high' | 'premium'
 
 export type BudgetCategory = 'transport' | 'lodging' | 'food' | 'etc'
 
-/** Day 하나의 일정. 출발 장소·필수 장소는 일정편집 화면에서 인라인으로 채워진다 (기본 null/빈 배열) */
+/** Day 일정에 담긴 장소 하나. `isPreferred`가 선호경유지(★) 표시 — 앵커 추천의 기준점이 된다 */
+export type Waypoint = {
+  placeId: string
+  isPreferred: boolean
+}
+
+/** Day 하나의 일정. 출발 장소는 일정편집 화면에서 인라인으로 채워진다 (기본 null) */
 export type DayItinerary = {
   /** 이 Day의 출발 장소 id. 검색으로 입력 (아직 없으면 null) */
   departurePlaceId: string | null
-  /** 이 Day에서 반드시 가야 할 장소(가장 가고 싶은 곳) id 목록. 최대 2개까지 (아직 없으면 빈 배열) */
-  mustVisitPlaceIds: string[]
-  /** 그 외 방문 장소 id 목록. 기존 순서·시간 배정 대상 */
-  placeIds: string[]
+  /** 방문 장소 목록. 배열 순서가 곧 방문 순서 */
+  waypoints: Waypoint[]
 }
 
 /**

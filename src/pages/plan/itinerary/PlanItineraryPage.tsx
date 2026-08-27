@@ -14,6 +14,7 @@ import { PLACE_CATEGORY_LABELS, ROUTES } from '@/constants'
 import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
 import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
 import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
+import type { Waypoint } from '@/features/plans/types'
 import {
   backButtonStyle,
   courseRowStyle,
@@ -171,7 +172,8 @@ export function PlanItineraryPage() {
   const dayDateLabel = format(addDays(startDate, selectedDay - 1), 'M.d(EEE)', { locale: ko })
 
   const currentDayEntry = plan.itinerary[selectedDay]
-  const currentDayPlaceIds = currentDayEntry?.placeIds ?? []
+  const currentDayWaypoints = currentDayEntry?.waypoints ?? []
+  const currentDayPlaceIds = currentDayWaypoints.map((waypoint) => waypoint.placeId)
 
   const isFirstDay = selectedDay === 1
   const isLastDay = selectedDay === dayCount
@@ -208,15 +210,16 @@ export function PlanItineraryPage() {
   const assignedEverywhere = new Set(
     Object.values(plan.itinerary).flatMap((day) => [
       ...(day.departurePlaceId ? [day.departurePlaceId] : []),
-      ...day.mustVisitPlaceIds,
-      ...day.placeIds,
+      ...day.waypoints.map((waypoint) => waypoint.placeId),
     ]),
   )
   const candidatePlaces = MOCK_PLACES.filter((place) => !assignedEverywhere.has(place.id))
 
   // "가까운 장소"는 이 Day에 꼭 가고 싶은 장소(앵커)를 정해뒀으면 그곳들 기준으로만 추천해서
   // 하루 일정이 그 앵커 주변으로 짜이게 하고, 아직 안 정했으면 출발지·이미 담은 장소로 대신한다.
-  const currentDayMustVisitIds = currentDayEntry?.mustVisitPlaceIds ?? []
+  const currentDayMustVisitIds = currentDayWaypoints
+    .filter((waypoint) => waypoint.isPreferred)
+    .map((waypoint) => waypoint.placeId)
   // 출발지만 정해진 상태는 아직 "빈 일정"으로 본다 — 출발지는 참고 지점일 뿐 실제
   // 방문 계획이 아니라서, 출발지만 있고 꼭 가고 싶은 장소·일정이 없으면 코스 추천을
   // 계속 보여준다. 반대로 꼭 가고 싶은 장소가 있는데 일정이 비어 있으면(예: 담았던
@@ -274,8 +277,7 @@ export function PlanItineraryPage() {
   const persistDay = (
     updates: Partial<{
       departurePlaceId: string | null
-      mustVisitPlaceIds: string[]
-      placeIds: string[]
+      waypoints: Waypoint[]
     }>,
     onSuccessMessage?: string,
   ) => {
@@ -283,8 +285,7 @@ export function PlanItineraryPage() {
       ...plan.itinerary,
       [selectedDay]: {
         departurePlaceId: currentDayEntry?.departurePlaceId ?? null,
-        mustVisitPlaceIds: currentDayMustVisitIds,
-        placeIds: currentDayPlaceIds,
+        waypoints: currentDayWaypoints,
         ...updates,
       },
     }
@@ -302,12 +303,16 @@ export function PlanItineraryPage() {
   }
 
   const handleReorder = (nextOrderIds: string[]) => {
-    persistDay({ placeIds: nextOrderIds })
+    const waypointByPlaceId = new Map(currentDayWaypoints.map((waypoint) => [waypoint.placeId, waypoint]))
+    const nextWaypoints = nextOrderIds.map(
+      (placeId) => waypointByPlaceId.get(placeId) ?? { placeId, isPreferred: false },
+    )
+    persistDay({ waypoints: nextWaypoints })
   }
 
   const handleRemove = (id: string) => {
     persistDay(
-      { placeIds: currentDayPlaceIds.filter((placeId) => placeId !== id) },
+      { waypoints: currentDayWaypoints.filter((waypoint) => waypoint.placeId !== id) },
       `${placeTitle(id)}를 Day ${selectedDay} 일정에서 뺐어요`,
     )
   }
@@ -323,12 +328,7 @@ export function PlanItineraryPage() {
     }
     const shouldMarkMustVisit = recommendMode === 'popular'
     persistDay(
-      {
-        placeIds: [...currentDayPlaceIds, id],
-        mustVisitPlaceIds: shouldMarkMustVisit
-          ? [...currentDayMustVisitIds, id]
-          : currentDayMustVisitIds,
-      },
+      { waypoints: [...currentDayWaypoints, { placeId: id, isPreferred: shouldMarkMustVisit }] },
       shouldMarkMustVisit
         ? `${placeTitle(id)}를 Day ${selectedDay}의 꼭 가고 싶은 장소로 담았어요`
         : `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`,
@@ -360,8 +360,10 @@ export function PlanItineraryPage() {
       // "꼭 가고 싶은 장소"로 함께 찍는다.
       persistDay(
         {
-          placeIds: [...currentDayPlaceIds, ...addedPlaceIds],
-          mustVisitPlaceIds: [...currentDayMustVisitIds, ...addedPlaceIds],
+          waypoints: [
+            ...currentDayWaypoints,
+            ...addedPlaceIds.map((placeId) => ({ placeId, isPreferred: true })),
+          ],
         },
         addedPlaceIds.length < coursePlaceIds.length
           ? `Day ${selectedDay}은 최대 ${MAX_DAY_PLACES}곳까지만 담을 수 있어 일부만 담았어요`
@@ -382,10 +384,10 @@ export function PlanItineraryPage() {
 
     setCustomTimes((prev) => ({ ...prev, ...timesById }))
 
-    const sortedPlaceIds = [...currentDayPlaceIds].sort((a, b) =>
-      timesById[a].localeCompare(timesById[b]),
+    const sortedWaypoints = [...currentDayWaypoints].sort((a, b) =>
+      timesById[a.placeId].localeCompare(timesById[b.placeId]),
     )
-    persistDay({ placeIds: sortedPlaceIds })
+    persistDay({ waypoints: sortedWaypoints })
   }
 
   // 별 토글: 이미 담긴 장소면 그대로 꼭 가고 싶은 장소로만 정하고, 아직 안 담은
@@ -401,13 +403,13 @@ export function PlanItineraryPage() {
       return
     }
 
-    const nextMustVisitPlaceIds = isUnsetting
-      ? currentDayMustVisitIds.filter((placeId) => placeId !== id)
-      : [...currentDayMustVisitIds, id]
-    const nextPlaceIds =
-      isUnsetting || isAlreadyInSchedule ? currentDayPlaceIds : [...currentDayPlaceIds, id]
+    const nextWaypoints = isAlreadyInSchedule
+      ? currentDayWaypoints.map((waypoint) =>
+          waypoint.placeId === id ? { ...waypoint, isPreferred: !isUnsetting } : waypoint,
+        )
+      : [...currentDayWaypoints, { placeId: id, isPreferred: true }]
     persistDay(
-      { mustVisitPlaceIds: nextMustVisitPlaceIds, placeIds: nextPlaceIds },
+      { waypoints: nextWaypoints },
       isUnsetting
         ? '꼭 가고 싶은 장소 설정을 해제했어요'
         : `${placeTitle(id)}를 Day ${selectedDay}의 꼭 가고 싶은 장소로 정했어요`,

@@ -128,12 +128,12 @@ export function PlanPreviewPage() {
   const days = Array.from({ length: dayCount }, (_, index) => {
     const day = index + 1
     const dayEntry = plan.itinerary[day]
-    const placeIds = dayEntry?.placeIds ?? []
+    const waypoints = dayEntry?.waypoints ?? []
     const places = [
       ...(dayEntry?.departurePlaceId
         ? [{ id: dayEntry.departurePlaceId, title: placeTitle(dayEntry.departurePlaceId), isDeparture: true }]
         : []),
-      ...placeIds.map((id) => ({ id, title: placeTitle(id) })),
+      ...waypoints.map(({ placeId }) => ({ id: placeId, title: placeTitle(placeId) })),
     ]
     return { day, places }
   })
