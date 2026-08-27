@@ -6,12 +6,21 @@ import {
   deletePlan,
   fetchPlanById,
   fetchPlans,
+  fetchRecommendations,
+  searchPlanPlaces,
   updatePlanBudget,
   updatePlanInfo,
   updatePlanItinerary,
   updatePlanTitle,
 } from './api'
-import type { BudgetCategory, DayItinerary, PlanDraft, TravelPlan } from './types'
+import type {
+  BudgetCategory,
+  DayItinerary,
+  PlanDraft,
+  PlanPlaceSearchParams,
+  RecommendationRequest,
+  TravelPlan,
+} from './types'
 
 export function usePlansQuery() {
   return useQuery({
@@ -123,5 +132,27 @@ export function useDeletePlanMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
     },
+  })
+}
+
+/**
+ * STEP4 추천·검색 탭 — 전역/앵커 추천. 서버가 이전 결과를 기억하지 않는 stateless API라,
+ * request(특히 excludedPlaceIds/excludeContentIds 누적분)가 바뀌면 그 자체가 새 쿼리키가 되어
+ * 자동으로 다시 요청한다. "새로고침"은 그 누적 배열을 늘리기만 하면 된다.
+ */
+export function useRecommendationsQuery(request: RecommendationRequest, enabled: boolean) {
+  return useQuery({
+    queryKey: ['plans', 'recommendations', request],
+    queryFn: () => fetchRecommendations(request),
+    enabled,
+    staleTime: 0,
+  })
+}
+
+export function useSearchPlanPlacesQuery(params: PlanPlaceSearchParams, enabled: boolean) {
+  return useQuery({
+    queryKey: ['plans', 'placeSearch', params],
+    queryFn: () => searchPlanPlaces(params),
+    enabled,
   })
 }

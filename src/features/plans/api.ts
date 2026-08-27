@@ -1,6 +1,16 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
+import { apiGet, apiPost } from '@/api/http'
 import { mockPlans } from './mockPlans'
-import type { BudgetCategory, DayItinerary, PlanDraft, TravelPlan } from './types'
+import type {
+  BudgetCategory,
+  DayItinerary,
+  PlanDraft,
+  PlanPlaceSearchParams,
+  PlanPlaceSearchPage,
+  RecommendationRequest,
+  RecommendationResponse,
+  TravelPlan,
+} from './types'
 
 const DESTINATION = '제주도'
 const DATE_FORMAT = 'yyyy.MM.dd'
@@ -152,4 +162,16 @@ export async function confirmPlan(planId: string): Promise<TravelPlan> {
 export async function deletePlan(planId: string): Promise<void> {
   const index = mockPlans.findIndex((item) => item.id === planId)
   if (index !== -1) mockPlans.splice(index, 1)
+}
+
+/** STEP4 추천·검색 탭 — 전역/앵커 추천. preferredWaypoints가 비어있으면 전역, 있으면 앵커 추천 */
+export async function fetchRecommendations(
+  payload: RecommendationRequest,
+): Promise<RecommendationResponse> {
+  return apiPost<RecommendationResponse>('/recommendations', payload)
+}
+
+/** STEP4 추천·검색 탭 — 키워드로 DB 장소 검색 */
+export async function searchPlanPlaces(params: PlanPlaceSearchParams): Promise<PlanPlaceSearchPage> {
+  return apiGet<PlanPlaceSearchPage>('/places', { params })
 }
