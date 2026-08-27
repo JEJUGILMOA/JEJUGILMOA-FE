@@ -194,7 +194,7 @@ export function PlanPreviewPage() {
             </button>
           </div>
           <p className={tripMetaStyle}>
-            {plan.startDate} - {plan.endDate} · {durationLabel} · {plan.arrivalTime} 도착
+            {plan.startDate} - {plan.endDate} · {durationLabel}
           </p>
         </div>
 

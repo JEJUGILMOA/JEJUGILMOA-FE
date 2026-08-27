@@ -47,12 +47,8 @@ function resolvePlanInfo(draft: PlanDraft, fallback: { startDate: string; endDat
   return {
     startDate,
     endDate,
-    transportMode: draft.transportMode,
-    arrivalTime: draft.arrivalTime,
-    departureTime: draft.departureTime,
     companionType,
     travelerCount: companionType === 'solo' ? 1 : draft.travelerCount,
-    budgetTier: draft.budgetTier,
     interests: draft.interests,
   }
 }
@@ -88,14 +84,9 @@ const COMPANION_API_TO_TYPE: Record<TravelCompanion, CompanionType> = {
   COLLEAGUES: 'colleague',
 }
 
-// GET 응답(목록·상세)엔 없는, 위저드(STEP1~2) 전용 필드들의 기본값. v2 API가 이 정보를
-// 아예 저장하지 않아서(PlanCreateRequest에도 없음) 서버에서 불러온 계획은 항상 이 값으로 채워진다 —
-// 원래 사용자가 위저드에서 골랐던 값을 복원하는 게 아니라는 뜻.
-const DEFAULT_TRANSPORT_MODE: TravelPlan['transportMode'] = '비행기'
-const DEFAULT_ARRIVAL_TIME = '09:00'
-const DEFAULT_DEPARTURE_TIME = '18:00'
+// GET 응답(목록·상세)엔 인원수가 없다(v2 API가 저장하지 않음) — 서버에서 불러온 계획은
+// 항상 이 값으로 채워진다.
 const DEFAULT_TRAVELER_COUNT = 1
-const DEFAULT_BUDGET_TIER: TravelPlan['budgetTier'] = 'mid'
 
 /** `yyyy-MM-dd` -> `yyyy.MM.dd` (`toApiDate`의 반대 방향) */
 function fromApiDate(date: string): string {
@@ -111,12 +102,8 @@ function mapPlanSummaryToTravelPlan(summary: TravelPlanSummary): TravelPlan {
     status: summary.status === 'DRAFT' ? 'draft' : 'saved',
     startDate: fromApiDate(summary.startDate),
     endDate: fromApiDate(summary.endDate),
-    transportMode: DEFAULT_TRANSPORT_MODE,
-    arrivalTime: DEFAULT_ARRIVAL_TIME,
-    departureTime: DEFAULT_DEPARTURE_TIME,
     companionType: DEFAULT_COMPANION_TYPE,
     travelerCount: DEFAULT_TRAVELER_COUNT,
-    budgetTier: DEFAULT_BUDGET_TIER,
     interests: [],
     createdAt: new Date().toISOString(),
     waypointPlaceIds: [],
@@ -153,12 +140,8 @@ function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): TravelPlan
     status: detail.status === 'DRAFT' ? 'draft' : 'saved',
     startDate: fromApiDate(detail.startDate),
     endDate: fromApiDate(detail.endDate),
-    transportMode: DEFAULT_TRANSPORT_MODE,
-    arrivalTime: DEFAULT_ARRIVAL_TIME,
-    departureTime: DEFAULT_DEPARTURE_TIME,
     companionType: detail.companion ? COMPANION_API_TO_TYPE[detail.companion] : DEFAULT_COMPANION_TYPE,
     travelerCount: DEFAULT_TRAVELER_COUNT,
-    budgetTier: DEFAULT_BUDGET_TIER,
     interests: detail.categories ?? [],
     createdAt: new Date().toISOString(),
     waypointPlaceIds: [],

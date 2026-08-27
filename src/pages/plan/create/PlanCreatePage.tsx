@@ -62,14 +62,10 @@ function defaultTravelerCount(companionType: CompanionType): number {
 // 모든 단계는 건너뛰어도 계획 생성이 실패하지 않도록 처음부터 유효한 기본값을 채워 둔다.
 const DEFAULT_COMPANION_TYPE: CompanionType = 'solo'
 const initialDraft: PlanDraft = {
-  transportMode: '비행기',
-  arrivalTime: '09:00',
-  departureTime: '18:00',
   startDate: format(new Date(), DATE_FORMAT),
   endDate: format(addDays(new Date(), 1), DATE_FORMAT),
   companionType: DEFAULT_COMPANION_TYPE,
   travelerCount: defaultTravelerCount(DEFAULT_COMPANION_TYPE),
-  budgetTier: 'mid',
   interests: ['FOOD', 'NATURE'],
   title: '',
 }
@@ -96,14 +92,10 @@ export function PlanCreatePage() {
   useEffect(() => {
     if (!isEditMode || !existingPlan || hasSyncedEditDraftRef.current) return
     setDraft({
-      transportMode: existingPlan.transportMode,
-      arrivalTime: existingPlan.arrivalTime,
-      departureTime: existingPlan.departureTime,
       startDate: existingPlan.startDate,
       endDate: existingPlan.endDate,
       companionType: existingPlan.companionType,
       travelerCount: existingPlan.travelerCount,
-      budgetTier: existingPlan.budgetTier,
       interests: existingPlan.interests,
       title: existingPlan.title,
     })
@@ -137,12 +129,8 @@ export function PlanCreatePage() {
         ...existingPlan,
         startDate: draft.startDate ?? existingPlan.startDate,
         endDate: draft.endDate ?? existingPlan.endDate,
-        transportMode: draft.transportMode,
-        arrivalTime: draft.arrivalTime,
-        departureTime: draft.departureTime,
         companionType: draft.companionType ?? existingPlan.companionType,
         travelerCount: draft.travelerCount,
-        budgetTier: draft.budgetTier,
         interests: draft.interests,
         title: draft.title.trim() || existingPlan.title,
       }

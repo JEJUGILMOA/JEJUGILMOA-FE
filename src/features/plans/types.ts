@@ -1,8 +1,4 @@
-export type TransportMode = '배' | '비행기'
-
 export type CompanionType = 'solo' | 'couple' | 'family' | 'friends' | 'colleague'
-
-export type BudgetTier = 'low' | 'mid' | 'high' | 'premium'
 
 /** Day 일정에 담긴 장소 하나. `isPreferred`가 선호경유지(★) 표시 — 앵커 추천의 기준점이 된다 */
 export type Waypoint = {
@@ -35,14 +31,8 @@ export type TravelPlan = {
   status: PlanStatus
   startDate: string
   endDate: string
-  transportMode: TransportMode
-  /** 제주 도착 시각 ("HH:mm"). Day 1 일정의 시작점으로 쓰인다 */
-  arrivalTime: string
-  /** 제주 출발 시각 ("HH:mm"). 마지막 Day 일정의 끝점으로 쓰인다 */
-  departureTime: string
   companionType: CompanionType
   travelerCount: number
-  budgetTier: BudgetTier
   interests: TravelTheme[]
   createdAt: string
   /** STEP 02 경유지 추천에서 담은 장소 id 목록 */
@@ -61,15 +51,11 @@ export type TravelPlan = {
 
 /** STEP 01 정보입력 마법사에서 사용하는 draft 상태 */
 export type PlanDraft = {
-  transportMode: TransportMode
-  arrivalTime: string
-  departureTime: string
   /** `yyyy.MM.dd` 형식. 미선택 시 null */
   startDate: string | null
   endDate: string | null
   companionType: CompanionType | null
   travelerCount: number
-  budgetTier: BudgetTier
   interests: TravelTheme[]
   /** 여행 제목. 비우면 날짜 기준으로 자동 생성 */
   title: string

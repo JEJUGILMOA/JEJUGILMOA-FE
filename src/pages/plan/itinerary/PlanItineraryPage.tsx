@@ -69,6 +69,9 @@ const STOP_INTERVAL_MINUTES = 90
 const ARRIVAL_BUFFER_MINUTES = 60
 /** 출발 전 공항/항구에 도착해 있어야 하는 여유 시간 */
 const DEPARTURE_BUFFER_MINUTES = 90
+// 제주 도착/출발 시각은 현재 입력 UI가 없어 고정값을 쓴다.
+const FIXED_ARRIVAL_TIME = '09:00'
+const FIXED_DEPARTURE_TIME = '18:00'
 
 function parseTimeToMinutes(time: string) {
   const [hours, minutes] = time.split(':').map(Number)
@@ -90,20 +93,20 @@ function formatMinutesToTime(totalMinutes: number) {
  */
 function computeScheduleTimes(
   stopCount: number,
-  options: { isFirstDay: boolean; isLastDay: boolean; arrivalTime: string; departureTime: string },
+  options: { isFirstDay: boolean; isLastDay: boolean },
 ) {
   if (stopCount === 0) return []
 
-  const { isFirstDay, isLastDay, arrivalTime, departureTime } = options
+  const { isFirstDay, isLastDay } = options
 
   let dayStart = isFirstDay
-    ? Math.max(DAY_START_MINUTES, parseTimeToMinutes(arrivalTime) + ARRIVAL_BUFFER_MINUTES)
+    ? Math.max(DAY_START_MINUTES, parseTimeToMinutes(FIXED_ARRIVAL_TIME) + ARRIVAL_BUFFER_MINUTES)
     : DAY_START_MINUTES
 
   let interval = STOP_INTERVAL_MINUTES
 
   if (isLastDay) {
-    const dayEndLimit = parseTimeToMinutes(departureTime) - DEPARTURE_BUFFER_MINUTES
+    const dayEndLimit = parseTimeToMinutes(FIXED_DEPARTURE_TIME) - DEPARTURE_BUFFER_MINUTES
 
     if (stopCount === 1) {
       dayStart = Math.min(dayStart, dayEndLimit)
@@ -308,12 +311,7 @@ export function PlanItineraryPage() {
       : undefined
 
   const stops = currentDayWaypoints.map((waypoint) => ({ id: waypoint.placeId, title: waypoint.title }))
-  const stopTimes = computeScheduleTimes(currentDayPlaceIds.length, {
-    isFirstDay,
-    isLastDay,
-    arrivalTime: plan.arrivalTime,
-    departureTime: plan.departureTime,
-  })
+  const stopTimes = computeScheduleTimes(currentDayPlaceIds.length, { isFirstDay, isLastDay })
   const scheduleItems = stops.map((stop, index) => ({
     id: stop.id,
     title: stop.title,
