@@ -23,14 +23,6 @@ import {
   triggerWrapStyle,
 } from './PlanListItem.css.ts'
 
-const COMPANION_LABELS: Record<TravelPlan['companionType'], string> = {
-  solo: '혼자',
-  couple: '연인과',
-  family: '가족과',
-  friends: '친구와',
-  colleague: '동료와',
-}
-
 export type PlanListItemProps = {
   plan: TravelPlan
   /** 진행중인 계획은 관리 메뉴(⋯)를 아예 렌더링하지 않아 삭제할 수 없다. */
@@ -92,10 +84,9 @@ export function PlanListItem({ plan, group }: PlanListItemProps) {
       <p className={dateRangeStyle}>
         {plan.startDate} - {plan.endDate}
       </p>
-      <p className={metaStyle}>
-        {plan.transportMode}로 출발 · {COMPANION_LABELS[plan.companionType]}
-        {plan.companionType !== 'solo' ? ` · ${plan.travelerCount}명` : ''}
-      </p>
+      {plan.waypointCount !== undefined ? (
+        <p className={metaStyle}>경유지 {plan.waypointCount}곳</p>
+      ) : null}
 
       {group !== 'ongoing' ? (
         <div

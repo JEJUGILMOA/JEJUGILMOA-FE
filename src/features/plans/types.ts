@@ -55,6 +55,8 @@ export type TravelPlan = {
   budgetAccommodation: number | null
   budgetFood: number | null
   budgetEtc: number | null
+  /** `GET /api/plans` 목록 응답에만 있는 경유지 개수. 상세 조회로 채운 계획엔 없다(itinerary로 직접 셀 수 있어서) */
+  waypointCount?: number
 }
 
 /** STEP 01 정보입력 마법사에서 사용하는 draft 상태 */

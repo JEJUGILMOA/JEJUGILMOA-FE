@@ -1,9 +1,10 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
-import { apiGet, apiPost, apiPut } from '@/api/http'
-import { mockPlans } from './mockPlans'
+import { apiDelete, apiGet, apiPost, apiPut } from '@/api/http'
+import { isApiError } from '@/api/error'
 import type {
   CompanionType,
   DayCreateRequest,
+  DayItinerary,
   PlanCreateRequest,
   PlanDraft,
   PlanPlaceSearchParams,
@@ -13,6 +14,8 @@ import type {
   TravelCompanion,
   TravelPlan,
   TravelPlanDetailResponse,
+  TravelPlanSummary,
+  Waypoint,
   WaypointCreateRequest,
 } from './types'
 
@@ -77,22 +80,113 @@ export function toTravelPlan(draft: PlanDraft): TravelPlan {
   }
 }
 
-/** TODO: 백엔드 API가 준비되면 apiClient.get('/plans')로 교체 */
+const COMPANION_API_TO_TYPE: Record<TravelCompanion, CompanionType> = {
+  SOLO: 'solo',
+  COUPLE: 'couple',
+  FAMILY: 'family',
+  FRIENDS: 'friends',
+  COLLEAGUES: 'colleague',
+}
+
+// GET 응답(목록·상세)엔 없는, 위저드(STEP1~2) 전용 필드들의 기본값. v2 API가 이 정보를
+// 아예 저장하지 않아서(PlanCreateRequest에도 없음) 서버에서 불러온 계획은 항상 이 값으로 채워진다 —
+// 원래 사용자가 위저드에서 골랐던 값을 복원하는 게 아니라는 뜻.
+const DEFAULT_TRANSPORT_MODE: TravelPlan['transportMode'] = '비행기'
+const DEFAULT_ARRIVAL_TIME = '09:00'
+const DEFAULT_DEPARTURE_TIME = '18:00'
+const DEFAULT_TRAVELER_COUNT = 1
+const DEFAULT_BUDGET_TIER: TravelPlan['budgetTier'] = 'mid'
+
+/** `yyyy-MM-dd` -> `yyyy.MM.dd` (`toApiDate`의 반대 방향) */
+function fromApiDate(date: string): string {
+  return date.replaceAll('-', '.')
+}
+
+/** `GET /api/plans` 목록 아이템 하나를 로컬 `TravelPlan` 모양으로 변환 */
+function mapPlanSummaryToTravelPlan(summary: TravelPlanSummary): TravelPlan {
+  return {
+    id: String(summary.planId),
+    title: summary.title,
+    destination: DESTINATION,
+    status: summary.status === 'DRAFT' ? 'draft' : 'saved',
+    startDate: fromApiDate(summary.startDate),
+    endDate: fromApiDate(summary.endDate),
+    transportMode: DEFAULT_TRANSPORT_MODE,
+    arrivalTime: DEFAULT_ARRIVAL_TIME,
+    departureTime: DEFAULT_DEPARTURE_TIME,
+    companionType: DEFAULT_COMPANION_TYPE,
+    travelerCount: DEFAULT_TRAVELER_COUNT,
+    budgetTier: DEFAULT_BUDGET_TIER,
+    interests: [],
+    createdAt: new Date().toISOString(),
+    waypointPlaceIds: [],
+    itinerary: {},
+    budgetTransportation: null,
+    budgetAccommodation: null,
+    budgetFood: null,
+    budgetEtc: null,
+    waypointCount: summary.waypointCount,
+  }
+}
+
+/** `GET /api/plans/{id}` 응답을 로컬 `TravelPlan` 모양으로 변환 */
+function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): TravelPlan {
+  const itinerary: Record<number, DayItinerary> = {}
+  for (const day of detail.itinerary) {
+    const waypoints: Waypoint[] = day.waypoints
+      .slice()
+      .sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+      .map((waypoint) => ({
+        placeId: String(waypoint.placeId),
+        title: waypoint.placeName,
+        isPreferred: waypoint.isPreferred,
+      }))
+    // 출발지는 계획 전체에 하나(departureLocationName/좌표)로만 오고, 로컬은 Day별 구조라
+    // 그대로 되돌려 채울 수 없다 — 비워두고, 다시 설정하게 한다.
+    itinerary[day.dayNumber] = { departurePlaceId: null, waypoints }
+  }
+
+  return {
+    id: String(detail.planId),
+    title: detail.title,
+    destination: DESTINATION,
+    status: detail.status === 'DRAFT' ? 'draft' : 'saved',
+    startDate: fromApiDate(detail.startDate),
+    endDate: fromApiDate(detail.endDate),
+    transportMode: DEFAULT_TRANSPORT_MODE,
+    arrivalTime: DEFAULT_ARRIVAL_TIME,
+    departureTime: DEFAULT_DEPARTURE_TIME,
+    companionType: detail.companion ? COMPANION_API_TO_TYPE[detail.companion] : DEFAULT_COMPANION_TYPE,
+    travelerCount: DEFAULT_TRAVELER_COUNT,
+    budgetTier: DEFAULT_BUDGET_TIER,
+    interests: detail.categories ?? [],
+    createdAt: new Date().toISOString(),
+    waypointPlaceIds: [],
+    itinerary,
+    budgetTransportation: detail.budgetTransportation,
+    budgetAccommodation: detail.budgetAccommodation,
+    budgetFood: detail.budgetFood,
+    budgetEtc: detail.budgetEtc,
+  }
+}
+
 export async function fetchPlans(): Promise<TravelPlan[]> {
-  // 매 호출마다 새 배열을 반환 — 같은 참조를 반환하면 구조적 공유 최적화로 인해
-  // React Query가 "데이터 변경 없음"으로 판단해 리렌더를 건너뛴다.
-  return [...mockPlans]
+  const summaries = await apiGet<TravelPlanSummary[]>('/plans')
+  return summaries.map(mapPlanSummaryToTravelPlan)
 }
 
-/** TODO: 백엔드 API가 준비되면 apiClient.get(`/plans/${id}`)로 교체 */
 export async function fetchPlanById(planId: string): Promise<TravelPlan | undefined> {
-  return mockPlans.find((plan) => plan.id === planId)
+  try {
+    const detail = await apiGet<TravelPlanDetailResponse>(`/plans/${planId}`)
+    return mapPlanDetailToTravelPlan(detail)
+  } catch (error) {
+    if (isApiError(error) && error.status === 404) return undefined
+    throw error
+  }
 }
 
-/** TODO: 백엔드 API가 준비되면 apiClient.delete(`/plans/${id}`)로 교체 */
 export async function deletePlan(planId: string): Promise<void> {
-  const index = mockPlans.findIndex((item) => item.id === planId)
-  if (index !== -1) mockPlans.splice(index, 1)
+  await apiDelete<null>(`/plans/${planId}`)
 }
 
 /** STEP4 추천·검색 탭 — 전역/앵커 추천. preferredWaypoints가 비어있으면 전역, 있으면 앵커 추천 */
