@@ -1,26 +1,17 @@
+import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants'
 import {
-  confirmPlan,
   createPlan,
   deletePlan,
   fetchPlanById,
   fetchPlans,
   fetchRecommendations,
+  savePlanEdit,
   searchPlanPlaces,
-  updatePlanBudget,
-  updatePlanInfo,
-  updatePlanItinerary,
-  updatePlanTitle,
 } from './api'
-import type {
-  DayItinerary,
-  PlanBudgetRequest,
-  PlanDraft,
-  PlanPlaceSearchParams,
-  RecommendationRequest,
-  TravelPlan,
-} from './types'
+import { NEW_PLAN_ID, planDraftStore, usePlanDraftStore } from './planDraftStore'
+import type { PlanCreateRequest, PlanPlaceSearchParams, RecommendationRequest } from './types'
 
 export function usePlansQuery() {
   return useQuery({
@@ -41,81 +32,46 @@ export function usePlanQuery(planId: string) {
   })
 }
 
-function rememberPlan(queryClient: ReturnType<typeof useQueryClient>, plan: TravelPlan) {
-  queryClient.setQueryData(QUERY_KEYS.plan(plan.id), plan)
+/**
+ * STEP4~6 화면(일정·예산·미리보기)이 공통으로 쓰는 조회. `planDraftStore`에 이미 이 planId의
+ * draft가 있으면 그걸 그대로 쓰고(서버 요청 없음), 없으면(예: 새로고침으로 draft를 잃어버린
+ * 경우, 또는 이미 저장된 DRAFT 계획을 링크로 바로 열었을 때) `GET`으로 한 번 불러와 스토어에
+ * 채워 넣는다. 이후 편집은 전부 스토어에서만 이뤄지고 서버로는 안 나간다.
+ */
+export function usePlanDraft(planId: string) {
+  const draft = usePlanDraftStore((state) => state.draft)
+  const hasMatchingDraft = draft?.id === planId
+  const isNewPlan = planId === NEW_PLAN_ID
+  const query = usePlanQuery(hasMatchingDraft || isNewPlan ? '' : planId)
+
+  useEffect(() => {
+    if (!hasMatchingDraft && query.data) {
+      planDraftStore.getState().setDraft(query.data)
+    }
+  }, [hasMatchingDraft, query.data])
+
+  if (hasMatchingDraft) {
+    return { plan: draft, isPending: false, isError: false, refetch: query.refetch }
+  }
+  // 새 계획인데 로컬 draft가 없다 — STEP1~3 마법사를 거치지 않고 바로 들어온 경우라 복구할 수 없다.
+  if (isNewPlan) {
+    return { plan: undefined, isPending: false, isError: true, refetch: query.refetch }
+  }
+  return { plan: query.data, isPending: query.isPending, isError: query.isError, refetch: query.refetch }
 }
 
+/** STEP6 — 신규 계획 저장. STEP1~5는 전부 로컬(`planDraftStore`)에서만 편집하다가 여기서 한 번만 호출한다 */
 export function useCreatePlanMutation() {
-  const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: createPlan,
-    onSuccess: (plan) => {
-      rememberPlan(queryClient, plan)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-    },
+    mutationFn: (payload: PlanCreateRequest) => createPlan(payload),
   })
 }
 
-export function useUpdatePlanInfoMutation() {
-  const queryClient = useQueryClient()
-
+/** STEP6 — 기존 DRAFT 계획 저장(PUT 전체 덮어쓰기) */
+export function useSavePlanEditMutation() {
   return useMutation({
-    mutationFn: ({ planId, draft }: { planId: string; draft: PlanDraft }) => updatePlanInfo(planId, draft),
-    onSuccess: (plan) => {
-      rememberPlan(queryClient, plan)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-    },
-  })
-}
-
-export function useUpdatePlanTitleMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ planId, title }: { planId: string; title: string }) => updatePlanTitle(planId, title),
-    onSuccess: (plan) => {
-      rememberPlan(queryClient, plan)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-    },
-  })
-}
-
-export function useUpdatePlanItineraryMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ planId, itinerary }: { planId: string; itinerary: Record<number, DayItinerary> }) =>
-      updatePlanItinerary(planId, itinerary),
-    onSuccess: (plan) => {
-      rememberPlan(queryClient, plan)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-    },
-  })
-}
-
-export function useUpdatePlanBudgetMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({ planId, budget }: { planId: string; budget: PlanBudgetRequest }) =>
-      updatePlanBudget(planId, budget),
-    onSuccess: (plan) => {
-      rememberPlan(queryClient, plan)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-    },
-  })
-}
-
-export function useConfirmPlanMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: confirmPlan,
-    onSuccess: (plan) => {
-      rememberPlan(queryClient, plan)
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
-    },
+    mutationFn: ({ planId, payload }: { planId: string; payload: PlanCreateRequest }) =>
+      savePlanEdit(planId, payload),
   })
 }
 

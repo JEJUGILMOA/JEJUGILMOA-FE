@@ -12,12 +12,8 @@ import { Modal } from '@/components/ui/Modal/Modal'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
-import {
-  useRecommendationsQuery,
-  usePlanQuery,
-  useSearchPlanPlacesQuery,
-  useUpdatePlanItineraryMutation,
-} from '@/features/plans/hooks'
+import { usePlanDraft, useRecommendationsQuery, useSearchPlanPlacesQuery } from '@/features/plans/hooks'
+import { planDraftStore } from '@/features/plans/planDraftStore'
 import { TRAVEL_THEMES, TRAVEL_THEME_LABELS } from '@/features/plans/travelTheme'
 import type { GeoCoordinate, RecommendationRequest, TravelTheme, Waypoint } from '@/features/plans/types'
 import {
@@ -133,8 +129,7 @@ export function PlanItineraryPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { data: plan, isPending, isError, refetch } = usePlanQuery(planId)
-  const updateItineraryMutation = useUpdatePlanItineraryMutation()
+  const { plan, isPending, isError, refetch } = usePlanDraft(planId)
 
   const [selectedDay, setSelectedDay] = useState(1)
   const [customTimes, setCustomTimes] = useState<Record<string, string>>({})
@@ -312,7 +307,7 @@ export function PlanItineraryPage() {
       ? MOCK_PLACES.find((place) => place.id === previousDayDeparturePlaceId)
       : undefined
 
-  const stops = currentDayPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
+  const stops = currentDayWaypoints.map((waypoint) => ({ id: waypoint.placeId, title: waypoint.title }))
   const stopTimes = computeScheduleTimes(currentDayPlaceIds.length, {
     isFirstDay,
     isLastDay,
@@ -389,6 +384,7 @@ export function PlanItineraryPage() {
     .filter((place) => place.addable)
     .map((place) => ({ id: place.id, title: place.title }))
 
+  // v2는 STEP6에서 딱 한 번만 서버로 보낸다 — 일정 편집은 여기서 로컬 draft만 갱신한다.
   const persistDay = (
     updates: Partial<{
       departurePlaceId: string | null
@@ -396,31 +392,24 @@ export function PlanItineraryPage() {
     }>,
     onSuccessMessage?: string,
   ) => {
-    const nextItinerary = {
-      ...plan.itinerary,
-      [selectedDay]: {
-        departurePlaceId: currentDayEntry?.departurePlaceId ?? null,
-        waypoints: currentDayWaypoints,
-        ...updates,
-      },
-    }
-    updateItineraryMutation.mutate(
-      { planId, itinerary: nextItinerary },
-      {
-        onSuccess: () => {
-          if (onSuccessMessage) toast.success(onSuccessMessage)
-        },
-        onError: () => {
-          toast.error('일정 변경에 실패했어요. 다시 시도해 주세요.')
+    planDraftStore.getState().updateDraft((current) => ({
+      ...current,
+      itinerary: {
+        ...current.itinerary,
+        [selectedDay]: {
+          departurePlaceId: currentDayEntry?.departurePlaceId ?? null,
+          waypoints: currentDayWaypoints,
+          ...updates,
         },
       },
-    )
+    }))
+    if (onSuccessMessage) toast.success(onSuccessMessage)
   }
 
   const handleReorder = (nextOrderIds: string[]) => {
     const waypointByPlaceId = new Map(currentDayWaypoints.map((waypoint) => [waypoint.placeId, waypoint]))
     const nextWaypoints = nextOrderIds.map(
-      (placeId) => waypointByPlaceId.get(placeId) ?? { placeId, isPreferred: false },
+      (placeId) => waypointByPlaceId.get(placeId) ?? { placeId, title: placeTitle(placeId), isPreferred: false },
     )
     persistDay({ waypoints: nextWaypoints })
   }
@@ -443,7 +432,12 @@ export function PlanItineraryPage() {
     }
     const shouldMarkMustVisit = recommendMode === 'popular'
     persistDay(
-      { waypoints: [...currentDayWaypoints, { placeId: id, isPreferred: shouldMarkMustVisit }] },
+      {
+        waypoints: [
+          ...currentDayWaypoints,
+          { placeId: id, title: placeTitle(id), isPreferred: shouldMarkMustVisit },
+        ],
+      },
       shouldMarkMustVisit
         ? `${placeTitle(id)}를 Day ${selectedDay}의 꼭 가고 싶은 장소로 담았어요`
         : `${placeTitle(id)}를 Day ${selectedDay}에 담았어요`,
@@ -477,7 +471,7 @@ export function PlanItineraryPage() {
         {
           waypoints: [
             ...currentDayWaypoints,
-            ...addedPlaceIds.map((placeId) => ({ placeId, isPreferred: true })),
+            ...addedPlaceIds.map((placeId) => ({ placeId, title: placeTitle(placeId), isPreferred: true })),
           ],
         },
         addedPlaceIds.length < coursePlaceIds.length
@@ -522,7 +516,7 @@ export function PlanItineraryPage() {
       ? currentDayWaypoints.map((waypoint) =>
           waypoint.placeId === id ? { ...waypoint, isPreferred: !isUnsetting } : waypoint,
         )
-      : [...currentDayWaypoints, { placeId: id, isPreferred: true }]
+      : [...currentDayWaypoints, { placeId: id, title: placeTitle(id), isPreferred: true }]
     persistDay(
       { waypoints: nextWaypoints },
       isUnsetting
@@ -925,12 +919,7 @@ export function PlanItineraryPage() {
           </div>
         )}
 
-        <Button
-          fullWidth
-          size="lg"
-          isLoading={updateItineraryMutation.isPending}
-          onClick={handleNext}
-        >
+        <Button fullWidth size="lg" onClick={handleNext}>
           {nextLabel}
         </Button>
       </ItineraryBottomSheet>

@@ -6,7 +6,8 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { TextField } from '@/components/ui/TextField/TextField'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
-import { usePlanQuery, useUpdatePlanBudgetMutation } from '@/features/plans/hooks'
+import { usePlanDraft } from '@/features/plans/hooks'
+import { planDraftStore } from '@/features/plans/planDraftStore'
 import type { PlanBudgetRequest } from '@/features/plans/types'
 import {
   descriptionStyle,
@@ -44,8 +45,7 @@ export function PlanBudgetPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { data: plan, isPending } = usePlanQuery(planId)
-  const updateBudgetMutation = useUpdatePlanBudgetMutation()
+  const { plan, isPending } = usePlanDraft(planId)
 
   // 미리보기의 연필 아이콘으로 들어왔으면 버튼 라벨을 "다음"이 아니라 "저장하기"로 보여준다.
   const fromPreview = Boolean((location.state as { fromPreview?: boolean } | null)?.fromPreview)
@@ -81,6 +81,7 @@ export function PlanBudgetPage() {
     navigate(ROUTES.planPreview(planId))
   }
 
+  // v2는 STEP6에서 딱 한 번만 서버로 보낸다 — 여기선 로컬 draft만 갱신한다.
   const handleNext = () => {
     const budget: PlanBudgetRequest = {
       budgetTransportation: amounts.budgetTransportation ? Number(amounts.budgetTransportation) : null,
@@ -88,19 +89,9 @@ export function PlanBudgetPage() {
       budgetFood: amounts.budgetFood ? Number(amounts.budgetFood) : null,
       budgetEtc: amounts.budgetEtc ? Number(amounts.budgetEtc) : null,
     }
-
-    updateBudgetMutation.mutate(
-      { planId, budget },
-      {
-        onSuccess: () => {
-          toast.success('예산을 저장했어요')
-          navigate(ROUTES.planPreview(planId))
-        },
-        onError: () => {
-          toast.error('예산 저장에 실패했어요. 다시 시도해 주세요.')
-        },
-      },
-    )
+    planDraftStore.getState().updateDraft((current) => ({ ...current, ...budget }))
+    toast.success('예산을 저장했어요')
+    navigate(ROUTES.planPreview(planId))
   }
 
   return (
@@ -149,12 +140,7 @@ export function PlanBudgetPage() {
             ) : null}
           </div>
 
-          <Button
-            fullWidth
-            size="lg"
-            isLoading={updateBudgetMutation.isPending}
-            onClick={handleNext}
-          >
+          <Button fullWidth size="lg" onClick={handleNext}>
             {fromPreview ? '저장하기' : '다음'}
           </Button>
         </div>

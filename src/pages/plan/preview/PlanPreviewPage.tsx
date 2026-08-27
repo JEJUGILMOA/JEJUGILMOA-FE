@@ -10,7 +10,9 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
-import { useConfirmPlanMutation, usePlanQuery, useUpdatePlanTitleMutation } from '@/features/plans/hooks'
+import { buildPlanCreateRequest } from '@/features/plans/api'
+import { useCreatePlanMutation, usePlanDraft, useSavePlanEditMutation } from '@/features/plans/hooks'
+import { NEW_PLAN_ID, planDraftStore } from '@/features/plans/planDraftStore'
 import type { PlanBudgetRequest } from '@/features/plans/types'
 import {
   budgetRowLabelStyle,
@@ -59,9 +61,10 @@ function placeTitle(placeId: string) {
 export function PlanPreviewPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
-  const { data: plan, isPending, isError } = usePlanQuery(planId)
-  const updateTitleMutation = useUpdatePlanTitleMutation()
-  const confirmPlanMutation = useConfirmPlanMutation()
+  const { plan, isPending, isError } = usePlanDraft(planId)
+  const createPlanMutation = useCreatePlanMutation()
+  const savePlanEditMutation = useSavePlanEditMutation()
+  const isSaving = createPlanMutation.isPending || savePlanEditMutation.isPending
 
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
@@ -72,16 +75,25 @@ export function PlanPreviewPage() {
     navigate(ROUTES.planItinerary(planId), { state: { fromPreview: true } })
   const goEditBudget = () => navigate(ROUTES.planBudget(planId), { state: { fromPreview: true } })
 
+  // STEP6 — 지금까지 로컬(planDraftStore)에만 모아둔 계획을 여기서 딱 한 번 서버로 보낸다.
+  // 신규 계획(NEW_PLAN_ID)이면 POST, 이미 서버에 있던 DRAFT 계획 편집이면 PUT.
   const handleSave = () => {
-    confirmPlanMutation.mutate(planId, {
-      onSuccess: () => {
-        toast.success('계획을 저장했어요')
-        navigate(ROUTES.plan)
-      },
-      onError: () => {
-        toast.error('계획 저장에 실패했어요. 다시 시도해 주세요.')
-      },
-    })
+    if (!plan) return
+    const payload = buildPlanCreateRequest(plan)
+    const onSuccess = () => {
+      toast.success('계획을 저장했어요')
+      planDraftStore.getState().clearDraft()
+      navigate(ROUTES.plan)
+    }
+    const onError = () => {
+      toast.error('계획 저장에 실패했어요. 다시 시도해 주세요.')
+    }
+
+    if (plan.id === NEW_PLAN_ID) {
+      createPlanMutation.mutate(payload, { onSuccess, onError })
+    } else {
+      savePlanEditMutation.mutate({ planId: plan.id, payload }, { onSuccess, onError })
+    }
   }
 
   const startEditTitle = (currentTitle: string) => {
@@ -93,15 +105,7 @@ export function PlanPreviewPage() {
     const nextTitle = titleDraft.trim()
     setIsEditingTitle(false)
     if (!plan || !nextTitle || nextTitle === plan.title) return
-
-    updateTitleMutation.mutate(
-      { planId, title: nextTitle },
-      {
-        onError: () => {
-          toast.error('제목 수정에 실패했어요. 다시 시도해 주세요.')
-        },
-      },
-    )
+    planDraftStore.getState().updateDraft((current) => ({ ...current, title: nextTitle }))
   }
 
   if (isPending) {
@@ -136,7 +140,7 @@ export function PlanPreviewPage() {
       ...(dayEntry?.departurePlaceId
         ? [{ id: dayEntry.departurePlaceId, title: placeTitle(dayEntry.departurePlaceId), isDeparture: true }]
         : []),
-      ...waypoints.map(({ placeId }) => ({ id: placeId, title: placeTitle(placeId) })),
+      ...waypoints.map(({ placeId, title }) => ({ id: placeId, title })),
     ]
     return { day, places }
   })
@@ -266,7 +270,7 @@ export function PlanPreviewPage() {
         <Button
           fullWidth
           size="lg"
-          isLoading={confirmPlanMutation.isPending}
+          isLoading={isSaving}
           onClick={handleSave}
         >
           계획 저장하기

@@ -1,15 +1,19 @@
 import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
-import { apiGet, apiPost } from '@/api/http'
+import { apiGet, apiPost, apiPut } from '@/api/http'
 import { mockPlans } from './mockPlans'
 import type {
-  DayItinerary,
-  PlanBudgetRequest,
+  CompanionType,
+  DayCreateRequest,
+  PlanCreateRequest,
   PlanDraft,
   PlanPlaceSearchParams,
   PlanPlaceSearchPage,
   RecommendationRequest,
   RecommendationResponse,
+  TravelCompanion,
   TravelPlan,
+  TravelPlanDetailResponse,
+  WaypointCreateRequest,
 } from './types'
 
 const DESTINATION = '제주도'
@@ -50,7 +54,8 @@ function resolvePlanInfo(draft: PlanDraft, fallback: { startDate: string; endDat
   }
 }
 
-function toTravelPlan(draft: PlanDraft): TravelPlan {
+/** PlanCreatePage(STEP1~3)에서 새 계획을 만들 때, 서버 호출 없이 로컬 draft를 만드는 데 쓴다 */
+export function toTravelPlan(draft: PlanDraft): TravelPlan {
   const info = resolvePlanInfo(draft, {
     startDate: format(new Date(), DATE_FORMAT),
     endDate: format(addDays(new Date(), 1), DATE_FORMAT),
@@ -79,92 +84,9 @@ export async function fetchPlans(): Promise<TravelPlan[]> {
   return [...mockPlans]
 }
 
-/** TODO: 계획 생성 API가 준비되면 apiClient.post('/plans', ...)로 교체 */
-export async function createPlan(draft: PlanDraft): Promise<TravelPlan> {
-  const plan = toTravelPlan(draft)
-  mockPlans.unshift(plan)
-  return plan
-}
-
 /** TODO: 백엔드 API가 준비되면 apiClient.get(`/plans/${id}`)로 교체 */
 export async function fetchPlanById(planId: string): Promise<TravelPlan | undefined> {
   return mockPlans.find((plan) => plan.id === planId)
-}
-
-/** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/itinerary`, ...)로 교체 */
-export async function updatePlanItinerary(
-  planId: string,
-  itinerary: Record<number, DayItinerary>,
-): Promise<TravelPlan> {
-  const index = mockPlans.findIndex((item) => item.id === planId)
-  if (index === -1) {
-    throw new Error('계획을 찾을 수 없어요.')
-  }
-  const updated: TravelPlan = { ...mockPlans[index], itinerary }
-  mockPlans[index] = updated
-  return updated
-}
-
-/** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/info`, ...)로 교체 */
-export async function updatePlanInfo(planId: string, draft: PlanDraft): Promise<TravelPlan> {
-  const index = mockPlans.findIndex((item) => item.id === planId)
-  if (index === -1) {
-    throw new Error('계획을 찾을 수 없어요.')
-  }
-  const current = mockPlans[index]
-  const info = resolvePlanInfo(draft, { startDate: current.startDate, endDate: current.endDate })
-  const dateChanged = info.startDate !== current.startDate || info.endDate !== current.endDate
-  const title = draft.title.trim() || (dateChanged ? buildTitle(info.startDate, info.endDate) : current.title)
-  const updated: TravelPlan = {
-    ...current,
-    ...info,
-    title,
-  }
-  mockPlans[index] = updated
-  return updated
-}
-
-/** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/title`, ...)로 교체 */
-export async function updatePlanTitle(planId: string, title: string): Promise<TravelPlan> {
-  const index = mockPlans.findIndex((item) => item.id === planId)
-  if (index === -1) {
-    throw new Error('계획을 찾을 수 없어요.')
-  }
-  const updated: TravelPlan = { ...mockPlans[index], title }
-  mockPlans[index] = updated
-  return updated
-}
-
-/** TODO: 백엔드 API가 준비되면 PUT /api/plans/{planId}로 교체 (v2는 계획 전체 덮어쓰기 방식) */
-export async function updatePlanBudget(
-  planId: string,
-  budget: PlanBudgetRequest,
-): Promise<TravelPlan> {
-  const index = mockPlans.findIndex((item) => item.id === planId)
-  if (index === -1) {
-    throw new Error('계획을 찾을 수 없어요.')
-  }
-  const updated: TravelPlan = {
-    ...mockPlans[index],
-    budgetTransportation: budget.budgetTransportation,
-    budgetAccommodation: budget.budgetAccommodation,
-    budgetFood: budget.budgetFood,
-    budgetEtc: budget.budgetEtc,
-  }
-  mockPlans[index] = updated
-  return updated
-}
-
-/** 미리보기의 "계획 저장하기" — 여기서만 draft를 saved로 확정한다. TODO: 백엔드 API가
- * 준비되면 apiClient.patch(`/plans/${id}/confirm`, ...)로 교체 */
-export async function confirmPlan(planId: string): Promise<TravelPlan> {
-  const index = mockPlans.findIndex((item) => item.id === planId)
-  if (index === -1) {
-    throw new Error('계획을 찾을 수 없어요.')
-  }
-  const updated: TravelPlan = { ...mockPlans[index], status: 'saved' }
-  mockPlans[index] = updated
-  return updated
 }
 
 /** TODO: 백엔드 API가 준비되면 apiClient.delete(`/plans/${id}`)로 교체 */
@@ -183,4 +105,95 @@ export async function fetchRecommendations(
 /** STEP4 추천·검색 탭 — 키워드로 DB 장소 검색 */
 export async function searchPlanPlaces(params: PlanPlaceSearchParams): Promise<PlanPlaceSearchPage> {
   return apiGet<PlanPlaceSearchPage>('/places', { params })
+}
+
+const COMPANION_TYPE_TO_API: Record<CompanionType, TravelCompanion> = {
+  solo: 'SOLO',
+  couple: 'COUPLE',
+  family: 'FAMILY',
+  friends: 'FRIENDS',
+  colleague: 'COLLEAGUES',
+}
+
+/**
+ * 출발지 좌표를 못 구했을 때 쓰는 기본값. 출발지 입력이 아직 Day별 mock 기반이라(별도
+ * 이슈에서 "계획 전체에 하나"로 옮기기 전까지) 실제 좌표가 없는 경우가 대부분이라 임시로
+ * 제주국제공항 좌표를 대신 보낸다.
+ */
+const FALLBACK_DEPARTURE = {
+  name: '제주국제공항',
+  latitude: 33.507_2,
+  longitude: 126.492_9,
+}
+
+/** `yyyy.MM.dd` -> `yyyy-MM-dd` */
+function toApiDate(date: string): string {
+  return date.replaceAll('.', '-')
+}
+
+/**
+ * STEP6 "계획 저장하기" — 지금까지 로컬(`planDraftStore`)에만 쌓아둔 계획을 API가 원하는
+ * `PlanCreateRequest` 모양으로 조립한다. `POST /api/plans`(신규)·`PUT /api/plans/{id}`(편집)에
+ * 둘 다 이 같은 모양을 그대로 쓴다.
+ *
+ * 두 가지는 지금 구조상 어쩔 수 없이 걸러진다:
+ * - 경유지 중 placeId가 숫자로 안 바뀌는 것(`hyeopjae-beach` 같은 mock 장소)은 실제 DB에 없는
+ *   장소라 payload에서 빠진다. STEP4 추천·검색에서 실제로 담은 장소만 전송된다.
+ * - 출발지 좌표는 실제 좌표를 구했을 때만 쓰고, 없으면 FALLBACK_DEPARTURE를 대신 보낸다.
+ */
+export function buildPlanCreateRequest(plan: TravelPlan): PlanCreateRequest {
+  const startDate = parse(plan.startDate, DATE_FORMAT, new Date())
+
+  const days: DayCreateRequest[] = Object.entries(plan.itinerary)
+    .map(([dayKey, day]): DayCreateRequest | null => {
+      const waypoints: WaypointCreateRequest[] = day.waypoints
+        .map((waypoint) => ({ placeId: Number(waypoint.placeId), isPreferred: waypoint.isPreferred }))
+        .filter((waypoint) => Number.isFinite(waypoint.placeId))
+      if (waypoints.length === 0) return null
+      return {
+        visitDate: format(addDays(startDate, Number(dayKey) - 1), 'yyyy-MM-dd'),
+        waypoints,
+      }
+    })
+    .filter((day): day is DayCreateRequest => day !== null)
+
+  const hasBudget =
+    plan.budgetTransportation !== null ||
+    plan.budgetAccommodation !== null ||
+    plan.budgetFood !== null ||
+    plan.budgetEtc !== null
+
+  return {
+    title: plan.title,
+    startDate: toApiDate(plan.startDate),
+    endDate: toApiDate(plan.endDate),
+    companion: COMPANION_TYPE_TO_API[plan.companionType] ?? null,
+    categories: plan.interests.length > 0 ? plan.interests : null,
+    departurePlaceId: null,
+    departureLocationName: FALLBACK_DEPARTURE.name,
+    departureLatitude: FALLBACK_DEPARTURE.latitude,
+    departureLongitude: FALLBACK_DEPARTURE.longitude,
+    days: days.length > 0 ? days : null,
+    budget: hasBudget
+      ? {
+          budgetTransportation: plan.budgetTransportation,
+          budgetAccommodation: plan.budgetAccommodation,
+          budgetFood: plan.budgetFood,
+          budgetEtc: plan.budgetEtc,
+        }
+      : null,
+  }
+}
+
+/** STEP6 — 신규 계획 저장 */
+export async function createPlan(payload: PlanCreateRequest): Promise<TravelPlanDetailResponse> {
+  return apiPost<TravelPlanDetailResponse>('/plans', payload)
+}
+
+/** STEP6 — 기존 DRAFT 계획 저장 (전체 덮어쓰기). startDate/endDate는 기존 값과 같아야 한다 */
+export async function savePlanEdit(
+  planId: string,
+  payload: PlanCreateRequest,
+): Promise<TravelPlanDetailResponse> {
+  return apiPut<TravelPlanDetailResponse>(`/plans/${planId}`, payload)
 }

@@ -31,20 +31,20 @@ const demoPlan: TravelPlan = {
     1: {
       departurePlaceId: 'aewol-stay',
       waypoints: [
-        { placeId: 'hyeopjae-beach', isPreferred: false },
-        { placeId: 'hallim-cafe', isPreferred: false },
+        { placeId: 'hyeopjae-beach', title: '협재 해수욕장', isPreferred: false },
+        { placeId: 'hallim-cafe', title: '한림 해안 카페', isPreferred: false },
       ],
     },
     2: {
       departurePlaceId: null,
       waypoints: [
-        { placeId: 'seongsan-ilchulbong', isPreferred: false },
-        { placeId: 'seopjikoji-cafe', isPreferred: false },
+        { placeId: 'seongsan-ilchulbong', title: '성산일출봉', isPreferred: false },
+        { placeId: 'seopjikoji-cafe', title: '섭지코지 카페', isPreferred: false },
       ],
     },
     3: {
       departurePlaceId: 'aewol-stay',
-      waypoints: [{ placeId: 'dongmun', isPreferred: false }],
+      waypoints: [{ placeId: 'dongmun', title: '동문 시장', isPreferred: false }],
     },
   },
   // 만원 단위 (v2 API와 동일)

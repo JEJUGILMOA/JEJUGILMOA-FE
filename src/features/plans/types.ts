@@ -7,6 +7,9 @@ export type BudgetTier = 'low' | 'mid' | 'high' | 'premium'
 /** Day 일정에 담긴 장소 하나. `isPreferred`가 선호경유지(★) 표시 — 앵커 추천의 기준점이 된다 */
 export type Waypoint = {
   placeId: string
+  /** 담을 당시의 장소 이름을 그대로 들고 있는다 — 나중 화면(예산·미리보기)에서 다시
+   * 검색/추천 캐시를 조회하지 않아도 이름을 보여줄 수 있게 하기 위함 */
+  title: string
   isPreferred: boolean
 }
 

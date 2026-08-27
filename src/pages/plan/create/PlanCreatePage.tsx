@@ -6,9 +6,10 @@ import { Modal } from '@/components/ui/Modal/Modal'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
-import { useCreatePlanMutation, usePlanQuery, useUpdatePlanInfoMutation } from '@/features/plans/hooks'
-import { suggestPlanTitle } from '@/features/plans/api'
-import type { CompanionType, DayItinerary, PlanDraft } from '@/features/plans/types'
+import { usePlanQuery } from '@/features/plans/hooks'
+import { suggestPlanTitle, toTravelPlan } from '@/features/plans/api'
+import { NEW_PLAN_ID, planDraftStore } from '@/features/plans/planDraftStore'
+import type { CompanionType, DayItinerary, PlanDraft, TravelPlan } from '@/features/plans/types'
 import { StepProgress } from './components/StepProgress'
 import { pageShellStyle, pageStyle, progressTrackStyle, topBarStyle } from './PlanCreatePage.css.ts'
 import { CompanionStep } from './steps/CompanionStep'
@@ -81,8 +82,6 @@ export function PlanCreatePage() {
   const [step, setStep] = useState<WizardStepId>('dates')
   const [draft, setDraft] = useState<PlanDraft>(initialDraft)
   const [showDateShrinkWarning, setShowDateShrinkWarning] = useState(false)
-  const createPlanMutation = useCreatePlanMutation()
-  const updatePlanInfoMutation = useUpdatePlanInfoMutation()
 
   const { data: existingPlan, isLoading: isExistingPlanLoading } = usePlanQuery(planId ?? '')
   const hasSyncedEditDraftRef = useRef(false)
@@ -130,36 +129,37 @@ export function PlanCreatePage() {
     }
   }
 
+  // v2는 STEP1~5를 전부 로컬(planDraftStore)에서만 편집하고, STEP6 "계획 저장하기"에서
+  // 딱 한 번 서버로 보낸다. 그래서 여기선 서버 호출 없이 draft를 스토어에 채워 넣기만 한다.
   const handleComplete = () => {
-    if (isEditMode && planId) {
-      updatePlanInfoMutation.mutate(
-        { planId, draft },
-        {
-          onSuccess: () => {
-            toast.success('여행 정보를 수정했어요')
-            // 완료된 수정 화면(/plan/:id/edit)도 히스토리에서 대체해 뒤로가기 시
-            // 다시 마운트되지 않고 그 이전(미리보기 전 화면)으로 나가게 한다.
-            navigate(ROUTES.planPreview(planId), { replace: true })
-          },
-          onError: () => {
-            toast.error('여행 정보 수정에 실패했어요. 다시 시도해 주세요.')
-          },
-        },
-      )
+    if (isEditMode && planId && existingPlan) {
+      const updated: TravelPlan = {
+        ...existingPlan,
+        startDate: draft.startDate ?? existingPlan.startDate,
+        endDate: draft.endDate ?? existingPlan.endDate,
+        transportMode: draft.transportMode,
+        arrivalTime: draft.arrivalTime,
+        departureTime: draft.departureTime,
+        companionType: draft.companionType ?? existingPlan.companionType,
+        travelerCount: draft.travelerCount,
+        budgetTier: draft.budgetTier,
+        interests: draft.interests,
+        title: draft.title.trim() || existingPlan.title,
+      }
+      planDraftStore.getState().setDraft(updated)
+      toast.success('여행 정보를 수정했어요')
+      // 완료된 수정 화면(/plan/:id/edit)도 히스토리에서 대체해 뒤로가기 시
+      // 다시 마운트되지 않고 그 이전(미리보기 전 화면)으로 나가게 한다.
+      navigate(ROUTES.planPreview(planId), { replace: true })
       return
     }
 
-    createPlanMutation.mutate(draft, {
-      onSuccess: (plan) => {
-        toast.success('여행 계획을 만들었어요')
-        // 완료된 마법사(/plan/new)는 히스토리에서 대체한다 — 뒤로가기를 눌렀을 때
-        // 이미 끝난 마법사가 처음부터 다시 마운트되는 대신, 그 이전 화면(계획 목록)으로 나가게 한다.
-        navigate(ROUTES.planItinerary(plan.id), { replace: true })
-      },
-      onError: () => {
-        toast.error('계획 생성에 실패했어요. 다시 시도해 주세요.')
-      },
-    })
+    const newPlan: TravelPlan = { ...toTravelPlan(draft), id: NEW_PLAN_ID }
+    planDraftStore.getState().setDraft(newPlan)
+    toast.success('여행 계획을 만들었어요')
+    // 완료된 마법사(/plan/new)는 히스토리에서 대체한다 — 뒤로가기를 눌렀을 때
+    // 이미 끝난 마법사가 처음부터 다시 마운트되는 대신, 그 이전 화면(계획 목록)으로 나가게 한다.
+    navigate(ROUTES.planItinerary(NEW_PLAN_ID), { replace: true })
   }
 
   // 제목 입력이 마지막 단계라, 여기서 다음으로 넘어가면 바로 계획을 완성한다.
@@ -270,7 +270,7 @@ export function PlanCreatePage() {
             onChange={(title) => setDraft((prev) => ({ ...prev, title }))}
             onNext={goNext}
             suggestedTitle={suggestPlanTitle(draft.startDate, draft.endDate)}
-            isSubmitting={isEditMode ? updatePlanInfoMutation.isPending : createPlanMutation.isPending}
+            isSubmitting={false}
           />
         ) : null}
       </div>
