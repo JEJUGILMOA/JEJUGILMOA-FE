@@ -94,7 +94,7 @@ function fromApiDate(date: string): string {
 }
 
 /** `GET /api/plans` 목록 아이템 하나를 로컬 `TravelPlan` 모양으로 변환 */
-function mapPlanSummaryToTravelPlan(summary: TravelPlanSummary): TravelPlan {
+export function mapPlanSummaryToTravelPlan(summary: TravelPlanSummary): TravelPlan {
   return {
     id: String(summary.planId),
     title: summary.title,
@@ -117,7 +117,7 @@ function mapPlanSummaryToTravelPlan(summary: TravelPlanSummary): TravelPlan {
 }
 
 /** `GET /api/plans/{id}` 응답을 로컬 `TravelPlan` 모양으로 변환 */
-function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): TravelPlan {
+export function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): TravelPlan {
   const itinerary: Record<number, DayItinerary> = {}
   for (const day of detail.itinerary) {
     const waypoints: Waypoint[] = day.waypoints
