@@ -69,7 +69,7 @@ const initialDraft: PlanDraft = {
   companionType: DEFAULT_COMPANION_TYPE,
   travelerCount: defaultTravelerCount(DEFAULT_COMPANION_TYPE),
   budgetTier: 'mid',
-  interests: ['맛집 탐방', '자연/힐링'],
+  interests: ['FOOD', 'NATURE'],
   title: '',
 }
 

@@ -6,16 +6,6 @@ export type BudgetTier = 'low' | 'mid' | 'high' | 'premium'
 
 export type BudgetCategory = 'transport' | 'lodging' | 'food' | 'etc'
 
-export type InterestTheme =
-  | '맛집 탐방'
-  | '자연/힐링'
-  | '액티비티'
-  | '핫플/카페'
-  | '문화/역사'
-  | '쇼핑'
-  | '사진 명소'
-  | '축제/이벤트'
-
 /** Day 하나의 일정. 출발 장소·필수 장소는 일정편집 화면에서 인라인으로 채워진다 (기본 null/빈 배열) */
 export type DayItinerary = {
   /** 이 Day의 출발 장소 id. 검색으로 입력 (아직 없으면 null) */
@@ -48,7 +38,7 @@ export type TravelPlan = {
   companionType: CompanionType
   travelerCount: number
   budgetTier: BudgetTier
-  interests: InterestTheme[]
+  interests: TravelTheme[]
   createdAt: string
   /** STEP 02 경유지 추천에서 담은 장소 id 목록 */
   waypointPlaceIds: string[]
@@ -69,7 +59,7 @@ export type PlanDraft = {
   companionType: CompanionType | null
   travelerCount: number
   budgetTier: BudgetTier
-  interests: InterestTheme[]
+  interests: TravelTheme[]
   /** 여행 제목. 비우면 날짜 기준으로 자동 생성 */
   title: string
 }

@@ -1,26 +1,27 @@
 import { Button } from '@/components/ui/Button/Button'
 import { Chip } from '@/components/ui/Chip/Chip'
-import type { InterestTheme } from '@/features/plans/types'
+import type { TravelTheme } from '@/features/plans/types'
 import { chipWrapStyle, stepDescriptionStyle, stepHeaderStyle, stepTitleStyle } from '../PlanCreatePage.css.ts'
 
-const INTEREST_THEMES: InterestTheme[] = [
-  '맛집 탐방',
-  '자연/힐링',
-  '액티비티',
-  '핫플/카페',
-  '문화/역사',
-  '쇼핑',
-  '사진 명소',
-  '축제/이벤트',
-]
+const TRAVEL_THEME_LABELS: Record<TravelTheme, string> = {
+  FOOD: '맛집 탐방',
+  NATURE: '자연/힐링',
+  ACTIVITY: '액티비티',
+  CAFE: '핫플/카페',
+  CULTURE: '문화/역사',
+  SHOPPING: '쇼핑',
+  FESTIVAL: '축제/이벤트',
+}
+
+const TRAVEL_THEMES = Object.keys(TRAVEL_THEME_LABELS) as TravelTheme[]
 
 export type InterestsStepProps = {
-  interests: InterestTheme[]
-  onToggle: (theme: InterestTheme) => void
+  interests: TravelTheme[]
+  onToggle: (theme: TravelTheme) => void
   onNext: () => void
 }
 
-/** STEP 01-6: 관심사 다중 선택 */
+/** STEP 01-6: 관심사(여행 테마) 다중 선택 */
 export function InterestsStep({ interests, onToggle, onNext }: InterestsStepProps) {
   return (
     <>
@@ -30,14 +31,14 @@ export function InterestsStep({ interests, onToggle, onNext }: InterestsStepProp
       </div>
 
       <div className={chipWrapStyle}>
-        {INTEREST_THEMES.map((theme) => (
+        {TRAVEL_THEMES.map((theme) => (
           <Chip
             key={theme}
             colorScheme="primary"
             isSelected={interests.includes(theme)}
             onClick={() => onToggle(theme)}
           >
-            {theme}
+            {TRAVEL_THEME_LABELS[theme]}
           </Chip>
         ))}
       </div>

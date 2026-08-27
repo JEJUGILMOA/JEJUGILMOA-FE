@@ -17,7 +17,7 @@ const demoPlan: TravelPlan = {
   companionType: 'couple',
   travelerCount: 2,
   budgetTier: 'mid',
-  interests: ['맛집 탐방', '자연/힐링'],
+  interests: ['FOOD', 'NATURE'],
   createdAt: new Date().toISOString(),
   waypointPlaceIds: [
     'hyeopjae-beach',
@@ -58,7 +58,7 @@ const draftPlan: TravelPlan = {
   companionType: 'family',
   travelerCount: 4,
   budgetTier: 'mid',
-  interests: ['자연/힐링'],
+  interests: ['NATURE'],
   createdAt: new Date().toISOString(),
   waypointPlaceIds: [],
   itinerary: {},
