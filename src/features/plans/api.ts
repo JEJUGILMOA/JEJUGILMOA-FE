@@ -2,8 +2,8 @@ import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { apiGet, apiPost } from '@/api/http'
 import { mockPlans } from './mockPlans'
 import type {
-  BudgetCategory,
   DayItinerary,
+  PlanBudgetRequest,
   PlanDraft,
   PlanPlaceSearchParams,
   PlanPlaceSearchPage,
@@ -65,7 +65,10 @@ function toTravelPlan(draft: PlanDraft): TravelPlan {
     createdAt: new Date().toISOString(),
     waypointPlaceIds: [],
     itinerary: {},
-    budgetDetail: null,
+    budgetTransportation: null,
+    budgetAccommodation: null,
+    budgetFood: null,
+    budgetEtc: null,
   }
 }
 
@@ -132,16 +135,22 @@ export async function updatePlanTitle(planId: string, title: string): Promise<Tr
   return updated
 }
 
-/** TODO: 백엔드 API가 준비되면 apiClient.patch(`/plans/${id}/budget`, ...)로 교체 */
+/** TODO: 백엔드 API가 준비되면 PUT /api/plans/{planId}로 교체 (v2는 계획 전체 덮어쓰기 방식) */
 export async function updatePlanBudget(
   planId: string,
-  budgetDetail: Record<BudgetCategory, number> | null,
+  budget: PlanBudgetRequest,
 ): Promise<TravelPlan> {
   const index = mockPlans.findIndex((item) => item.id === planId)
   if (index === -1) {
     throw new Error('계획을 찾을 수 없어요.')
   }
-  const updated: TravelPlan = { ...mockPlans[index], budgetDetail }
+  const updated: TravelPlan = {
+    ...mockPlans[index],
+    budgetTransportation: budget.budgetTransportation,
+    budgetAccommodation: budget.budgetAccommodation,
+    budgetFood: budget.budgetFood,
+    budgetEtc: budget.budgetEtc,
+  }
   mockPlans[index] = updated
   return updated
 }

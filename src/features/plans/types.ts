@@ -4,8 +4,6 @@ export type CompanionType = 'solo' | 'couple' | 'family' | 'friends' | 'colleagu
 
 export type BudgetTier = 'low' | 'mid' | 'high' | 'premium'
 
-export type BudgetCategory = 'transport' | 'lodging' | 'food' | 'etc'
-
 /** Day 일정에 담긴 장소 하나. `isPreferred`가 선호경유지(★) 표시 — 앵커 추천의 기준점이 된다 */
 export type Waypoint = {
   placeId: string
@@ -48,8 +46,12 @@ export type TravelPlan = {
   waypointPlaceIds: string[]
   /** STEP 04 지도추가에서 배정한 Day별 일정 (1부터 시작) */
   itinerary: Record<number, DayItinerary>
-  /** STEP 07 예산 입력에서 저장한 카테고리별 예산(원). 입력 전에는 null */
-  budgetDetail: Record<BudgetCategory, number> | null
+  // STEP5 예산 입력에서 저장한 카테고리별 예산. v2 API(`PlanBudgetRequest`/`TravelPlanDetailResponse`)와
+  // 필드명·단위(만원)를 그대로 맞춰서, 저장할 때 별도 변환 없이 그대로 보낼 수 있게 한다.
+  budgetTransportation: number | null
+  budgetAccommodation: number | null
+  budgetFood: number | null
+  budgetEtc: number | null
 }
 
 /** STEP 01 정보입력 마법사에서 사용하는 draft 상태 */

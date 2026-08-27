@@ -11,7 +11,7 @@ import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
 import { useConfirmPlanMutation, usePlanQuery, useUpdatePlanTitleMutation } from '@/features/plans/hooks'
-import type { BudgetCategory } from '@/features/plans/types'
+import type { PlanBudgetRequest } from '@/features/plans/types'
 import {
   budgetRowLabelStyle,
   budgetRowStyle,
@@ -42,11 +42,14 @@ import { PlanRouteMap } from './components/PlanRouteMap'
 
 const DATE_FORMAT = 'yyyy.MM.dd'
 
-const BUDGET_CATEGORY_LABELS: { key: BudgetCategory; label: string }[] = [
-  { key: 'transport', label: '교통비' },
-  { key: 'lodging', label: '숙박' },
-  { key: 'food', label: '식비' },
-  { key: 'etc', label: '기타(입장료 등)' },
+/** 예산 입력값은 만원 단위(API와 동일)로 저장돼 있어, 화면에 보여줄 때만 원 단위로 바꾼다. */
+const WON_PER_MANWON = 10_000
+
+const BUDGET_CATEGORY_LABELS: { key: keyof PlanBudgetRequest; label: string }[] = [
+  { key: 'budgetTransportation', label: '교통비' },
+  { key: 'budgetAccommodation', label: '숙박' },
+  { key: 'budgetFood', label: '식비' },
+  { key: 'budgetEtc', label: '기타(입장료 등)' },
 ]
 
 function placeTitle(placeId: string) {
@@ -138,8 +141,13 @@ export function PlanPreviewPage() {
     return { day, places }
   })
 
-  const budgetTotal = plan.budgetDetail
-    ? BUDGET_CATEGORY_LABELS.reduce((sum, { key }) => sum + (plan.budgetDetail?.[key] ?? 0), 0)
+  const hasBudget =
+    plan.budgetTransportation !== null ||
+    plan.budgetAccommodation !== null ||
+    plan.budgetFood !== null ||
+    plan.budgetEtc !== null
+  const budgetTotal = hasBudget
+    ? BUDGET_CATEGORY_LABELS.reduce((sum, { key }) => sum + (plan[key] ?? 0), 0) * WON_PER_MANWON
     : 0
 
   return (
@@ -234,13 +242,13 @@ export function PlanPreviewPage() {
                 <Pencil size={16} />
               </button>
             </div>
-            {plan.budgetDetail ? (
+            {hasBudget ? (
               <>
                 {BUDGET_CATEGORY_LABELS.map(({ key, label }) => (
                   <div key={key} className={budgetRowStyle}>
                     <span className={budgetRowLabelStyle}>{label}</span>
                     <span className={budgetRowValueStyle}>
-                      {(plan.budgetDetail?.[key] ?? 0).toLocaleString()}원
+                      {((plan[key] ?? 0) * WON_PER_MANWON).toLocaleString()}원
                     </span>
                   </div>
                 ))}

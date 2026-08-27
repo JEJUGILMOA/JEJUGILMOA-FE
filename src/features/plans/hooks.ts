@@ -14,8 +14,8 @@ import {
   updatePlanTitle,
 } from './api'
 import type {
-  BudgetCategory,
   DayItinerary,
+  PlanBudgetRequest,
   PlanDraft,
   PlanPlaceSearchParams,
   RecommendationRequest,
@@ -98,13 +98,8 @@ export function useUpdatePlanBudgetMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({
-      planId,
-      budgetDetail,
-    }: {
-      planId: string
-      budgetDetail: Record<BudgetCategory, number> | null
-    }) => updatePlanBudget(planId, budgetDetail),
+    mutationFn: ({ planId, budget }: { planId: string; budget: PlanBudgetRequest }) =>
+      updatePlanBudget(planId, budget),
     onSuccess: (plan) => {
       rememberPlan(queryClient, plan)
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
