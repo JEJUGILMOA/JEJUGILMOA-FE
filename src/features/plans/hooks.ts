@@ -16,7 +16,7 @@ import type { PlanCreateRequest, PlanPlaceSearchParams, RecommendationRequest } 
 export function usePlansQuery() {
   return useQuery({
     queryKey: QUERY_KEYS.plans,
-    queryFn: fetchPlans,
+    queryFn: () => fetchPlans(),
   })
 }
 

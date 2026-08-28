@@ -14,6 +14,7 @@ import type {
   TravelCompanion,
   TravelPlan,
   TravelPlanDetailResponse,
+  TravelPlanStatus,
   TravelPlanSummary,
   Waypoint,
   WaypointCreateRequest,
@@ -153,8 +154,8 @@ export function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): Tra
   }
 }
 
-export async function fetchPlans(): Promise<TravelPlan[]> {
-  const summaries = await apiGet<TravelPlanSummary[]>('/plans')
+export async function fetchPlans(params?: { status?: TravelPlanStatus }): Promise<TravelPlan[]> {
+  const summaries = await apiGet<TravelPlanSummary[]>('/plans', { params })
   return summaries.map(mapPlanSummaryToTravelPlan)
 }
 

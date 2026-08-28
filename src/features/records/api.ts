@@ -1,7 +1,19 @@
+import { apiGet } from '@/api/http'
+import { fetchPlans } from '@/features/plans/api'
+import type { TravelPlan, TravelPlanDetailResponse } from '@/features/plans/types'
 import { authStore } from '@/stores/authStore'
+// TODO: STEP C·D에서 createRecord/toSavedRecord/toExploreRecord가 실 API로 바뀌면 이 mock 의존도 제거
 import { mockCompletedTrips } from './mockCompletedTrips'
 import { mockExploreRecords } from './mockExploreRecords'
-import type { CompletedTrip, ExploreRecord, ReactionType, RecordDraft, SavedRecord } from './types'
+import type {
+  CompletedTrip,
+  ExploreRecord,
+  ReactionType,
+  RecordDraft,
+  SavedRecord,
+  TripDayPlan,
+  TripPlace,
+} from './types'
 
 function currentNickname(): string {
   return authStore.getState().user?.nickname ?? '나'
@@ -69,9 +81,46 @@ function collectUniquePhotos(draft: RecordDraft): File[] {
   return photos
 }
 
-/** TODO: 백엔드 API 연동 전까지 목데이터를 사용하는 스텁 */
+/**
+ * `GET /api/plans/{planId}` 응답을 `CompletedTrip`으로 변환.
+ * 경유지 id는 `waypointId`를 쓴다 — 기록 생성 API가 요구하는 `travelCourseId`와 값이
+ * 같다는 가정 하에 그대로 넘긴다 (계획 도메인엔 별도 travelCourseId 필드가 없다).
+ */
+function mapPlanDetailToCompletedTrip(plan: TravelPlan, detail: TravelPlanDetailResponse): CompletedTrip {
+  const sortedDays = detail.itinerary.slice().sort((a, b) => a.dayNumber - b.dayNumber)
+
+  const sortedWaypoints = (day: TravelPlanDetailResponse['itinerary'][number]) =>
+    day.waypoints.slice().sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+
+  const places: TripPlace[] = sortedDays.flatMap((day) =>
+    sortedWaypoints(day).map((waypoint) => ({ id: String(waypoint.waypointId), name: waypoint.placeName })),
+  )
+
+  const itinerary: TripDayPlan[] = sortedDays.map((day) => ({
+    day: day.dayNumber,
+    // 'yyyy-MM-dd' -> 'MM.dd'
+    dateLabel: day.date.slice(5).replaceAll('-', '.'),
+    items: sortedWaypoints(day).map((waypoint) => ({ time: '', activity: waypoint.placeName })),
+  }))
+
+  const visitedLabel = `${places.length}곳 방문`
+  // plan.endDate는 'yyyy.MM.dd' -> 'MM.dd'만 잘라 범위 표기에 쓴다 (mock 데이터와 동일한 표기)
+  const dateRangeLabel =
+    plan.startDate === plan.endDate
+      ? `${plan.startDate} · ${visitedLabel}`
+      : `${plan.startDate} - ${plan.endDate.slice(5)} · ${visitedLabel}`
+
+  return { id: plan.id, title: plan.title, dateRangeLabel, places, itinerary }
+}
+
 export async function fetchCompletedTrips(): Promise<CompletedTrip[]> {
-  return mockCompletedTrips
+  const completedPlans = await fetchPlans({ status: 'COMPLETED' })
+  return Promise.all(
+    completedPlans.map(async (plan) => {
+      const detail = await apiGet<TravelPlanDetailResponse>(`/plans/${plan.id}`)
+      return mapPlanDetailToCompletedTrip(plan, detail)
+    }),
+  )
 }
 
 /** TODO: 백엔드 기록 저장소가 준비되면 제거. 그전까지 세션 내 임시 저장소 역할 */
