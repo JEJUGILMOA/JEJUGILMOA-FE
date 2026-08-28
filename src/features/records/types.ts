@@ -96,3 +96,18 @@ export type ExploreRecord = {
   dislikeCount: number
   myReaction: ReactionType | null
 }
+
+/** `POST /api/image-uploads` 요청 — 이미지 하나당 presigned URL을 발급받는다 */
+export type ImageUploadRequest = {
+  contentType: string
+  fileSize: number
+}
+
+/** `POST /api/image-uploads` 응답. `uploadUrl`은 S3 PUT 전용, 이후엔 `objectKey`만 쓴다 */
+export type ImageUploadResponse = {
+  objectKey: string
+  uploadUrl: string
+  httpMethod: string
+  requiredHeaders: Record<string, string>
+  expiresAt: string
+}
