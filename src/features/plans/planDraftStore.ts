@@ -1,5 +1,6 @@
 import { createStore } from 'zustand/vanilla'
 import { useStore } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { TravelPlan } from './types'
 
 /**
@@ -19,13 +20,25 @@ type PlanDraftStoreState = {
   clearDraft: () => void
 }
 
-export const planDraftStore = createStore<PlanDraftStoreState>()((set) => ({
-  draft: null,
-  setDraft: (draft) => set({ draft }),
-  updateDraft: (updater) =>
-    set((state) => (state.draft ? { draft: updater(state.draft) } : state)),
-  clearDraft: () => set({ draft: null }),
-}))
+/**
+ * localStorage에 그대로 미러링해서, 일정·예산·미리보기 편집 중 새로고침해도 안 날아가게 한다.
+ * "계획 저장하기" 성공 시 clearDraft()를 호출하는 곳(PlanPreviewPage)에서 자동으로 같이 지워진다.
+ */
+export const planDraftStore = createStore<PlanDraftStoreState>()(
+  persist(
+    (set) => ({
+      draft: null,
+      setDraft: (draft) => set({ draft }),
+      updateDraft: (updater) =>
+        set((state) => (state.draft ? { draft: updater(state.draft) } : state)),
+      clearDraft: () => set({ draft: null }),
+    }),
+    {
+      name: 'gilmoa-plan-draft',
+      partialize: (state) => ({ draft: state.draft }),
+    },
+  ),
+)
 
 export function usePlanDraftStore<T>(selector: (state: PlanDraftStoreState) => T): T {
   return useStore(planDraftStore, selector)
