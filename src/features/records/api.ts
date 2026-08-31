@@ -1,69 +1,37 @@
-import { apiGet, apiPost } from '@/api/http'
+import { apiDelete, apiGet, apiPatch, apiPost } from '@/api/http'
 import { fetchPlans } from '@/features/plans/api'
 import type { TravelPlan, TravelPlanDetailResponse } from '@/features/plans/types'
-import { authStore } from '@/stores/authStore'
 import { uploadImageAndGetObjectKey } from './imageUpload'
-// TODO: STEP D에서 fetchMyRecords/fetchExploreRecords가 실 API로 바뀌면 이 mock 의존도 제거
-import { mockCompletedTrips } from './mockCompletedTrips'
-import { mockExploreRecords } from './mockExploreRecords'
 import type {
   CompletedTrip,
   ExploreRecord,
+  PageResponseObject,
   PlaceMemo,
-  ReactionType,
   RecordDraft,
+  RecordPlaceMemoUpdate,
+  RecordUpdatePatch,
+  RecordVisibility,
+  RecordVisibilityApi,
   SavedRecord,
   TravelRecordCreateRequest,
   TravelRecordCreateResponse,
+  TravelRecordDetailResponse,
+  TravelRecordImageResponse,
   TravelRecordPlaceMemoRequest,
+  TravelRecordPlaceResponse,
+  TravelRecordPlaceUpdateRequest,
+  TravelRecordUpdateRequest,
   TripDayPlan,
   TripPlace,
+  VisitedPlaceRecord,
 } from './types'
 
-function currentNickname(): string {
-  return authStore.getState().user?.nickname ?? '나'
+function toApiVisibility(visibility: RecordVisibility): RecordVisibilityApi {
+  return visibility === 'public' ? 'PUBLIC' : 'PRIVATE'
 }
 
-/** 좋아요/싫어요 배타 토글 로직 (내 기록·둘러보기 기록 공용) */
-function applyReaction<T extends { myReaction: ReactionType | null; likeCount: number; dislikeCount: number }>(
-  record: T,
-  reaction: ReactionType,
-): T {
-  const next = { ...record }
-  if (next.myReaction === reaction) {
-    if (reaction === 'like') next.likeCount -= 1
-    else next.dislikeCount -= 1
-    next.myReaction = null
-  } else {
-    if (next.myReaction === 'like') next.likeCount -= 1
-    if (next.myReaction === 'dislike') next.dislikeCount -= 1
-    if (reaction === 'like') next.likeCount += 1
-    else next.dislikeCount += 1
-    next.myReaction = reaction
-  }
-  return next
-}
-
-/** 전체공개로 설정한 내 기록을 둘러보기 목록에도 노출하기 위한 변환 */
-function toExploreRecord(record: SavedRecord, authorName: string): ExploreRecord {
-  const trip = mockCompletedTrips.find((item) => item.id === record.tripId)
-  return {
-    id: record.id,
-    title: record.title,
-    summary: record.summary,
-    authorName,
-    linkedPlanTitle: trip?.title ?? null,
-    linkedPlanItinerary: trip?.itinerary ?? null,
-    path: [],
-    photoUrls: record.photoUrls,
-    tripDateRangeLabel: record.tripDateRangeLabel,
-    visitedPlaces: record.visitedPlaces,
-    createdAt: record.createdAt,
-    isBookmarked: record.isBookmarked,
-    likeCount: record.likeCount,
-    dislikeCount: record.dislikeCount,
-    myReaction: record.myReaction,
-  }
+function fromApiVisibility(visibility: RecordVisibilityApi): RecordVisibility {
+  return visibility === 'PUBLIC' ? 'public' : 'private'
 }
 
 function collectUniquePhotos(draft: RecordDraft): File[] {
@@ -122,9 +90,6 @@ export async function fetchCompletedTrips(): Promise<CompletedTrip[]> {
     }),
   )
 }
-
-/** TODO: STEP D·E에서 fetchMyRecords/updateRecord/deleteRecord/반응·북마크가 실 API로 바뀌면 제거 */
-const myRecords: SavedRecord[] = []
 
 function objectKeyOf(file: File, fileToObjectKey: Map<File, string>): string {
   const objectKey = fileToObjectKey.get(file)
@@ -185,7 +150,7 @@ function buildRecordCreateRequest(
     tripId: Number(draft.tripId),
     title: draft.title,
     description: draft.summary,
-    visibility: draft.visibility === 'public' ? 'PUBLIC' : 'PRIVATE',
+    visibility: toApiVisibility(draft.visibility),
     placeMemos: buildPlaceMemoRequests(draft, fileToObjectKey),
     imageObjectKeys: buildRecordImageObjectKeys(draft, fileToObjectKey),
   }
@@ -203,107 +168,179 @@ export async function createRecord(draft: RecordDraft): Promise<{ id: string }> 
   return { id: String(response.recordId) }
 }
 
-/** TODO: 백엔드 API가 준비되면 apiClient.get('/records/me')로 교체 */
+/** `GET /api/records` 목록 응답 아이템 — swagger 미완성이라 `recordId`만 신뢰한다 */
+type RecordListItem = { recordId: number }
+
+async function fetchRecordDetail(recordId: number): Promise<TravelRecordDetailResponse> {
+  return apiGet<TravelRecordDetailResponse>(`/records/${recordId}`)
+}
+
+/**
+ * `GET /api/records`(목록) 응답 스키마가 swagger에 미완성이라, 목록에서 `recordId`만 뽑아
+ * 각각 `GET /api/records/{recordId}`(문서화된 상세)로 다시 조회해서 채운다. 기록이 많아지면
+ * N+1이 되니, 목록 응답 스키마가 확정되면 최적화할 것 (`docs/RECORD_API_INTEGRATION.md` 참고).
+ */
+async function fetchRecordDetails(mine: boolean): Promise<TravelRecordDetailResponse[]> {
+  const page = await apiGet<PageResponseObject<RecordListItem>>('/records', {
+    params: { mine, view: 'CARD' },
+  })
+  return Promise.all(page.content.map((item) => fetchRecordDetail(item.recordId)))
+}
+
+function sortBySequenceOrder<T extends { sequenceOrder: number }>(items: T[]): T[] {
+  return items.slice().sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+}
+
+function mapDetailToVisitedPlaces(places: TravelRecordPlaceResponse[]): VisitedPlaceRecord[] {
+  return sortBySequenceOrder(places).map((place) => ({
+    recordPlaceId: place.recordPlaceId,
+    placeId: String(place.placeId),
+    placeName: place.placeName,
+    note: place.memo ?? '',
+    photoUrls: place.image ? [place.image.imageUrl] : [],
+  }))
+}
+
+function mapDetailToPhotoUrls(images: TravelRecordImageResponse[]): string[] {
+  return sortBySequenceOrder(images).map((image) => image.imageUrl)
+}
+
+/** 'yyyy-MM-dd' -> 'yyyy.MM.dd' */
+function formatApiDate(date: string): string {
+  return date.replaceAll('-', '.')
+}
+
+function buildTripDateRangeLabel(startDate: string, endDate: string, visitedPlaceCount: number): string {
+  const visitedLabel = `${visitedPlaceCount}곳 방문`
+  const start = formatApiDate(startDate)
+  const end = formatApiDate(endDate)
+  return start === end ? `${start} · ${visitedLabel}` : `${start} - ${end.slice(5)} · ${visitedLabel}`
+}
+
+function mapDetailToSavedRecord(detail: TravelRecordDetailResponse): SavedRecord {
+  const photoUrls = mapDetailToPhotoUrls(detail.images)
+  return {
+    id: String(detail.recordId),
+    tripId: detail.plan ? String(detail.plan.planId) : null,
+    title: detail.title,
+    summary: detail.description ?? '',
+    thumbnailUrl: photoUrls[0] ?? null,
+    photoUrls,
+    tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate, detail.places.length),
+    visitedPlaces: mapDetailToVisitedPlaces(detail.places),
+    visitedPlaceCount: detail.places.length,
+    photoCount: photoUrls.length,
+    visibility: fromApiVisibility(detail.visibility),
+    likeCount: detail.likeCount,
+    dislikeCount: detail.dislikeCount,
+    myReaction: detail.myReaction === 'LIKE' ? 'like' : detail.myReaction === 'DISLIKE' ? 'dislike' : null,
+    // 서버에 북마크 API가 없어 로컬 전용으로 남겨둔다 (hooks.ts의 캐시 토글 참고)
+    isBookmarked: false,
+    createdAt: detail.createdAt,
+  }
+}
+
+function mapDetailToExploreRecord(detail: TravelRecordDetailResponse): ExploreRecord {
+  const photoUrls = mapDetailToPhotoUrls(detail.images)
+  return {
+    id: String(detail.recordId),
+    title: detail.title,
+    summary: detail.description ?? '',
+    authorName: detail.author.nickname,
+    linkedPlanTitle: detail.plan?.title ?? null,
+    // 다른 사용자의 계획 상세는 API 권한상 조회할 수 없어 보임(계획은 본인 것만 조회 가능) — null 유지
+    linkedPlanItinerary: null,
+    path: [],
+    photoUrls,
+    tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate, detail.places.length),
+    visitedPlaces: mapDetailToVisitedPlaces(detail.places),
+    createdAt: detail.createdAt,
+    isBookmarked: false,
+    likeCount: detail.likeCount,
+    dislikeCount: detail.dislikeCount,
+    myReaction: detail.myReaction === 'LIKE' ? 'like' : detail.myReaction === 'DISLIKE' ? 'dislike' : null,
+  }
+}
+
 export async function fetchMyRecords(): Promise<SavedRecord[]> {
-  // 매 호출마다 새 배열을 반환 — 같은 참조를 반환하면 구조적 공유 최적화로 인해
-  // React Query가 "데이터 변경 없음"으로 판단해 리렌더를 건너뛴다.
-  return [...myRecords]
+  const details = await fetchRecordDetails(true)
+  return details.map(mapDetailToSavedRecord)
 }
 
-/** TODO: 기록 수정 API가 준비되면 apiClient.patch(`/records/${id}`, patch)로 교체 */
-export async function updateRecord(
-  id: string,
-  patch: Partial<
-    Pick<
-      SavedRecord,
-      'title' | 'summary' | 'visibility' | 'visitedPlaces' | 'photoUrls' | 'photoCount'
-    >
-  >,
-): Promise<SavedRecord> {
-  const index = myRecords.findIndex((record) => record.id === id)
-  if (index === -1) throw new Error('Record not found')
-
-  const updated = { ...myRecords[index], ...patch }
-  myRecords[index] = updated
-  return updated
-}
-
-/** TODO: 기록 삭제 API가 준비되면 apiClient.delete(`/records/${id}`)로 교체 */
-export async function deleteRecord(id: string): Promise<void> {
-  const index = myRecords.findIndex((record) => record.id === id)
-  if (index !== -1) myRecords.splice(index, 1)
-}
-
-/** TODO: 북마크 API가 준비되면 apiClient.post(`/records/${id}/bookmark`, ...)로 교체 */
-export async function toggleRecordBookmark(id: string): Promise<SavedRecord> {
-  const index = myRecords.findIndex((record) => record.id === id)
-  if (index === -1) throw new Error('Record not found')
-
-  const updated = { ...myRecords[index], isBookmarked: !myRecords[index].isBookmarked }
-  myRecords[index] = updated
-  return updated
-}
-
-/** TODO: 반응 API가 준비되면 apiClient.post(`/records/${id}/reactions`, ...)로 교체 */
-export async function reactToRecord(id: string, reaction: ReactionType): Promise<SavedRecord> {
-  const index = myRecords.findIndex((record) => record.id === id)
-  if (index === -1) throw new Error('Record not found')
-
-  const next = applyReaction(myRecords[index], reaction)
-  myRecords[index] = next
-  return next
-}
-
-/** TODO: 둘러보기 API가 준비되면 apiClient.get('/records/explore')로 교체 */
 export async function fetchExploreRecords(): Promise<ExploreRecord[]> {
-  // 전체공개로 설정한 내 기록도 다른 사용자 기록과 함께 노출한다.
-  // 매 호출마다 새 배열을 반환 (fetchMyRecords와 같은 이유)
-  const ownPublicRecords = myRecords
-    .filter((record) => record.visibility === 'public')
-    .map((record) => toExploreRecord(record, currentNickname()))
+  const details = await fetchRecordDetails(false)
+  return details.map(mapDetailToExploreRecord).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
 
-  return [...ownPublicRecords, ...mockExploreRecords].sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt),
+/**
+ * 장소 하나의 메모 수정을 PATCH 요청 항목으로 변환. 사진 REPLACE는 새로 첨부한 File을
+ * 업로드해서 그 objectKey를 보내면 되고, REMOVE는 액션 플래그만 있으면 되니 기존 objectKey가
+ * 없어도 표현 가능하다(장소 사진은 문제없음 — 기록 전체 사진첩과 다른 점).
+ */
+async function buildPlaceUpdateRequest(
+  place: RecordPlaceMemoUpdate,
+  before: VisitedPlaceRecord | undefined,
+): Promise<TravelRecordPlaceUpdateRequest | null> {
+  const [photo] = place.photos
+  const hadPhoto = Boolean(before?.photoUrls.length)
+  const noteChanged = (before?.note ?? '') !== place.note
+
+  let image: TravelRecordPlaceUpdateRequest['image']
+  if (photo instanceof File) {
+    image = { action: 'REPLACE', objectKey: await uploadImageAndGetObjectKey(photo) }
+  } else if (!photo && hadPhoto) {
+    image = { action: 'REMOVE' }
+  }
+
+  if (!noteChanged && !image) return null
+  return { recordPlaceId: place.recordPlaceId, memo: place.note, image }
+}
+
+async function buildPlaceUpdateRequests(
+  places: RecordPlaceMemoUpdate[],
+  original: VisitedPlaceRecord[],
+): Promise<TravelRecordPlaceUpdateRequest[]> {
+  const originalById = new Map(original.map((place) => [place.recordPlaceId, place]))
+  const results = await Promise.all(
+    places.map((place) => buildPlaceUpdateRequest(place, originalById.get(place.recordPlaceId))),
   )
+  return results.filter((request): request is TravelRecordPlaceUpdateRequest => request !== null)
 }
 
-/** TODO: 반응 API가 준비되면 apiClient.post(`/records/${id}/reactions`, ...)로 교체 */
-export async function reactToExploreRecord(
-  id: string,
-  reaction: ReactionType,
-): Promise<ExploreRecord> {
-  // 둘러보기에 노출된 게 내 기록일 수도 있으니 내 기록 저장소에서 먼저 찾는다
-  const ownIndex = myRecords.findIndex((record) => record.id === id)
-  if (ownIndex !== -1) {
-    const updated = applyReaction(myRecords[ownIndex], reaction)
-    myRecords[ownIndex] = updated
-    return toExploreRecord(updated, currentNickname())
-  }
+/**
+ * 서버가 기존 사진의 objectKey를 안 돌려주기 때문에(응답엔 `imageUrl`만 있음) 기존 사진을
+ * 유지한 채 일부만 바꾸는 부분 수정은 표현할 수 없다. 안 건드렸으면 생략(유지), 뭐든
+ * 바뀌었으면 새로 첨부한 File만 업로드해서 전체를 그걸로 교체한다 — 그 사이 남겨두고 싶던
+ * 기존 사진은 유실될 수 있다(백엔드 확인 필요, `docs/RECORD_API_INTEGRATION.md` 참고).
+ */
+async function buildRecordImageObjectKeysForUpdate(
+  photos: (File | string)[] | undefined,
+  original: string[],
+): Promise<string[] | undefined> {
+  if (!photos) return undefined
+  const unchanged = photos.length === original.length && photos.every((photo, index) => photo === original[index])
+  if (unchanged) return undefined
 
-  const index = mockExploreRecords.findIndex((record) => record.id === id)
-  if (index === -1) throw new Error('Record not found')
-
-  const next = applyReaction(mockExploreRecords[index], reaction)
-  mockExploreRecords[index] = next
-  return next
+  const newFiles = photos.filter((photo): photo is File => photo instanceof File)
+  return Promise.all(newFiles.map((file) => uploadImageAndGetObjectKey(file)))
 }
 
-/** TODO: 북마크 API가 준비되면 apiClient.post(`/records/${id}/bookmark`, ...)로 교체 */
-export async function toggleExploreRecordBookmark(id: string): Promise<ExploreRecord> {
-  const ownIndex = myRecords.findIndex((record) => record.id === id)
-  if (ownIndex !== -1) {
-    const updated = { ...myRecords[ownIndex], isBookmarked: !myRecords[ownIndex].isBookmarked }
-    myRecords[ownIndex] = updated
-    return toExploreRecord(updated, currentNickname())
-  }
+export async function updateRecord(id: string, patch: RecordUpdatePatch, original: SavedRecord): Promise<void> {
+  const places = patch.visitedPlaces
+    ? await buildPlaceUpdateRequests(patch.visitedPlaces, original.visitedPlaces)
+    : undefined
+  const imageObjectKeys = await buildRecordImageObjectKeysForUpdate(patch.photos, original.photoUrls)
 
-  const index = mockExploreRecords.findIndex((record) => record.id === id)
-  if (index === -1) throw new Error('Record not found')
-
-  const updated = {
-    ...mockExploreRecords[index],
-    isBookmarked: !mockExploreRecords[index].isBookmarked,
+  const payload: TravelRecordUpdateRequest = {
+    title: patch.title,
+    description: patch.summary,
+    visibility: patch.visibility ? toApiVisibility(patch.visibility) : undefined,
+    places: places && places.length > 0 ? places : undefined,
+    imageObjectKeys,
   }
-  mockExploreRecords[index] = updated
-  return updated
+  await apiPatch(`/records/${id}`, payload)
+}
+
+export async function deleteRecord(id: string): Promise<void> {
+  await apiDelete(`/records/${id}`)
 }

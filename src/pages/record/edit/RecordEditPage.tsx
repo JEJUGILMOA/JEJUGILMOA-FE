@@ -99,31 +99,20 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
   }
 
   const handleSave = () => {
-    const toUrl = (photo: File | string) =>
-      typeof photo === 'string' ? photo : URL.createObjectURL(photo)
-
     const visitedPlaces = record.visitedPlaces.map((place) => {
       const memo = placeMemos[place.placeId]
       return {
-        placeId: place.placeId,
-        placeName: place.placeName,
+        recordPlaceId: place.recordPlaceId,
         note: memo?.note ?? place.note,
-        photoUrls: (memo?.photos ?? place.photoUrls).map(toUrl),
+        photos: memo?.photos ?? place.photoUrls,
       }
     })
-    const photoUrls = photos.map(toUrl)
 
     updateMutation.mutate(
       {
         id: record.id,
-        patch: {
-          title,
-          summary,
-          visibility,
-          visitedPlaces,
-          photoUrls,
-          photoCount: photoUrls.length,
-        },
+        original: record,
+        patch: { title, summary, visibility, visitedPlaces, photos },
       },
       {
         onSuccess: () => {

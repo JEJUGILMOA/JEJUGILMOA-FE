@@ -50,7 +50,7 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
 
   const handleSetVisibility = (visibility: RecordVisibility) => {
     updateMutation.mutate(
-      { id: record.id, patch: { visibility } },
+      { id: record.id, original: record, patch: { visibility } },
       {
         onSuccess: () => {
           toast.success('공개 범위를 변경했어요')

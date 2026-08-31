@@ -75,6 +75,8 @@ export type TravelRecordCreateResponse = {
 }
 
 export type VisitedPlaceRecord = {
+  /** 서버가 매긴 이 장소 방문 기록의 id. 수정(PATCH) 요청에 그대로 되돌려보낸다 */
+  recordPlaceId: number
   placeId: string
   placeName: string
   note: string
@@ -142,4 +144,111 @@ export type ImageUploadResponse = {
   httpMethod: string
   requiredHeaders: Record<string, string>
   expiresAt: string
+}
+
+export type RecordReactionApi = 'LIKE' | 'DISLIKE'
+
+export type TravelRecordAuthorResponse = {
+  authorId: number
+  nickname: string
+  profileImageUrl: string | null
+}
+
+export type TravelRecordImageResponse = {
+  imageId: number
+  imageUrl: string
+  sequenceOrder: number
+}
+
+export type TravelRecordPlaceResponse = {
+  recordPlaceId: number
+  placeId: number
+  placeName: string
+  address: string
+  latitude: number
+  longitude: number
+  visitDate: string
+  sequenceOrder: number
+  visited: boolean
+  visitedAt: string | null
+  memo: string | null
+  stayMinutes: number | null
+  rating: number | null
+  image: TravelRecordImageResponse | null
+}
+
+export type TravelRecordPlanLinkResponse = {
+  planId: number
+  title: string
+}
+
+/** `GET /api/records/{recordId}` 응답 */
+export type TravelRecordDetailResponse = {
+  recordId: number
+  title: string
+  description: string | null
+  visibility: RecordVisibilityApi
+  actualStartDate: string
+  actualEndDate: string
+  createdAt: string
+  updatedAt: string
+  author: TravelRecordAuthorResponse
+  plan: TravelRecordPlanLinkResponse | null
+  images: TravelRecordImageResponse[]
+  places: TravelRecordPlaceResponse[]
+  likeCount: number
+  dislikeCount: number
+  myReaction: RecordReactionApi | null
+}
+
+/**
+ * `GET /api/records` 목록 응답 페이지네이션 래퍼. swagger에 `content` 아이템 스키마가
+ * 미완성으로 남아있어서(`content: {}` 제네릭), 목록에서는 `recordId`만 신뢰하고 나머지
+ * 필드는 각 항목을 `GET /api/records/{recordId}`로 다시 조회해서 채운다.
+ */
+export type PageResponseObject<T> = {
+  content: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+  last: boolean
+}
+
+export type TravelRecordImageUpdateAction = 'REPLACE' | 'REMOVE'
+
+export type TravelRecordPlaceUpdateRequest = {
+  recordPlaceId: number
+  memo?: string
+  image?: { action: TravelRecordImageUpdateAction; objectKey?: string }
+}
+
+/** `PATCH /api/records/{recordId}` 요청 body */
+export type TravelRecordUpdateRequest = {
+  title?: string
+  description?: string
+  visibility?: RecordVisibilityApi
+  places?: TravelRecordPlaceUpdateRequest[]
+  /** null(또는 생략)=유지, []=전체 제거. 기존 사진의 objectKey를 서버가 안 돌려줘서(`imageUrl`만
+   * 응답) 일부만 바꾸는 부분 diff는 표현할 수 없다 — 안 건드렸으면 생략, 바뀌었으면 새로
+   * 첨부한 사진만으로 전체 교체한다(그 사이 유지하려던 기존 사진은 유실될 수 있음, 백엔드
+   * 확인 필요 — `docs/RECORD_API_INTEGRATION.md` 리스크 참고). */
+  imageObjectKeys?: string[]
+}
+
+/** 기록 수정 화면에서 장소 하나의 메모 입력 상태 → PATCH 요청으로 변환하기 전 중간 형태 */
+export type RecordPlaceMemoUpdate = {
+  recordPlaceId: number
+  note: string
+  photos: (File | string)[]
+}
+
+/** `updateRecord`에 넘기는 로컬 patch. `RecordEditPage`/`RecordManageSheet`가 이 모양으로 채운다 */
+export type RecordUpdatePatch = {
+  title?: string
+  summary?: string
+  visibility?: RecordVisibility
+  visitedPlaces?: RecordPlaceMemoUpdate[]
+  /** 기록 전체 사진 그리드의 현재 상태 (File=새로 첨부, string=기존 사진 URL 유지) */
+  photos?: (File | string)[]
 }
