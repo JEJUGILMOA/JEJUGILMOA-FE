@@ -1,16 +1,21 @@
-import { apiGet } from '@/api/http'
+import { apiGet, apiPost } from '@/api/http'
 import { fetchPlans } from '@/features/plans/api'
 import type { TravelPlan, TravelPlanDetailResponse } from '@/features/plans/types'
 import { authStore } from '@/stores/authStore'
-// TODO: STEP C·D에서 createRecord/toSavedRecord/toExploreRecord가 실 API로 바뀌면 이 mock 의존도 제거
+import { uploadImageAndGetObjectKey } from './imageUpload'
+// TODO: STEP D에서 fetchMyRecords/fetchExploreRecords가 실 API로 바뀌면 이 mock 의존도 제거
 import { mockCompletedTrips } from './mockCompletedTrips'
 import { mockExploreRecords } from './mockExploreRecords'
 import type {
   CompletedTrip,
   ExploreRecord,
+  PlaceMemo,
   ReactionType,
   RecordDraft,
   SavedRecord,
+  TravelRecordCreateRequest,
+  TravelRecordCreateResponse,
+  TravelRecordPlaceMemoRequest,
   TripDayPlan,
   TripPlace,
 } from './types'
@@ -59,11 +64,6 @@ function toExploreRecord(record: SavedRecord, authorName: string): ExploreRecord
     dislikeCount: record.dislikeCount,
     myReaction: record.myReaction,
   }
-}
-
-/** 새로 첨부한 File은 blob URL로, 기록 수정에서 프리필된 기존 URL 문자열은 그대로 반환 */
-function photoToUrl(photo: File | string): string {
-  return typeof photo === 'string' ? photo : URL.createObjectURL(photo)
 }
 
 function collectUniquePhotos(draft: RecordDraft): File[] {
@@ -123,51 +123,84 @@ export async function fetchCompletedTrips(): Promise<CompletedTrip[]> {
   )
 }
 
-/** TODO: 백엔드 기록 저장소가 준비되면 제거. 그전까지 세션 내 임시 저장소 역할 */
+/** TODO: STEP D·E에서 fetchMyRecords/updateRecord/deleteRecord/반응·북마크가 실 API로 바뀌면 제거 */
 const myRecords: SavedRecord[] = []
 
-function toSavedRecord(draft: RecordDraft): SavedRecord {
-  const trip = mockCompletedTrips.find((item) => item.id === draft.tripId)
+function objectKeyOf(file: File, fileToObjectKey: Map<File, string>): string {
+  const objectKey = fileToObjectKey.get(file)
+  if (!objectKey) throw new Error('업로드되지 않은 사진입니다')
+  return objectKey
+}
 
-  // 장소별 사진과 STEP 03 추가 업로드 사진을 합쳐 중복 없이 센다.
-  // 대표 사진은 이 풀에서 고른 것이라 별도로 더하면 중복 집계된다.
-  const uniquePhotos = collectUniquePhotos(draft)
+/**
+ * 장소당 사진을 1장(`imageObjectKey`, 단수)만 받는 현재 서버 스펙에 맞춰, 장소의 "대표 사진
+ * 하나"를 고르는 부분만 분리해뒀다. 서버가 장소당 여러 장(배열)을 받게 바뀌면 이 함수와
+ * `TravelRecordPlaceMemoRequest` 타입만 고치면 된다.
+ */
+function resolvePlaceImageObjectKey(
+  memo: PlaceMemo,
+  fileToObjectKey: Map<File, string>,
+): string | undefined {
+  const [firstPhoto] = memo.photos
+  if (!firstPhoto || typeof firstPhoto === 'string') return undefined
+  return objectKeyOf(firstPhoto, fileToObjectKey)
+}
 
-  const visitedPlaces = (trip?.places ?? []).map((place) => {
-    const memo = draft.placeMemos[place.id]
-    return {
-      placeId: place.id,
-      placeName: place.name,
-      note: memo?.note ?? '',
-      photoUrls: (memo?.photos ?? []).map(photoToUrl),
-    }
-  })
+/** 메모나 사진이 있는 장소만 골라 `placeMemos` 요청 항목으로 매핑 */
+function buildPlaceMemoRequests(
+  draft: RecordDraft,
+  fileToObjectKey: Map<File, string>,
+): TravelRecordPlaceMemoRequest[] {
+  return Object.entries(draft.placeMemos)
+    .filter(([, memo]) => memo.note.trim().length > 0 || memo.photos.length > 0)
+    .map(([travelCourseId, memo]) => ({
+      travelCourseId: Number(travelCourseId),
+      memo: memo.note,
+      imageObjectKey: resolvePlaceImageObjectKey(memo, fileToObjectKey),
+    }))
+}
 
+/**
+ * 대표 사진 + STEP 03 추가 업로드 사진 + (장소당 대표 사진으로 쓰지 않은) 장소별 나머지
+ * 사진을 기록 전체 사진첩(`imageObjectKeys`)으로 모은다.
+ */
+function buildRecordImageObjectKeys(draft: RecordDraft, fileToObjectKey: Map<File, string>): string[] {
+  const leftoverPlacePhotos = Object.values(draft.placeMemos).flatMap((memo) =>
+    memo.photos.slice(1).filter((photo): photo is File => photo instanceof File),
+  )
+
+  const files = [
+    ...(draft.coverPhoto ? [draft.coverPhoto] : []),
+    ...draft.extraPhotos,
+    ...leftoverPlacePhotos,
+  ]
+  return files.map((file) => objectKeyOf(file, fileToObjectKey))
+}
+
+function buildRecordCreateRequest(
+  draft: RecordDraft,
+  fileToObjectKey: Map<File, string>,
+): TravelRecordCreateRequest {
   return {
-    id: `record-${Date.now()}`,
-    tripId: draft.tripId,
+    tripId: Number(draft.tripId),
     title: draft.title,
-    summary: draft.summary,
-    thumbnailUrl: draft.coverPhoto ? URL.createObjectURL(draft.coverPhoto) : null,
-    photoUrls: uniquePhotos.map((file) => URL.createObjectURL(file)),
-    tripDateRangeLabel: trip?.dateRangeLabel ?? '',
-    visitedPlaces,
-    visitedPlaceCount: trip?.places.length ?? 0,
-    photoCount: uniquePhotos.length,
-    visibility: draft.visibility,
-    likeCount: 0,
-    dislikeCount: 0,
-    myReaction: null,
-    isBookmarked: false,
-    createdAt: new Date().toISOString(),
+    description: draft.summary,
+    visibility: draft.visibility === 'public' ? 'PUBLIC' : 'PRIVATE',
+    placeMemos: buildPlaceMemoRequests(draft, fileToObjectKey),
+    imageObjectKeys: buildRecordImageObjectKeys(draft, fileToObjectKey),
   }
 }
 
-/** TODO: 기록 생성 API가 준비되면 apiClient.post('/records', ...)로 교체 */
 export async function createRecord(draft: RecordDraft): Promise<{ id: string }> {
-  const record = toSavedRecord(draft)
-  myRecords.unshift(record)
-  return { id: record.id }
+  const files = collectUniquePhotos(draft)
+  const objectKeys = await Promise.all(files.map((file) => uploadImageAndGetObjectKey(file)))
+  const fileToObjectKey = new Map(files.map((file, index) => [file, objectKeys[index]]))
+
+  const response = await apiPost<TravelRecordCreateResponse>(
+    '/records',
+    buildRecordCreateRequest(draft, fileToObjectKey),
+  )
+  return { id: String(response.recordId) }
 }
 
 /** TODO: 백엔드 API가 준비되면 apiClient.get('/records/me')로 교체 */

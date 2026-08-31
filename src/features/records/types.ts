@@ -42,6 +42,38 @@ export type RecordDraft = {
   visibility: RecordVisibility
 }
 
+export type RecordVisibilityApi = 'PUBLIC' | 'PRIVATE'
+
+/**
+ * `POST /api/records`의 장소별 메모 하나. 서버가 장소당 사진을 1장(`imageObjectKey`, 단수)만
+ * 받는다 — 배열(`imageObjectKeys`)로 바뀔 예정이라고 들었지만 아직 배포 전(ETA 미정)이라
+ * 지금은 이 단수 스펙 기준으로 둔다.
+ */
+export type TravelRecordPlaceMemoRequest = {
+  travelCourseId: number
+  memo?: string
+  imageObjectKey?: string
+}
+
+/** `POST /api/records` 요청 body */
+export type TravelRecordCreateRequest = {
+  tripId: number
+  title: string
+  description?: string
+  visibility?: RecordVisibilityApi
+  placeMemos?: TravelRecordPlaceMemoRequest[]
+  imageObjectKeys?: string[]
+}
+
+/** `POST /api/records` 응답 */
+export type TravelRecordCreateResponse = {
+  recordId: number
+  tripId: number
+  title: string
+  visibility: RecordVisibilityApi
+  createdAt: string
+}
+
 export type VisitedPlaceRecord = {
   placeId: string
   placeName: string
