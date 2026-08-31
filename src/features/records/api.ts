@@ -196,8 +196,11 @@ function mapDetailToVisitedPlaces(places: TravelRecordPlaceResponse[]): VisitedP
     recordPlaceId: place.recordPlaceId,
     placeId: String(place.placeId),
     placeName: place.placeName,
+    address: place.address,
     note: place.memo ?? '',
     photoUrls: place.image ? [place.image.imageUrl] : [],
+    stayMinutes: place.stayMinutes,
+    rating: place.rating,
   }))
 }
 
@@ -247,6 +250,7 @@ function mapDetailToExploreRecord(detail: TravelRecordDetailResponse): ExploreRe
     title: detail.title,
     summary: detail.description ?? '',
     authorName: detail.author.nickname,
+    authorProfileImageUrl: detail.author.profileImageUrl,
     linkedPlanTitle: detail.plan?.title ?? null,
     // 다른 사용자의 계획 상세는 API 권한상 조회할 수 없어 보임(계획은 본인 것만 조회 가능) — null 유지
     linkedPlanItinerary: null,

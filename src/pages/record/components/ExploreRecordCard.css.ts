@@ -68,6 +68,8 @@ export const avatarStyle = style({
   fontWeight: vars.fontWeight.semibold,
 })
 
+export const avatarImageStyle = style([avatarStyle, { objectFit: 'cover' }])
+
 export const authorNameStyle = style({
   flex: 1,
   fontSize: vars.fontSize.xs,

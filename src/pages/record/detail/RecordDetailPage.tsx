@@ -27,6 +27,7 @@ import {
   authorNameStyle,
   authorRowStyle,
   authorTimeStyle,
+  avatarImageStyle,
   avatarStyle,
   backButtonStyle,
   badgeRowStyle,
@@ -59,12 +60,13 @@ type DetailViewModel = {
   dislikeCount: number
   myReaction: ReactionType | null
   authorName: string
+  authorProfileImageUrl: string | null
   visibilityLabel: string
   linkedPlanLabel: string | null
   isOwn: boolean
 }
 
-function fromOwnRecord(record: SavedRecord, nickname: string): DetailViewModel {
+function fromOwnRecord(record: SavedRecord, nickname: string, profileImageUrl: string | null): DetailViewModel {
   return {
     id: record.id,
     title: record.title,
@@ -78,6 +80,7 @@ function fromOwnRecord(record: SavedRecord, nickname: string): DetailViewModel {
     dislikeCount: record.dislikeCount,
     myReaction: record.myReaction,
     authorName: nickname,
+    authorProfileImageUrl: profileImageUrl,
     visibilityLabel: record.visibility === 'public' ? '전체 공개' : '비공개',
     linkedPlanLabel: record.tripDateRangeLabel ? `${record.title} 계획 보기` : null,
     isOwn: true,
@@ -98,6 +101,7 @@ function fromExploreRecord(record: ExploreRecord): DetailViewModel {
     dislikeCount: record.dislikeCount,
     myReaction: record.myReaction,
     authorName: record.authorName,
+    authorProfileImageUrl: record.authorProfileImageUrl,
     visibilityLabel: '전체 공개',
     linkedPlanLabel: record.linkedPlanTitle ? `${record.linkedPlanTitle} 계획 보기` : null,
     isOwn: false,
@@ -109,6 +113,7 @@ export function RecordDetailPage() {
   const { recordId } = useParams<{ recordId: string }>()
   const navigate = useNavigate()
   const nickname = useAuthStore((state) => state.user?.nickname) ?? '나'
+  const profileImageUrl = useAuthStore((state) => state.user?.profileImageUrl) ?? null
 
   const myRecordsQuery = useMyRecordsQuery()
   const exploreRecordsQuery = useExploreRecordsQuery()
@@ -121,7 +126,7 @@ export function RecordDetailPage() {
   const isLoading = myRecordsQuery.isLoading || (!ownRecord && exploreRecordsQuery.isLoading)
 
   const view = ownRecord
-    ? fromOwnRecord(ownRecord, nickname)
+    ? fromOwnRecord(ownRecord, nickname, profileImageUrl)
     : exploreRecord
       ? fromExploreRecord(exploreRecord)
       : null
@@ -230,9 +235,13 @@ export function RecordDetailPage() {
             <p className={summaryStyle}>{view.summary}</p>
 
             <div className={authorRowStyle}>
-              <span className={avatarStyle} aria-hidden>
-                {view.authorName[0]}
-              </span>
+              {view.authorProfileImageUrl ? (
+                <img className={avatarImageStyle} src={view.authorProfileImageUrl} alt="" />
+              ) : (
+                <span className={avatarStyle} aria-hidden>
+                  {view.authorName[0]}
+                </span>
+              )}
               <span className={authorNameStyle}>{view.authorName}</span>
               <span className={authorTimeStyle}>
                 {formatDistanceToNow(new Date(view.createdAt), { locale: ko, addSuffix: true })}

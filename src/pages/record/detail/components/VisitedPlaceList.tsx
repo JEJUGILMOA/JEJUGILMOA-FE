@@ -1,9 +1,14 @@
-import { Image } from 'lucide-react'
+import { Image, Star } from 'lucide-react'
 import type { VisitedPlaceRecord } from '@/features/records/types'
 import {
+  addressStyle,
   listStyle,
+  metaRowStyle,
+  metaTextStyle,
   noteStyle,
   placeNameStyle,
+  ratingIconStyle,
+  ratingStyle,
   rowStyle,
   sectionTitleStyle,
   thumbnailImageStyle,
@@ -33,6 +38,20 @@ export function VisitedPlaceList({ places }: VisitedPlaceListProps) {
             </div>
             <div>
               <p className={placeNameStyle}>{place.placeName}</p>
+              {place.address ? <p className={addressStyle}>{place.address}</p> : null}
+              {place.rating !== null || place.stayMinutes !== null ? (
+                <div className={metaRowStyle}>
+                  {place.rating !== null ? (
+                    <span className={ratingStyle}>
+                      <Star size={12} className={ratingIconStyle} fill="currentColor" strokeWidth={0} />
+                      {place.rating.toFixed(1)}
+                    </span>
+                  ) : null}
+                  {place.stayMinutes !== null ? (
+                    <span className={metaTextStyle}>{place.stayMinutes}분 머묾</span>
+                  ) : null}
+                </div>
+              ) : null}
               {place.note ? <p className={noteStyle}>{place.note}</p> : null}
             </div>
           </div>

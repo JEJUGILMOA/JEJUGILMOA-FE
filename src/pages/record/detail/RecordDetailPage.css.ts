@@ -125,6 +125,8 @@ export const avatarStyle = style({
   fontWeight: vars.fontWeight.semibold,
 })
 
+export const avatarImageStyle = style([avatarStyle, { objectFit: 'cover' }])
+
 export const authorNameStyle = style({
   fontSize: vars.fontSize.sm,
   fontWeight: vars.fontWeight.medium,
