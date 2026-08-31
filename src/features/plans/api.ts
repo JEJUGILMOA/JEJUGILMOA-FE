@@ -5,6 +5,7 @@ import type {
   CompanionType,
   DayCreateRequest,
   DayItinerary,
+  DepartureInfo,
   PlanCreateRequest,
   PlanDraft,
   PlanPlaceSearchParams,
@@ -129,9 +130,15 @@ export function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): Tra
         title: waypoint.placeName,
         isPreferred: waypoint.isPreferred,
       }))
-    // 출발지는 계획 전체에 하나(departureLocationName/좌표)로만 오고, 로컬은 Day별 구조라
-    // 그대로 되돌려 채울 수 없다 — 비워두고, 다시 설정하게 한다.
-    itinerary[day.dayNumber] = { departurePlaceId: null, waypoints }
+    const departure: DepartureInfo = {
+      placeId: day.departurePlaceId !== null ? String(day.departurePlaceId) : '',
+      title: day.departureLocationName ?? '',
+      // 서버 응답엔 주소가 없다 — 이번 세션에서 검색으로 새로 고른 출발지만 주소를 보여줄 수 있다.
+      address: '',
+      latitude: day.departureLatitude,
+      longitude: day.departureLongitude,
+    }
+    itinerary[day.dayNumber] = { departure, waypoints }
   }
 
   return {
@@ -194,9 +201,8 @@ const COMPANION_TYPE_TO_API: Record<CompanionType, TravelCompanion> = {
 }
 
 /**
- * 출발지 좌표를 못 구했을 때 쓰는 기본값. 출발지 입력이 아직 Day별 mock 기반이라(별도
- * 이슈에서 "계획 전체에 하나"로 옮기기 전까지) 실제 좌표가 없는 경우가 대부분이라 임시로
- * 제주국제공항 좌표를 대신 보낸다.
+ * 출발지·위도·경도는 day마다 필수라, 경유지는 담았는데 출발지를 한 번도 안 정한 day가
+ * 있으면 대신 채워 넣는 안전망. 실제로 출발지를 검색해서 고른 day는 이 값을 안 쓴다.
  */
 const FALLBACK_DEPARTURE = {
   name: '제주국제공항',
@@ -214,10 +220,8 @@ function toApiDate(date: string): string {
  * `PlanCreateRequest` 모양으로 조립한다. `POST /api/plans`(신규)·`PUT /api/plans/{id}`(편집)에
  * 둘 다 이 같은 모양을 그대로 쓴다.
  *
- * 두 가지는 지금 구조상 어쩔 수 없이 걸러진다:
- * - 경유지 중 placeId가 숫자로 안 바뀌는 것(`hyeopjae-beach` 같은 mock 장소)은 실제 DB에 없는
- *   장소라 payload에서 빠진다. STEP4 추천·검색에서 실제로 담은 장소만 전송된다.
- * - 출발지 좌표는 실제 좌표를 구했을 때만 쓰고, 없으면 FALLBACK_DEPARTURE를 대신 보낸다.
+ * 경유지 중 placeId가 숫자로 안 바뀌는 것(`hyeopjae-beach` 같은 mock 장소)은 실제 DB에 없는
+ * 장소라 payload에서 빠진다 — STEP4 추천·검색에서 실제로 담은 장소만 전송된다.
  */
 export function buildPlanCreateRequest(plan: TravelPlan): PlanCreateRequest {
   const startDate = parse(plan.startDate, DATE_FORMAT, new Date())
@@ -228,8 +232,14 @@ export function buildPlanCreateRequest(plan: TravelPlan): PlanCreateRequest {
         .map((waypoint) => ({ placeId: Number(waypoint.placeId), isPreferred: waypoint.isPreferred }))
         .filter((waypoint) => Number.isFinite(waypoint.placeId))
       if (waypoints.length === 0) return null
+
+      const departure = day.departure
       return {
         visitDate: format(addDays(startDate, Number(dayKey) - 1), 'yyyy-MM-dd'),
+        departurePlaceId: departure ? Number(departure.placeId) || null : null,
+        departureLocationName: departure ? departure.title : FALLBACK_DEPARTURE.name,
+        departureLatitude: departure ? departure.latitude : FALLBACK_DEPARTURE.latitude,
+        departureLongitude: departure ? departure.longitude : FALLBACK_DEPARTURE.longitude,
         waypoints,
       }
     })
@@ -247,10 +257,6 @@ export function buildPlanCreateRequest(plan: TravelPlan): PlanCreateRequest {
     endDate: toApiDate(plan.endDate),
     companion: COMPANION_TYPE_TO_API[plan.companionType] ?? null,
     categories: plan.interests.length > 0 ? plan.interests : null,
-    departurePlaceId: null,
-    departureLocationName: FALLBACK_DEPARTURE.name,
-    departureLatitude: FALLBACK_DEPARTURE.latitude,
-    departureLongitude: FALLBACK_DEPARTURE.longitude,
     days: days.length > 0 ? days : null,
     budget: hasBudget
       ? {

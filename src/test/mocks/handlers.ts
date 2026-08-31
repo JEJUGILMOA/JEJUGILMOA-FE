@@ -73,14 +73,15 @@ export const mockPlanDetail: TravelPlanDetailResponse = {
   status: 'IN_PROGRESS',
   travelStyle: null,
   companion: 'COUPLE',
-  departureLocationName: '제주국제공항',
-  departureLatitude: 33.5072,
-  departureLongitude: 126.4929,
   categories: ['NATURE'],
   itinerary: [
     {
       date: '2026-07-15',
       dayNumber: 1,
+      departurePlaceId: null,
+      departureLocationName: '제주국제공항',
+      departureLatitude: 33.5072,
+      departureLongitude: 126.4929,
       waypoints: [
         {
           waypointId: 1,
@@ -136,9 +137,6 @@ function toDetailResponse(planId: number, payload: PlanCreateRequest): TravelPla
     status: 'DRAFT',
     travelStyle: null,
     companion: payload.companion,
-    departureLocationName: payload.departureLocationName,
-    departureLatitude: payload.departureLatitude,
-    departureLongitude: payload.departureLongitude,
     categories: payload.categories,
     itinerary: [],
     budgetTransportation: payload.budget?.budgetTransportation ?? null,

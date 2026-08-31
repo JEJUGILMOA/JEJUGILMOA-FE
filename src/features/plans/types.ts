@@ -9,10 +9,20 @@ export type Waypoint = {
   isPreferred: boolean
 }
 
+/** 담을 당시의 이름·주소·좌표를 그 자리에서 함께 저장한다 — Waypoint와 같은 이유로,
+ * 새로고침해도 다시 검색/캐시 조회 없이 표시·좌표계산(앵커 추천)이 가능하도록 */
+export type DepartureInfo = {
+  placeId: string
+  title: string
+  address: string
+  latitude: number
+  longitude: number
+}
+
 /** Day 하나의 일정. 출발 장소는 일정편집 화면에서 인라인으로 채워진다 (기본 null) */
 export type DayItinerary = {
-  /** 이 Day의 출발 장소 id. 검색으로 입력 (아직 없으면 null) */
-  departurePlaceId: string | null
+  /** 이 Day의 출발 장소. 검색으로 입력 (아직 없으면 null) */
+  departure: DepartureInfo | null
   /** 방문 장소 목록. 배열 순서가 곧 방문 순서 */
   waypoints: Waypoint[]
 }
@@ -80,6 +90,11 @@ export type WaypointCreateRequest = {
 export type DayCreateRequest = {
   /** `yyyy-MM-dd` */
   visitDate: string
+  /** DB에 있는 장소면 id, 없으면 null (이때 departureLocationName 필수) */
+  departurePlaceId: number | null
+  departureLocationName: string | null
+  departureLatitude: number
+  departureLongitude: number
   waypoints: WaypointCreateRequest[]
 }
 
@@ -99,11 +114,6 @@ export type PlanCreateRequest = {
   endDate: string
   companion: TravelCompanion | null
   categories: TravelTheme[] | null
-  /** DB에 있는 장소면 id, 없으면 null (이때 departureLocationName 필수) */
-  departurePlaceId: number | null
-  departureLocationName: string | null
-  departureLatitude: number
-  departureLongitude: number
   days: DayCreateRequest[] | null
   budget: PlanBudgetRequest | null
 }
@@ -133,6 +143,10 @@ export type PlanDayDetail = {
   date: string
   /** 1부터 시작 */
   dayNumber: number
+  departurePlaceId: number | null
+  departureLocationName: string | null
+  departureLatitude: number
+  departureLongitude: number
   waypoints: PlanWaypointDetail[]
 }
 
@@ -148,9 +162,6 @@ export type TravelPlanDetailResponse = {
   status: TravelPlanStatus
   travelStyle: string | null
   companion: TravelCompanion | null
-  departureLocationName: string | null
-  departureLatitude: number
-  departureLongitude: number
   categories: TravelTheme[] | null
   itinerary: PlanDayDetail[]
   budgetTransportation: number | null

@@ -15,7 +15,13 @@ import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
 import { usePlanDraft, useRecommendationsQuery, useSearchPlanPlacesQuery } from '@/features/plans/hooks'
 import { planDraftStore } from '@/features/plans/planDraftStore'
 import { TRAVEL_THEMES, TRAVEL_THEME_LABELS } from '@/features/plans/travelTheme'
-import type { GeoCoordinate, RecommendationRequest, TravelTheme, Waypoint } from '@/features/plans/types'
+import type {
+  DepartureInfo,
+  GeoCoordinate,
+  RecommendationRequest,
+  TravelTheme,
+  Waypoint,
+} from '@/features/plans/types'
 import {
   backButtonStyle,
   courseRowStyle,
@@ -173,7 +179,7 @@ export function PlanItineraryPage() {
     .filter((waypoint) => waypoint.isPreferred)
     .map((waypoint) => waypoint.placeId)
   const fallbackReferencePlaceIds = [
-    ...(currentDayEntry?.departurePlaceId ? [currentDayEntry.departurePlaceId] : []),
+    ...(currentDayEntry?.departure ? [currentDayEntry.departure.placeId] : []),
     ...currentDayPlaceIds,
   ]
   const referencePlaceIds =
@@ -183,7 +189,7 @@ export function PlanItineraryPage() {
   // 같은 장소가 여러 Day에 중복 배정되는 걸 막는다.
   const assignedEverywhere = new Set(
     Object.values(plan?.itinerary ?? {}).flatMap((day) => [
-      ...(day.departurePlaceId ? [day.departurePlaceId] : []),
+      ...(day.departure ? [day.departure.placeId] : []),
       ...day.waypoints.map((waypoint) => waypoint.placeId),
     ]),
   )
@@ -193,10 +199,9 @@ export function PlanItineraryPage() {
     return info ? { latitude: info.latitude, longitude: info.longitude } : null
   }
 
-  // 출발지·선호경유지가 mock 데이터에서 온 것이면 좌표가 없어 null이 된다 — 이 경우
-  // 서버는 전역 추천으로 대신 응답한다. 출발지 입력을 실제 API로 옮길 때 함께 정리한다.
-  const departureCoord = currentDayEntry?.departurePlaceId
-    ? toGeoCoordinate(currentDayEntry.departurePlaceId)
+  // 출발지는 이제 선택 시점에 실제 좌표를 그 자리에서 저장해두므로 캐시 조회가 필요 없다.
+  const departureCoord = currentDayEntry?.departure
+    ? { latitude: currentDayEntry.departure.latitude, longitude: currentDayEntry.departure.longitude }
     : null
   const preferredWaypoints =
     recommendMode === 'nearby'
@@ -232,9 +237,14 @@ export function PlanItineraryPage() {
     !trimmedRecommendQuery &&
     (recommendMode === 'popular' || referencePlaceIds.length > 0)
   const shouldSearchPlaces = isRecommendTabActive && Boolean(trimmedRecommendQuery)
+  // 출발지 검색도 같은 장소 검색 API를 재사용한다 — 검색어가 있을 때만 실행
+  const shouldSearchDeparture = isSelectingDeparture && Boolean(trimmedRecommendQuery)
 
   const recommendationsQuery = useRecommendationsQuery(recommendationRequest, shouldFetchRecommendations)
-  const placeSearchQuery = useSearchPlanPlacesQuery({ keyword: trimmedRecommendQuery }, shouldSearchPlaces)
+  const placeSearchQuery = useSearchPlanPlacesQuery(
+    { keyword: trimmedRecommendQuery },
+    shouldSearchPlaces || shouldSearchDeparture,
+  )
 
   // 새로 본 장소는 이름·좌표를 캐시에 기억해둔다 (제목 표시, 다음 앵커 좌표 계산용)
   useEffect(() => {
@@ -297,17 +307,17 @@ export function PlanItineraryPage() {
   const isFirstDay = selectedDay === 1
   const isLastDay = selectedDay === dayCount
 
-  const departurePlace = currentDayEntry?.departurePlaceId
-    ? { id: currentDayEntry.departurePlaceId, title: placeTitle(currentDayEntry.departurePlaceId) }
+  const departurePlace = currentDayEntry?.departure
+    ? { id: currentDayEntry.departure.placeId, title: currentDayEntry.departure.title }
     : null
 
   // 전날 출발지(예: 숙소)는 오늘도 그대로 출발지일 가능성이 높으니, 아직 안 정했으면
   // 출발지 검색 목록 맨 위에 추천으로 보여준다.
-  const previousDayDeparturePlaceId =
-    selectedDay > 1 ? (plan.itinerary[selectedDay - 1]?.departurePlaceId ?? null) : null
+  const previousDayDeparture =
+    selectedDay > 1 ? (plan.itinerary[selectedDay - 1]?.departure ?? null) : null
   const previousDayDeparturePlace =
-    previousDayDeparturePlaceId && previousDayDeparturePlaceId !== currentDayEntry?.departurePlaceId
-      ? MOCK_PLACES.find((place) => place.id === previousDayDeparturePlaceId)
+    previousDayDeparture && previousDayDeparture.placeId !== currentDayEntry?.departure?.placeId
+      ? previousDayDeparture
       : undefined
 
   const stops = currentDayWaypoints.map((waypoint) => ({ id: waypoint.placeId, title: waypoint.title }))
@@ -324,16 +334,15 @@ export function PlanItineraryPage() {
   // 곳을 다시 뺀 경우) 이미 앵커를 잡아둔 상태라 코스 추천 대신 안내 문구를 보여준다.
   const hasMustVisitWithoutStops = currentDayMustVisitIds.length > 0
 
-  // 출발지 검색은 별도 이슈에서 실제 API로 옮기기 전까지 여전히 MOCK_PLACES 기반이다.
-  const departureSearchKeyword = trimmedRecommendQuery.toLowerCase()
-  const departureCandidates = MOCK_PLACES.filter((place) => {
-    if (assignedEverywhere.has(place.id)) return false
-    if (!departureSearchKeyword) return true
-    return (
-      place.title.toLowerCase().includes(departureSearchKeyword) ||
-      place.location.toLowerCase().includes(departureSearchKeyword)
-    )
-  })
+  const departureCandidates: DepartureInfo[] = (placeSearchQuery.data?.content ?? [])
+    .filter((item) => !assignedEverywhere.has(String(item.id)))
+    .map((item) => ({
+      placeId: String(item.id),
+      title: item.name,
+      address: item.address,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    }))
 
   type DisplayPlace = {
     id: string
@@ -399,7 +408,7 @@ export function PlanItineraryPage() {
   // v2는 STEP6에서 딱 한 번만 서버로 보낸다 — 일정 편집은 여기서 로컬 draft만 갱신한다.
   const persistDay = (
     updates: Partial<{
-      departurePlaceId: string | null
+      departure: DepartureInfo | null
       waypoints: Waypoint[]
     }>,
     onSuccessMessage?: string,
@@ -409,7 +418,7 @@ export function PlanItineraryPage() {
       itinerary: {
         ...current.itinerary,
         [selectedDay]: {
-          departurePlaceId: currentDayEntry?.departurePlaceId ?? null,
+          departure: currentDayEntry?.departure ?? null,
           waypoints: currentDayWaypoints,
           ...updates,
         },
@@ -552,8 +561,8 @@ export function PlanItineraryPage() {
     setSheetTab('schedule')
   }
 
-  const handleSelectDeparture = (id: string) => {
-    persistDay({ departurePlaceId: id }, '출발지를 저장했어요')
+  const handleSelectDeparture = (departure: DepartureInfo) => {
+    persistDay({ departure }, '출발지를 저장했어요')
     setIsSelectingDeparture(false)
     setRecommendQuery('')
     setSheetTab('schedule')
@@ -847,30 +856,36 @@ export function PlanItineraryPage() {
                   <button
                     type="button"
                     className={departureResultRowStyle}
-                    onClick={() => handleSelectDeparture(previousDayDeparturePlace.id)}
+                    onClick={() => handleSelectDeparture(previousDayDeparturePlace)}
                   >
                     <span className={departureResultTextStyle}>
                       <span className={departureSuggestionBadgeStyle}>이전 Day와 동일</span>
                       <span className={fieldResultTitleStyle}>{previousDayDeparturePlace.title}</span>
-                      <span className={fieldResultMetaStyle}>{previousDayDeparturePlace.location}</span>
+                      <span className={fieldResultMetaStyle}>{previousDayDeparturePlace.address}</span>
                     </span>
                     <ChevronRight size={18} className={departureResultChevronStyle} aria-hidden />
                   </button>
                 ) : null}
 
-                {departureCandidates.length === 0 ? (
+                {!trimmedRecommendQuery ? (
+                  previousDayDeparturePlace ? null : (
+                    <p className={emptyTextStyle}>출발지를 검색해보세요.</p>
+                  )
+                ) : placeSearchQuery.isLoading ? (
+                  <p className={emptyTextStyle}>불러오는 중…</p>
+                ) : departureCandidates.length === 0 ? (
                   <p className={emptyTextStyle}>검색 결과가 없어요.</p>
                 ) : (
                   departureCandidates.map((place) => (
                     <button
-                      key={place.id}
+                      key={place.placeId}
                       type="button"
                       className={departureResultRowStyle}
-                      onClick={() => handleSelectDeparture(place.id)}
+                      onClick={() => handleSelectDeparture(place)}
                     >
                       <span className={departureResultTextStyle}>
                         <span className={fieldResultTitleStyle}>{place.title}</span>
-                        <span className={fieldResultMetaStyle}>{place.location}</span>
+                        <span className={fieldResultMetaStyle}>{place.address}</span>
                       </span>
                       <ChevronRight size={18} className={departureResultChevronStyle} aria-hidden />
                     </button>

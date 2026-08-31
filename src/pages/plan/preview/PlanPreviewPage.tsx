@@ -9,7 +9,6 @@ import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
-import { MOCK_PLACES } from '@/data/mockExplore'
 import { buildPlanCreateRequest } from '@/features/plans/api'
 import { useCreatePlanMutation, usePlanDraft, useSavePlanEditMutation } from '@/features/plans/hooks'
 import { NEW_PLAN_ID, planDraftStore } from '@/features/plans/planDraftStore'
@@ -53,10 +52,6 @@ const BUDGET_CATEGORY_LABELS: { key: keyof PlanBudgetRequest; label: string }[] 
   { key: 'budgetFood', label: '식비' },
   { key: 'budgetEtc', label: '기타(입장료 등)' },
 ]
-
-function placeTitle(placeId: string) {
-  return MOCK_PLACES.find((place) => place.id === placeId)?.title ?? placeId
-}
 
 export function PlanPreviewPage() {
   const { planId = '' } = useParams<{ planId: string }>()
@@ -137,8 +132,8 @@ export function PlanPreviewPage() {
     const dayEntry = plan.itinerary[day]
     const waypoints = dayEntry?.waypoints ?? []
     const places = [
-      ...(dayEntry?.departurePlaceId
-        ? [{ id: dayEntry.departurePlaceId, title: placeTitle(dayEntry.departurePlaceId), isDeparture: true }]
+      ...(dayEntry?.departure
+        ? [{ id: dayEntry.departure.placeId, title: dayEntry.departure.title, isDeparture: true }]
         : []),
       ...waypoints.map(({ placeId, title }) => ({ id: placeId, title })),
     ]

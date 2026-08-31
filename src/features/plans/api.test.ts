@@ -40,26 +40,44 @@ describe('buildPlanCreateRequest', () => {
     expect(request.categories).toBeNull()
   })
 
-  it('always sends the fallback departure — per-day departurePlaceId is not wired up yet', () => {
+  it('sends the fallback departure for a day that has waypoints but no departure set', () => {
     const plan = makePlan({
       itinerary: {
-        1: { departurePlaceId: 'hallim-cafe', waypoints: [] },
+        1: { departure: null, waypoints: [{ placeId: '5', title: '성산일출봉', isPreferred: false }] },
       },
     })
 
     const request = buildPlanCreateRequest(plan)
 
-    expect(request.departurePlaceId).toBeNull()
-    expect(request.departureLocationName).toBe('제주국제공항')
-    expect(request.departureLatitude).toBeCloseTo(33.5072)
-    expect(request.departureLongitude).toBeCloseTo(126.4929)
+    expect(request.days?.[0].departurePlaceId).toBeNull()
+    expect(request.days?.[0].departureLocationName).toBe('제주국제공항')
+    expect(request.days?.[0].departureLatitude).toBeCloseTo(33.5072)
+    expect(request.days?.[0].departureLongitude).toBeCloseTo(126.4929)
+  })
+
+  it('sends the real departure per day when one was picked', () => {
+    const plan = makePlan({
+      itinerary: {
+        1: {
+          departure: { placeId: '77', title: '제주 게스트하우스', address: '제주시', latitude: 33.5, longitude: 126.5 },
+          waypoints: [{ placeId: '5', title: '성산일출봉', isPreferred: false }],
+        },
+      },
+    })
+
+    const request = buildPlanCreateRequest(plan)
+
+    expect(request.days?.[0].departurePlaceId).toBe(77)
+    expect(request.days?.[0].departureLocationName).toBe('제주 게스트하우스')
+    expect(request.days?.[0].departureLatitude).toBe(33.5)
+    expect(request.days?.[0].departureLongitude).toBe(126.5)
   })
 
   it('drops mock-sourced waypoints whose placeId is not numeric', () => {
     const plan = makePlan({
       itinerary: {
         1: {
-          departurePlaceId: null,
+          departure: null,
           waypoints: [
             { placeId: 'hyeopjae-beach', title: '협재 해수욕장', isPreferred: false },
             { placeId: '96', title: '실제 DB 장소', isPreferred: true },
@@ -78,9 +96,9 @@ describe('buildPlanCreateRequest', () => {
     const plan = makePlan({
       startDate: '2026.09.01',
       itinerary: {
-        1: { departurePlaceId: null, waypoints: [] },
+        1: { departure: null, waypoints: [] },
         2: {
-          departurePlaceId: null,
+          departure: null,
           waypoints: [{ placeId: '5', title: '성산일출봉', isPreferred: false }],
         },
       },
@@ -89,7 +107,7 @@ describe('buildPlanCreateRequest', () => {
     const request = buildPlanCreateRequest(plan)
 
     expect(request.days).toHaveLength(1)
-    expect(request.days?.[0]).toEqual({
+    expect(request.days?.[0]).toMatchObject({
       visitDate: '2026-09-02',
       waypoints: [{ placeId: 5, isPreferred: false }],
     })
@@ -161,14 +179,15 @@ describe('mapPlanDetailToTravelPlan', () => {
       status: 'DRAFT',
       travelStyle: null,
       companion: 'COUPLE',
-      departureLocationName: '새별오름',
-      departureLatitude: 33.3605,
-      departureLongitude: 126.4086,
       categories: ['NATURE', 'CAFE'],
       itinerary: [
         {
           date: '2027-08-15',
           dayNumber: 1,
+          departurePlaceId: 99,
+          departureLocationName: '새별오름',
+          departureLatitude: 33.3605,
+          departureLongitude: 126.4086,
           waypoints: [
             {
               waypointId: 8,
@@ -202,7 +221,15 @@ describe('mapPlanDetailToTravelPlan', () => {
             },
           ],
         },
-        { date: '2027-08-16', dayNumber: 2, waypoints: [] },
+        {
+          date: '2027-08-16',
+          dayNumber: 2,
+          departurePlaceId: null,
+          departureLocationName: null,
+          departureLatitude: 33.507_2,
+          departureLongitude: 126.492_9,
+          waypoints: [],
+        },
       ],
       budgetTransportation: 50_000,
       budgetAccommodation: 150_000,
@@ -233,17 +260,32 @@ describe('mapPlanDetailToTravelPlan', () => {
     expect(plan.interests).toEqual([])
   })
 
-  it('sorts waypoints by sequenceOrder and maps placeId/title/isPreferred, leaving departurePlaceId unset', () => {
+  it('sorts waypoints by sequenceOrder and maps placeId/title/isPreferred', () => {
     const plan = mapPlanDetailToTravelPlan(makeDetail())
 
-    expect(plan.itinerary[1]).toEqual({
-      departurePlaceId: null,
-      waypoints: [
-        { placeId: '42', title: '협재해수욕장', isPreferred: true },
-        { placeId: '10', title: '애월 카페거리', isPreferred: false },
-      ],
+    expect(plan.itinerary[1]?.waypoints).toEqual([
+      { placeId: '42', title: '협재해수욕장', isPreferred: true },
+      { placeId: '10', title: '애월 카페거리', isPreferred: false },
+    ])
+  })
+
+  it('maps each day departure from the response, using an empty placeId when the day has none', () => {
+    const plan = mapPlanDetailToTravelPlan(makeDetail())
+
+    expect(plan.itinerary[1]?.departure).toEqual({
+      placeId: '99',
+      title: '새별오름',
+      address: '',
+      latitude: 33.3605,
+      longitude: 126.4086,
     })
-    expect(plan.itinerary[2]).toEqual({ departurePlaceId: null, waypoints: [] })
+    expect(plan.itinerary[2]?.departure).toEqual({
+      placeId: '',
+      title: '',
+      address: '',
+      latitude: 33.507_2,
+      longitude: 126.492_9,
+    })
   })
 
   it('passes budget fields straight through', () => {

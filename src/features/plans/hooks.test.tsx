@@ -45,10 +45,6 @@ const CREATE_PAYLOAD: PlanCreateRequest = {
   endDate: '2026-10-02',
   companion: 'SOLO',
   categories: null,
-  departurePlaceId: null,
-  departureLocationName: '제주국제공항',
-  departureLatitude: 33.5072,
-  departureLongitude: 126.4929,
   days: null,
   budget: null,
 }
