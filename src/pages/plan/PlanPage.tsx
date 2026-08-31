@@ -21,8 +21,8 @@ const SECTION_ORDER: { group: PlanGroup; title: string; hint?: string }[] = [
   { group: 'ongoing', title: '진행중인 계획' },
   {
     group: 'draft',
-    title: '저장해야 하는 계획',
-    hint: '계획하다 만 여행이 있어요. 마저 완성해보세요.',
+    title: '예정된 여행',
+    hint: '아직 출발 전인 여행이에요.',
   },
   { group: 'saved', title: '저장된 계획' },
 ]

@@ -78,7 +78,7 @@ export function PlanListItem({ plan, group }: PlanListItemProps) {
       <div className={titleRowStyle}>
         <h3 className={titleTextStyle}>{plan.title}</h3>
         {group === 'ongoing' ? <Badge status="info">진행중</Badge> : null}
-        {group === 'draft' ? <Badge status="neutral">임시저장</Badge> : null}
+        {group === 'draft' ? <Badge status="neutral">예정된 여행</Badge> : null}
       </div>
 
       <p className={dateRangeStyle}>

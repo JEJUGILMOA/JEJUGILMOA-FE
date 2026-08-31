@@ -8,8 +8,11 @@ export type PlanGroup = 'ongoing' | 'draft' | 'saved'
 
 /**
  * 계획 하나가 목록의 어느 구간에 속하는지 계산한다.
- * draft는 무조건 "저장해야 하는 계획"이고, saved는 오늘이 여행 기간에 들어오면
- * "진행중인 계획", 아니면 "저장된 계획"이다.
+ * draft(서버 status DRAFT)는 저장은 이미 끝났지만 `POST /api/trips`(여행 시작)를 아직
+ * 호출한 적 없는 상태 — "예정된 여행"으로 보여준다. 서버는 이걸 IN_PROGRESS/COMPLETED로
+ * 자동 전환해주지 않고 별도 API 호출이 있어야만 바뀐다(우리 앱엔 아직 그 플로우가 없음).
+ * 그래서 "진행중"/"저장된 계획" 구분은 실제 서버 상태가 아니라 오늘 날짜가 여행 기간에
+ * 들어오는지로 근사한 것 — `/api/trips` 연동을 만들면 이 함수도 실제 status 기준으로 바꿀 것.
  */
 export function getPlanGroup(plan: TravelPlan, today: Date = new Date()): PlanGroup {
   if (plan.status === 'draft') return 'draft'
