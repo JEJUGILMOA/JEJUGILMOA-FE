@@ -103,18 +103,10 @@ function objectKeyOf(file: File, fileToObjectKey: Map<File, string>): string {
   return objectKey
 }
 
-/**
- * 장소당 사진을 1장(`imageObjectKey`, 단수)만 받는 현재 서버 스펙에 맞춰, 장소의 "대표 사진
- * 하나"를 고르는 부분만 분리해뒀다. 서버가 장소당 여러 장(배열)을 받게 바뀌면 이 함수와
- * `TravelRecordPlaceMemoRequest` 타입만 고치면 된다.
- */
-function resolvePlaceImageObjectKey(
-  memo: PlaceMemo,
-  fileToObjectKey: Map<File, string>,
-): string | undefined {
-  const [firstPhoto] = memo.photos
-  if (!firstPhoto || typeof firstPhoto === 'string') return undefined
-  return objectKeyOf(firstPhoto, fileToObjectKey)
+function resolvePlaceImageObjectKeys(memo: PlaceMemo, fileToObjectKey: Map<File, string>): string[] {
+  return memo.photos
+    .filter((photo): photo is File => photo instanceof File)
+    .map((file) => objectKeyOf(file, fileToObjectKey))
 }
 
 /** 메모나 사진이 있는 장소만 골라 `placeMemos` 요청 항목으로 매핑 */
@@ -127,24 +119,13 @@ function buildPlaceMemoRequests(
     .map(([travelCourseId, memo]) => ({
       travelCourseId: Number(travelCourseId),
       memo: memo.note,
-      imageObjectKey: resolvePlaceImageObjectKey(memo, fileToObjectKey),
+      imageObjectKeys: resolvePlaceImageObjectKeys(memo, fileToObjectKey),
     }))
 }
 
-/**
- * 대표 사진 + STEP 03 추가 업로드 사진 + (장소당 대표 사진으로 쓰지 않은) 장소별 나머지
- * 사진을 기록 전체 사진첩(`imageObjectKeys`)으로 모은다.
- */
+/** 대표 사진 + STEP 03 추가 업로드 사진을 기록 전체 사진첩(`imageObjectKeys`)으로 모은다 */
 function buildRecordImageObjectKeys(draft: RecordDraft, fileToObjectKey: Map<File, string>): string[] {
-  const leftoverPlacePhotos = Object.values(draft.placeMemos).flatMap((memo) =>
-    memo.photos.slice(1).filter((photo): photo is File => photo instanceof File),
-  )
-
-  const files = [
-    ...(draft.coverPhoto ? [draft.coverPhoto] : []),
-    ...draft.extraPhotos,
-    ...leftoverPlacePhotos,
-  ]
+  const files = [...(draft.coverPhoto ? [draft.coverPhoto] : []), ...draft.extraPhotos]
   return files.map((file) => objectKeyOf(file, fileToObjectKey))
 }
 
@@ -283,23 +264,24 @@ export async function fetchExploreRecords(): Promise<ExploreRecord[]> {
 }
 
 /**
- * 장소 하나의 메모 수정을 PATCH 요청 항목으로 변환. 사진 REPLACE는 새로 첨부한 File을
- * 업로드해서 그 objectKey를 보내면 되고, REMOVE는 액션 플래그만 있으면 되니 기존 objectKey가
- * 없어도 표현 가능하다(장소 사진은 문제없음 — 기록 전체 사진첩과 다른 점).
+ * 장소 하나의 메모 수정을 PATCH 요청 항목으로 변환. 사진 REPLACE는 새로 첨부한 File들을
+ * 업로드해서 그 objectKey 배열을 보내면 되고, REMOVE는 액션 플래그만 있으면 되니 기존
+ * objectKey가 없어도 표현 가능하다(장소 사진은 문제없음 — 기록 전체 사진첩과 다른 점).
  */
 async function buildPlaceUpdateRequest(
   place: RecordPlaceMemoUpdate,
   before: VisitedPlaceRecord | undefined,
 ): Promise<TravelRecordPlaceUpdateRequest | null> {
-  const [photo] = place.photos
-  const hadPhoto = Boolean(before?.photoUrls.length)
+  const newFiles = place.photos.filter((photo): photo is File => photo instanceof File)
+  const hadPhotos = Boolean(before?.photoUrls.length)
   const noteChanged = (before?.note ?? '') !== place.note
 
   let image: TravelRecordPlaceUpdateRequest['image']
-  if (photo instanceof File) {
-    image = { action: 'REPLACE', objectKey: await uploadImageAndGetObjectKey(photo) }
-  } else if (!photo && hadPhoto) {
-    image = { action: 'REMOVE' }
+  if (newFiles.length > 0) {
+    const objectKeys = await Promise.all(newFiles.map((file) => uploadImageAndGetObjectKey(file)))
+    image = { action: 'REPLACE', objectKeys }
+  } else if (place.photos.length === 0 && hadPhotos) {
+    image = { action: 'REMOVE', objectKeys: [] }
   }
 
   if (!noteChanged && !image) return null

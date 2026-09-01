@@ -44,15 +44,11 @@ export type RecordDraft = {
 
 export type RecordVisibilityApi = 'PUBLIC' | 'PRIVATE'
 
-/**
- * `POST /api/records`의 장소별 메모 하나. 서버가 장소당 사진을 1장(`imageObjectKey`, 단수)만
- * 받는다 — 배열(`imageObjectKeys`)로 바뀔 예정이라고 들었지만 아직 배포 전(ETA 미정)이라
- * 지금은 이 단수 스펙 기준으로 둔다.
- */
+/** `POST /api/records`의 장소별 메모 하나. 장소당 사진 여러 장(`imageObjectKeys`)을 보낼 수 있다 */
 export type TravelRecordPlaceMemoRequest = {
   travelCourseId: number
   memo?: string
-  imageObjectKey?: string
+  imageObjectKeys?: string[]
 }
 
 /** `POST /api/records` 요청 body */
@@ -224,7 +220,7 @@ export type TravelRecordImageUpdateAction = 'REPLACE' | 'REMOVE'
 export type TravelRecordPlaceUpdateRequest = {
   recordPlaceId: number
   memo?: string
-  image?: { action: TravelRecordImageUpdateAction; objectKey?: string }
+  image?: { action: TravelRecordImageUpdateAction; objectKeys: string[] }
 }
 
 /** `PATCH /api/records/{recordId}` 요청 body */
