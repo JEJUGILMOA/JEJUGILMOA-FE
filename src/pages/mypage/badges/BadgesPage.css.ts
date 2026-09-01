@@ -67,3 +67,11 @@ export const badgeDescStyle = style([
     color: colors.text[4],
   },
 ])
+
+export const sectionTitleStyle = style([
+  titleSmall,
+  {
+    margin: `0 0 ${vars.space[2]}`,
+    color: colors.text[1],
+  },
+])

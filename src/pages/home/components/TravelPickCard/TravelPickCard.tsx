@@ -22,14 +22,14 @@ import {
 
 export type TravelPickCardProps = {
   title: string
-  eyebrow: string
-  region: string
-  description: string
-  tags: string[]
-  rating: number
-  duration: string
-  badge: string
-  imageUrl: string
+  eyebrow?: string
+  region?: string
+  description?: string
+  tags?: string[]
+  rating?: number
+  duration?: string
+  badge?: string
+  imageUrl?: string
   /** 강조색(태그·eyebrow). 기본 primary */
   accent?: string
   /** 별 아이콘 색 */
@@ -47,7 +47,7 @@ export function TravelPickCard({
   eyebrow,
   region,
   description,
-  tags,
+  tags = [],
   rating,
   duration,
   badge,
@@ -88,14 +88,21 @@ export function TravelPickCard({
       tabIndex={isClickable ? 0 : undefined}
     >
       <div className={heroStyle}>
-        <img src={imageUrl} alt="" className={heroImageStyle} />
+        {imageUrl ? <img src={imageUrl} alt="" className={heroImageStyle} /> : null}
         <div className={heroGradientStyle} />
-        <span className={badgeStyle}>{badge}</span>
-        <div className={heroRatingStyle}>
-          <Star size={14} fill={starColor} strokeWidth={0} />
-          <b className={heroRatingValueStyle}>{rating.toFixed(1)}</b>
-          <span>· {duration}</span>
-        </div>
+        {badge ? <span className={badgeStyle}>{badge}</span> : null}
+        {rating != null || duration ? (
+          <div className={heroRatingStyle}>
+            {rating != null ? (
+              <>
+                <Star size={14} fill={starColor} strokeWidth={0} />
+                <b className={heroRatingValueStyle}>{rating.toFixed(1)}</b>
+              </>
+            ) : null}
+            {rating != null && duration ? <span>· {duration}</span> : null}
+            {rating == null && duration ? <span>{duration}</span> : null}
+          </div>
+        ) : null}
         <button
           type="button"
           className={bookmarkStyle}
@@ -115,29 +122,33 @@ export function TravelPickCard({
       </div>
 
       <div className={contentStyle}>
-        <p className={eyebrowStyle} style={{ color: accent }}>
-          {eyebrow}
-        </p>
+        {eyebrow ? (
+          <p className={eyebrowStyle} style={{ color: accent }}>
+            {eyebrow}
+          </p>
+        ) : null}
         <div className={titleRowStyle}>
           <h3 className={titleStyle}>{title}</h3>
-          <span className={regionStyle}>{region}</span>
+          {region ? <span className={regionStyle}>{region}</span> : null}
         </div>
-        <p className={descStyle}>{description}</p>
-        <div className={tagsStyle}>
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className={tagStyle}
-              style={{
-                color: accent,
-                backgroundColor: `color-mix(in srgb, ${accent} 10%, white)`,
-                borderColor: `color-mix(in srgb, ${accent} 22%, white)`,
-              }}
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
+        {description ? <p className={descStyle}>{description}</p> : null}
+        {tags.length > 0 ? (
+          <div className={tagsStyle}>
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className={tagStyle}
+                style={{
+                  color: accent,
+                  backgroundColor: `color-mix(in srgb, ${accent} 10%, white)`,
+                  borderColor: `color-mix(in srgb, ${accent} 22%, white)`,
+                }}
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
     </article>
   )

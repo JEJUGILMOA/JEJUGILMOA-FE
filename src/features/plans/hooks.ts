@@ -11,6 +11,7 @@ import {
   updatePlanItinerary,
   updatePlanTitle,
 } from './api'
+import { fetchPlanSummaries, type FetchPlanSummariesParams } from './summariesApi'
 import type { BudgetCategory, DayItinerary, PlanDraft, TravelPlan } from './types'
 
 export function usePlansQuery() {
@@ -123,5 +124,16 @@ export function useDeletePlanMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
     },
+  })
+}
+
+export function usePlanSummariesQuery(
+  params?: FetchPlanSummariesParams,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.planSummaries(params?.status),
+    queryFn: () => fetchPlanSummaries(params),
+    enabled: options?.enabled ?? true,
   })
 }

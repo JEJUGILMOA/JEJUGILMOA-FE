@@ -1,13 +1,16 @@
 import { useNavigate } from 'react-router'
 import { BookOpen, ChevronRight, MapPin, Settings, Share2, Sparkles } from 'lucide-react'
 import { getErrorMessage } from '@/api/error'
-import { useMyProfileQuery } from '@/features/auth/hooks'
+import { Button } from '@/components/ui/Button/Button'
+import { toast } from '@/components/ui/Toast/Toast'
+import { useDevLoginMutation, useMyProfileQuery } from '@/features/auth/hooks'
 import { useAuthStore } from '@/stores/authStore'
 import { ROUTES } from '@/constants'
 import { MenuListItem } from '@/pages/mypage/components/MenuListItem/MenuListItem'
 import { ProfileAvatar } from '@/pages/mypage/components/ProfileAvatar/ProfileAvatar'
 import {
   chevronStyle,
+  devAuthButtonStyle,
   emailStyle,
   menuListStyle,
   nameStyle,
@@ -30,10 +33,20 @@ export function MyPage() {
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { data: profile, isPending, isError, error } = useMyProfileQuery()
+  const devLogin = useDevLoginMutation()
 
   const nickname = profile?.nickname ?? user?.nickname ?? ''
   const email = profile?.email
   const imageUrl = profile?.profileImageUrl ?? user?.profileImageUrl
+
+  const handleDevLogin = async () => {
+    try {
+      const result = await devLogin.mutateAsync()
+      toast.success(`${result.nickname}님, 개발 로그인되었어요.`)
+    } catch (loginError) {
+      toast.error(getErrorMessage(loginError, '개발 로그인에 실패했어요.'))
+    }
+  }
 
   return (
     <div className={pageStyle}>
@@ -83,6 +96,16 @@ export function MyPage() {
           />
         ))}
       </div>
+
+      <Button
+        className={devAuthButtonStyle}
+        variant="secondary"
+        fullWidth
+        isLoading={devLogin.isPending}
+        onClick={() => void handleDevLogin()}
+      >
+        개발 로그인 (user@example.com)
+      </Button>
     </div>
   )
 }

@@ -1,18 +1,19 @@
 import { useNavigate } from 'react-router'
 import homeHeroImage from '@/assets/images/home-hero.png'
+import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
+import { Loading } from '@/components/ui/Loading/Loading'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
+import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
+import { useRecommendedCoursesQuery } from '@/features/courses/hooks'
+import { courseThemeLabel, courseThemeTone } from '@/features/courses/format'
+import type { RecommendedCourse } from '@/features/courses/types'
+import { usePlacesQuery, usePopularPlacesQuery } from '@/features/places/hooks'
+import type { PlaceListItem, PopularPlace } from '@/features/places/types'
 import { TravelPickCard } from './components/TravelPickCard/TravelPickCard'
 import { CourseRecommendCard } from './components/CourseRecommendCard/CourseRecommendCard'
 import { PopularPlaceCard } from './components/PopularPlaceCard/PopularPlaceCard'
-import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
-import {
-  MOCK_COURSES,
-  MOCK_PLACES,
-  MOCK_TRAVEL_PICKS,
-  getCoursePreviewSteps,
-  getPlaceImageUrls,
-} from '@/data/mockExplore'
 import {
   categoryIconStyle,
   categoryItemStyle,
@@ -36,7 +37,39 @@ import {
   travelPickRowStyle,
 } from './HomePage.css.ts'
 
-const HOME_POPULAR_PLACES = MOCK_PLACES.slice(0, 4)
+const HOME_PICKS_SIZE = 4
+const HOME_POPULAR_LIMIT = 4
+const HOME_COURSES_LIMIT = 6
+
+function regionFromAddress(address?: string) {
+  if (!address) return undefined
+  const parts = address.split(/\s+/).filter(Boolean)
+  // "제주특별자치도 제주시 애월읍 …" → "제주시 애월읍"
+  if (parts.length >= 3) return `${parts[1]} ${parts[2]}`
+  if (parts.length >= 2) return parts[1]
+  return parts[0]
+}
+
+function mapCourseToCard(course: RecommendedCourse) {
+  const waypoints = [...course.waypoints].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+  const themeLabel = courseThemeLabel(course.theme)
+  const cover = waypoints.find((point) => point.imageUrl)?.imageUrl
+
+  return {
+    title: course.title,
+    description: course.description,
+    imageUrl: cover,
+    imageTags: themeLabel
+      ? [{ label: themeLabel, tone: courseThemeTone(course.theme) as 'blue' | 'pink' | 'green' }]
+      : [],
+    locationLabel: waypoints[0]?.placeName,
+    placeCount: waypoints.length,
+    previewSteps: waypoints.map((point) => ({
+      title: point.placeName,
+      thumbnailUrl: point.imageUrl ?? '',
+    })),
+  }
+}
 
 function SectionHeader({
   id,
@@ -61,8 +94,35 @@ function SectionHeader({
   )
 }
 
+function SectionStatus({
+  isLoading,
+  isError,
+  isEmpty,
+  onRetry,
+  emptyTitle,
+}: {
+  isLoading: boolean
+  isError: boolean
+  isEmpty: boolean
+  onRetry: () => void
+  emptyTitle: string
+}) {
+  if (isLoading) return <Loading label="불러오는 중…" />
+  if (isError) return <ErrorState onRetry={onRetry} />
+  if (isEmpty) return <Empty title={emptyTitle} description="잠시 후 다시 확인해 주세요." />
+  return null
+}
+
 export function HomePage() {
   const navigate = useNavigate()
+
+  const picksQuery = usePlacesQuery({ page: 0, size: HOME_PICKS_SIZE })
+  const coursesQuery = useRecommendedCoursesQuery()
+  const popularQuery = usePopularPlacesQuery({ limit: HOME_POPULAR_LIMIT })
+
+  const travelPicks = picksQuery.data ?? []
+  const courses = (coursesQuery.data ?? []).slice(0, HOME_COURSES_LIMIT)
+  const popularPlaces = popularQuery.data ?? []
 
   return (
     <div className={pageStyle}>
@@ -140,25 +200,30 @@ export function HomePage() {
             더보기 &gt;
           </button>
         </div>
-        <div className={travelPickRowStyle}>
-          {MOCK_TRAVEL_PICKS.map((pick) => (
-            <TravelPickCard
-              key={pick.id}
-              title={pick.title}
-              eyebrow={pick.eyebrow}
-              region={pick.region}
-              description={pick.description}
-              tags={pick.tags}
-              rating={pick.rating}
-              duration={pick.duration}
-              badge={pick.badge}
-              imageUrl={pick.imageUrl}
-              accent={pick.theme.accent}
-              starColor={pick.theme.starColor}
-              onClick={() => navigate(placePath(pick.placeId))}
-            />
-          ))}
-        </div>
+        <SectionStatus
+          isLoading={picksQuery.isLoading}
+          isError={picksQuery.isError}
+          isEmpty={!picksQuery.isLoading && !picksQuery.isError && travelPicks.length === 0}
+          onRetry={() => void picksQuery.refetch()}
+          emptyTitle="추천 관광지가 없어요"
+        />
+        {travelPicks.length > 0 ? (
+          <div className={travelPickRowStyle}>
+            {travelPicks.map((place: PlaceListItem) => (
+              <TravelPickCard
+                key={place.id}
+                title={place.name}
+                eyebrow={place.categoryName}
+                region={regionFromAddress(place.address)}
+                description={place.address}
+                tags={place.categoryName ? [place.categoryName] : []}
+                badge={place.categoryName}
+                imageUrl={place.imageUrl}
+                onClick={() => navigate(placePath(place.id))}
+              />
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <section className={sectionStyle} aria-labelledby="home-course-title">
@@ -168,26 +233,31 @@ export function HomePage() {
           actionLabel="더보기 >"
           onAction={() => navigate(ROUTES.courses)}
         />
-        <HorizontalScrollArea
-          className={courseRowStyle}
-          aria-label="오늘의 추천 코스 목록"
-          fade={false}
-        >
-          {MOCK_COURSES.map((course) => (
-            <CourseRecommendCard
-              key={course.id}
-              title={course.title}
-              description={course.description}
-              imageUrl={course.imageUrl}
-              imageTags={course.imageTags}
-              locationLabel={course.locationLabel}
-              duration={course.duration}
-              placeCount={course.steps.length}
-              previewSteps={getCoursePreviewSteps(course)}
-              onClick={() => navigate(coursePath(course.id))}
-            />
-          ))}
-        </HorizontalScrollArea>
+        <SectionStatus
+          isLoading={coursesQuery.isLoading}
+          isError={coursesQuery.isError}
+          isEmpty={!coursesQuery.isLoading && !coursesQuery.isError && courses.length === 0}
+          onRetry={() => void coursesQuery.refetch()}
+          emptyTitle="추천 코스가 없어요"
+        />
+        {courses.length > 0 ? (
+          <HorizontalScrollArea
+            className={courseRowStyle}
+            aria-label="오늘의 추천 코스 목록"
+            fade={false}
+          >
+            {courses.map((course) => {
+              const card = mapCourseToCard(course)
+              return (
+                <CourseRecommendCard
+                  key={course.courseId}
+                  {...card}
+                  onClick={() => navigate(coursePath(course.courseId))}
+                />
+              )
+            })}
+          </HorizontalScrollArea>
+        ) : null}
       </section>
 
       <section className={sectionStyle} aria-labelledby="home-popular-title">
@@ -197,17 +267,26 @@ export function HomePage() {
           actionLabel="더보기 >"
           onAction={() => navigate(ROUTES.placesPopular)}
         />
-        <div className={popularListStyle}>
-          {HOME_POPULAR_PLACES.map((place) => (
-            <PopularPlaceCard
-              key={place.id}
-              title={place.title}
-              rating={place.rating}
-              imageUrl={getPlaceImageUrls(place, 1)[0]}
-              onClick={() => navigate(placePath(place.id))}
-            />
-          ))}
-        </div>
+        <SectionStatus
+          isLoading={popularQuery.isLoading}
+          isError={popularQuery.isError}
+          isEmpty={!popularQuery.isLoading && !popularQuery.isError && popularPlaces.length === 0}
+          onRetry={() => void popularQuery.refetch()}
+          emptyTitle="인기 관광지가 없어요"
+        />
+        {popularPlaces.length > 0 ? (
+          <div className={popularListStyle}>
+            {popularPlaces.map((place: PopularPlace) => (
+              <PopularPlaceCard
+                key={place.placeId}
+                title={place.name}
+                visitCount={place.visitCount}
+                imageUrl={place.imageUrl}
+                onClick={() => navigate(placePath(place.placeId))}
+              />
+            ))}
+          </div>
+        ) : null}
       </section>
     </div>
   )

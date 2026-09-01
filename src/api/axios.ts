@@ -1,5 +1,10 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { ApiError } from './error'
+import {
+  logMyPageApiError,
+  logMyPageApiRequest,
+  logMyPageApiResponse,
+} from './mypageApiLogger'
 import { isApiEnvelope } from './unwrap'
 import { authStore } from '@/stores/authStore'
 
@@ -20,6 +25,7 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  logMyPageApiRequest(config)
   return config
 })
 
@@ -56,6 +62,8 @@ function toApiError(error: AxiosError<ErrorBody>) {
 
 apiClient.interceptors.response.use(
   (response) => {
+    logMyPageApiResponse(response)
+
     const payload = response.data
     if (isApiEnvelope(payload) && payload.isSuccess === false) {
       throw new ApiError(
@@ -68,6 +76,8 @@ apiClient.interceptors.response.use(
     return response
   },
   (error: AxiosError<ErrorBody>) => {
+    logMyPageApiError(error)
+
     if (error.response) {
       const { status, config } = error.response
       const url = `${config?.baseURL ?? ''}${config?.url ?? ''}`

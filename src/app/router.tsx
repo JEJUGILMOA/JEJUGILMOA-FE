@@ -20,6 +20,7 @@ import { RecordDetailPage } from '@/pages/record/detail/RecordDetailPage'
 import { RecordEditPage } from '@/pages/record/edit/RecordEditPage'
 import { RecordPlanPage } from '@/pages/record/plan/RecordPlanPage'
 import { MyPage } from '@/pages/mypage/MyPage'
+import { MyPageLayout } from '@/pages/mypage/MyPageLayout'
 import { ProfilePage } from '@/pages/mypage/profile/ProfilePage'
 import { ProfileEditPage } from '@/pages/mypage/profile-edit/ProfileEditPage'
 import { SettingsPage } from '@/pages/mypage/settings/SettingsPage'
@@ -180,6 +181,7 @@ export const router = createBrowserRouter([
       },
       {
         path: ROUTES.my.slice(1),
+        Component: MyPageLayout,
         handle: { title: '마이' } satisfies RouteHandle,
         children: [
           {

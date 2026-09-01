@@ -1,10 +1,15 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
-import { Car, Clock, Coffee, MapPin, X, type LucideIcon } from 'lucide-react'
+import { Clock, Coffee, MapPin, X, type LucideIcon } from 'lucide-react'
 import { Chip } from '@/components/ui/Chip/Chip'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
+import { Loading } from '@/components/ui/Loading/Loading'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { placePath } from '@/constants'
+import { usePlacesQuery } from '@/features/places/hooks'
+import type { PlaceListItem } from '@/features/places/types'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import {
   bodyStyle,
   cancelButtonStyle,
@@ -18,7 +23,6 @@ import {
   recentListStyle,
   removeButtonStyle,
   resultContentStyle,
-  resultDistanceStyle,
   resultIconStyle,
   resultItemStyle,
   resultListStyle,
@@ -30,83 +34,24 @@ import {
   topBarStyle,
 } from './SearchPage.css.ts'
 
-type SearchResultKind = 'attraction' | 'cafe' | 'parking'
-
-type SearchResult = {
-  id: string
-  placeId: string
-  title: string
-  category: string
-  location: string
-  distance: string
-  kind: SearchResultKind
-}
+const SEARCH_DEBOUNCE_MS = 300
+const SEARCH_PAGE_SIZE = 20
 
 const INITIAL_RECENT = ['협재 해수욕장', '오설록 티뮤지엄', '성산일출봉', '애월 카페거리']
 
 const POPULAR_KEYWORDS = ['성산일출봉', '애월 카페거리', '동문시장', '한라산', '흑돼지 맛집']
 
-const MOCK_SEARCH_RESULTS: SearchResult[] = [
-  {
-    id: 'hyeopjae-beach',
-    placeId: 'hyeopjae-beach',
-    title: '협재 해수욕장',
-    category: '관광지',
-    location: '제주 한림읍',
-    distance: '2.1km',
-    kind: 'attraction',
-  },
-  {
-    id: 'hyeopjae-cafe-street',
-    placeId: 'hallim-cafe',
-    title: '협재 카페거리',
-    category: '카페',
-    location: '제주 한림읍',
-    distance: '2.4km',
-    kind: 'cafe',
-  },
-  {
-    id: 'hyeopjae-parking',
-    placeId: 'hyeopjae-beach',
-    title: '협재 해수욕장 주차장',
-    category: '주차장',
-    location: '제주 한림읍',
-    distance: '2.0km',
-    kind: 'parking',
-  },
-  {
-    id: 'hyeopjae-coast',
-    placeId: 'olle-trail',
-    title: '협재 해안도로',
-    category: '관광지',
-    location: '제주 한림읍',
-    distance: '3.5km',
-    kind: 'attraction',
-  },
-  {
-    id: 'dongmun',
-    placeId: 'dongmun',
-    title: '동문 시장',
-    category: '전통시장',
-    location: '제주시 일도일동',
-    distance: '12.4km',
-    kind: 'attraction',
-  },
-  {
-    id: 'hallim-cafe',
-    placeId: 'hallim-cafe',
-    title: '한림 해안 카페',
-    category: '카페',
-    location: '제주 한림읍',
-    distance: '2.8km',
-    kind: 'cafe',
-  },
-]
+function shortAddress(address?: string) {
+  if (!address) return ''
+  const parts = address.split(/\s+/).filter(Boolean)
+  if (parts.length >= 3) return `${parts[1]} ${parts[2]}`
+  if (parts.length >= 2) return parts[1]
+  return address
+}
 
-const KIND_ICON: Record<SearchResultKind, LucideIcon> = {
-  attraction: MapPin,
-  cafe: Coffee,
-  parking: Car,
+function getResultIcon(categoryName?: string): LucideIcon {
+  if (categoryName === '카페') return Coffee
+  return MapPin
 }
 
 function highlightMatch(text: string, query: string): ReactNode {
@@ -133,13 +78,16 @@ export function SearchPage() {
   const [recentSearches, setRecentSearches] = useState(INITIAL_RECENT)
 
   const trimmedQuery = query.trim()
+  const debouncedKeyword = useDebouncedValue(trimmedQuery, SEARCH_DEBOUNCE_MS)
   const showResults = trimmedQuery.length > 0
+  const isDebouncing = trimmedQuery !== debouncedKeyword
 
-  const results = useMemo(() => {
-    if (!showResults) return []
-    const lower = trimmedQuery.toLowerCase()
-    return MOCK_SEARCH_RESULTS.filter((item) => item.title.toLowerCase().includes(lower))
-  }, [showResults, trimmedQuery])
+  const placesQuery = usePlacesQuery(
+    { keyword: debouncedKeyword, page: 0, size: SEARCH_PAGE_SIZE },
+    { enabled: debouncedKeyword.length > 0 },
+  )
+
+  const results = useMemo(() => placesQuery.data ?? [], [placesQuery.data])
 
   const pushRecent = (term: string) => {
     const next = term.trim()
@@ -156,13 +104,65 @@ export function SearchPage() {
     pushRecent(term)
   }
 
-  const handleSelectResult = (result: SearchResult) => {
-    pushRecent(result.title)
-    navigate(placePath(result.placeId))
+  const handleSelectResult = (place: PlaceListItem) => {
+    pushRecent(place.name)
+    navigate(placePath(place.id))
   }
 
   const handleRemoveRecent = (term: string) => {
     setRecentSearches((prev) => prev.filter((item) => item !== term))
+  }
+
+  const isLoadingResults =
+    debouncedKeyword.length > 0 && (placesQuery.isLoading || placesQuery.isFetching)
+  const showLoading = showResults && (isDebouncing || isLoadingResults)
+
+  const renderSearchResults = () => {
+    if (showLoading) {
+      return <Loading label="검색 중" />
+    }
+
+    if (debouncedKeyword.length > 0 && placesQuery.isError) {
+      return <ErrorState onRetry={() => void placesQuery.refetch()} />
+    }
+
+    if (debouncedKeyword.length > 0 && results.length > 0) {
+      return (
+        <ul className={resultListStyle}>
+          {results.map((place) => {
+            const Icon = getResultIcon(place.categoryName)
+            const location = shortAddress(place.address)
+            const meta = [place.categoryName, location].filter(Boolean).join(' · ')
+
+            return (
+              <li key={place.id}>
+                <button
+                  type="button"
+                  className={resultItemStyle}
+                  onClick={() => handleSelectResult(place)}
+                >
+                  <span className={resultIconStyle} aria-hidden>
+                    <Icon size={18} strokeWidth={1.75} />
+                  </span>
+                  <span className={resultContentStyle}>
+                    <span className={resultTitleStyle}>
+                      {highlightMatch(place.name, trimmedQuery)}
+                    </span>
+                    {meta ? <span className={resultMetaStyle}>{meta}</span> : null}
+                  </span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )
+    }
+
+    if (debouncedKeyword.length > 0 && placesQuery.isSuccess) {
+      return <Empty title="검색 결과가 없어요" description="다른 키워드로 다시 찾아보세요." />
+    }
+
+    return <Loading label="검색 중" />
   }
 
   return (
@@ -183,40 +183,7 @@ export function SearchPage() {
 
       <div className={bodyStyle}>
         {showResults ? (
-          results.length > 0 ? (
-            <ul className={resultListStyle}>
-              {results.map((result) => {
-                const Icon = KIND_ICON[result.kind]
-                return (
-                  <li key={result.id}>
-                    <button
-                      type="button"
-                      className={resultItemStyle}
-                      onClick={() => handleSelectResult(result)}
-                    >
-                      <span className={resultIconStyle} aria-hidden>
-                        <Icon size={18} strokeWidth={1.75} />
-                      </span>
-                      <span className={resultContentStyle}>
-                        <span className={resultTitleStyle}>
-                          {highlightMatch(result.title, trimmedQuery)}
-                        </span>
-                        <span className={resultMetaStyle}>
-                          {result.category} · {result.location}
-                        </span>
-                      </span>
-                      <span className={resultDistanceStyle}>{result.distance}</span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          ) : (
-            <Empty
-              title="검색 결과가 없어요"
-              description="다른 키워드로 다시 찾아보세요."
-            />
-          )
+          renderSearchResults()
         ) : (
           <>
             <section className={sectionStyle} aria-labelledby="search-popular-title">
