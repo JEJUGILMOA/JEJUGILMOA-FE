@@ -30,7 +30,7 @@ export function ExploreRecordCard({ record }: ExploreRecordCardProps) {
   const reactMutation = useReactToExploreRecordMutation()
 
   const handleReact = (reaction: 'like' | 'dislike') => {
-    reactMutation.mutate({ id: record.id, reaction })
+    reactMutation.mutate({ id: record.id, reaction, currentReaction: record.myReaction })
   }
 
   const goToDetail = () => navigate(ROUTES.recordDetail(record.id))

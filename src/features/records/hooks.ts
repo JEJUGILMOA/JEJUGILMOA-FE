@@ -6,6 +6,7 @@ import {
   fetchCompletedTrips,
   fetchExploreRecords,
   fetchMyRecords,
+  toggleRecordReaction,
   updateRecord,
 } from './api'
 import type { ExploreRecord, ReactionType, RecordUpdatePatch, SavedRecord } from './types'
@@ -77,10 +78,10 @@ export function useDeleteRecordMutation() {
   })
 }
 
-// 좋아요/싫어요/북마크는 서버 API가 없다(스웨거에 없음) — React Query 캐시를 직접 갱신하는
-// 로컬 전용 낙관적 토글로 대신한다. 서버 재조회로 덮어써지면 안 되니 invalidateQueries는
-// 호출하지 않는다. 같은 기록이 "내 기록"·"둘러보기" 캐시 양쪽에 있을 수 있어(전체공개 내
-// 기록) 두 캐시를 다 갱신한다.
+// 북마크는 서버 API가 없다(스웨거에 없음) — React Query 캐시를 직접 갱신하는 로컬 전용
+// 낙관적 토글로 대신한다. 서버 재조회로 덮어써지면 안 되니 invalidateQueries는 호출하지
+// 않는다. 같은 기록이 "내 기록"·"둘러보기" 캐시 양쪽에 있을 수 있어(전체공개 내 기록)
+// 두 캐시를 다 갱신한다.
 type ReactableRecord = SavedRecord | ExploreRecord
 
 function updateCachedRecord<T extends ReactableRecord>(
@@ -91,29 +92,6 @@ function updateCachedRecord<T extends ReactableRecord>(
 ) {
   queryClient.setQueryData<T[]>(queryKey, (records) =>
     records?.map((record) => (record.id === id ? updater(record) : record)),
-  )
-}
-
-function applyReaction<T extends ReactableRecord>(record: T, reaction: ReactionType): T {
-  const next = { ...record }
-  if (next.myReaction === reaction) {
-    if (reaction === 'like') next.likeCount -= 1
-    else next.dislikeCount -= 1
-    next.myReaction = null
-  } else {
-    if (next.myReaction === 'like') next.likeCount -= 1
-    if (next.myReaction === 'dislike') next.dislikeCount -= 1
-    if (reaction === 'like') next.likeCount += 1
-    else next.dislikeCount += 1
-    next.myReaction = reaction
-  }
-  return next
-}
-
-function reactInCaches(queryClient: QueryClient, id: string, reaction: ReactionType) {
-  updateCachedRecord<SavedRecord>(queryClient, QUERY_KEYS.myRecords, id, (record) => applyReaction(record, reaction))
-  updateCachedRecord<ExploreRecord>(queryClient, QUERY_KEYS.exploreRecords, id, (record) =>
-    applyReaction(record, reaction),
   )
 }
 
@@ -130,25 +108,39 @@ export function useToggleRecordBookmarkMutation() {
   })
 }
 
-export function useReactToRecordMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id, reaction }: { id: string; reaction: ReactionType }) =>
-      reactInCaches(queryClient, id, reaction),
-  })
-}
-
-export function useReactToExploreRecordMutation() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id, reaction }: { id: string; reaction: ReactionType }) =>
-      reactInCaches(queryClient, id, reaction),
-  })
-}
-
 export function useToggleExploreRecordBookmarkMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => toggleBookmarkInCaches(queryClient, id),
   })
+}
+
+// 좋아요/싫어요는 실 API(POST/DELETE /api/records/{id}/reactions)로 연동됐다. 성공 후
+// myRecords·exploreRecords 둘 다 무효화해서 실제 likeCount/dislikeCount/myReaction을
+// 서버에서 다시 받아온다(같은 기록이 두 캐시에 동시에 있을 수 있어서 둘 다 무효화).
+function useRecordReactionMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      reaction,
+      currentReaction,
+    }: {
+      id: string
+      reaction: ReactionType
+      currentReaction: ReactionType | null
+    }) => toggleRecordReaction(id, reaction, currentReaction),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exploreRecords })
+    },
+  })
+}
+
+export function useReactToRecordMutation() {
+  return useRecordReactionMutation()
+}
+
+export function useReactToExploreRecordMutation() {
+  return useRecordReactionMutation()
 }

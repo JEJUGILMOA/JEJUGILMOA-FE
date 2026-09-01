@@ -7,8 +7,10 @@ import type {
   ExploreRecord,
   PageResponseObject,
   PlaceMemo,
+  ReactionType,
   RecordDraft,
   RecordPlaceMemoUpdate,
+  RecordReactionApi,
   RecordUpdatePatch,
   RecordVisibility,
   RecordVisibilityApi,
@@ -32,6 +34,10 @@ function toApiVisibility(visibility: RecordVisibility): RecordVisibilityApi {
 
 function fromApiVisibility(visibility: RecordVisibilityApi): RecordVisibility {
   return visibility === 'PUBLIC' ? 'public' : 'private'
+}
+
+function toApiReaction(reaction: ReactionType): RecordReactionApi {
+  return reaction === 'like' ? 'LIKE' : 'DISLIKE'
 }
 
 function collectUniquePhotos(draft: RecordDraft): File[] {
@@ -198,7 +204,7 @@ function mapDetailToVisitedPlaces(places: TravelRecordPlaceResponse[]): VisitedP
     placeName: place.placeName,
     address: place.address,
     note: place.memo ?? '',
-    photoUrls: place.image ? [place.image.imageUrl] : [],
+    photoUrls: sortBySequenceOrder(place.images).map((image) => image.imageUrl),
     stayMinutes: place.stayMinutes,
     rating: place.rating,
   }))
@@ -347,4 +353,17 @@ export async function updateRecord(id: string, patch: RecordUpdatePatch, origina
 
 export async function deleteRecord(id: string): Promise<void> {
   await apiDelete(`/records/${id}`)
+}
+
+/** 같은 반응을 다시 누르면 취소(DELETE), 다른 반응이면 그걸로 설정(POST) — 좋아요/싫어요 배타 토글 */
+export async function toggleRecordReaction(
+  id: string,
+  reaction: ReactionType,
+  currentReaction: ReactionType | null,
+): Promise<void> {
+  if (currentReaction === reaction) {
+    await apiDelete(`/records/${id}/reactions`)
+    return
+  }
+  await apiPost(`/records/${id}/reactions`, { reactionType: toApiReaction(reaction) })
 }

@@ -146,8 +146,9 @@ export function RecordDetailPage() {
 
   const handleReact = (reaction: ReactionType) => {
     if (!view) return
-    if (view.isOwn) reactMutation.mutate({ id: view.id, reaction })
-    else exploreReactMutation.mutate({ id: view.id, reaction })
+    const payload = { id: view.id, reaction, currentReaction: view.myReaction }
+    if (view.isOwn) reactMutation.mutate(payload)
+    else exploreReactMutation.mutate(payload)
   }
 
   const handleShare = async () => {

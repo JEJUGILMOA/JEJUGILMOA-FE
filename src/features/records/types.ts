@@ -178,7 +178,7 @@ export type TravelRecordPlaceResponse = {
   memo: string | null
   stayMinutes: number | null
   rating: number | null
-  image: TravelRecordImageResponse | null
+  images: TravelRecordImageResponse[]
 }
 
 export type TravelRecordPlanLinkResponse = {
