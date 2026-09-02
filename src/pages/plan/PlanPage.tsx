@@ -6,8 +6,7 @@ import { FloatingActionButton } from '@/components/ui/FloatingActionButton/Float
 import { Loading } from '@/components/ui/Loading/Loading'
 import { ROUTES } from '@/constants'
 import { usePlansQuery } from '@/features/plans/hooks'
-import { getPlanGroup, type PlanGroup } from '@/features/plans/planStatus'
-import type { TravelPlan } from '@/features/plans/types'
+import type { PlanStatus, TravelPlan } from '@/features/plans/types'
 import { PlanListItem } from './components/PlanListItem'
 import {
   listStyle,
@@ -17,20 +16,20 @@ import {
   sectionTitleStyle,
 } from './PlanPage.css.ts'
 
-const SECTION_ORDER: { group: PlanGroup; title: string; hint?: string }[] = [
-  { group: 'ongoing', title: '진행중인 계획' },
+const SECTION_ORDER: { status: PlanStatus; title: string; hint?: string }[] = [
+  { status: 'ongoing', title: '진행중인 계획' },
   {
-    group: 'draft',
+    status: 'draft',
     title: '예정된 여행',
     hint: '아직 출발 전인 여행이에요.',
   },
-  { group: 'saved', title: '저장된 계획' },
+  { status: 'completed', title: '완료된 여행' },
 ]
 
-function groupPlans(plans: TravelPlan[]): Record<PlanGroup, TravelPlan[]> {
-  const groups: Record<PlanGroup, TravelPlan[]> = { ongoing: [], draft: [], saved: [] }
+function groupPlans(plans: TravelPlan[]): Record<PlanStatus, TravelPlan[]> {
+  const groups: Record<PlanStatus, TravelPlan[]> = { ongoing: [], draft: [], completed: [] }
   for (const plan of plans) {
-    groups[getPlanGroup(plan)].push(plan)
+    groups[plan.status].push(plan)
   }
   return groups
 }
@@ -60,13 +59,13 @@ export function PlanPage() {
         </Card>
       ) : (
         <div className={listStyle}>
-          {SECTION_ORDER.filter(({ group }) => groups[group].length > 0).map(
-            ({ group, title, hint }) => (
-              <div key={group} className={sectionStyle}>
+          {SECTION_ORDER.filter(({ status }) => groups[status].length > 0).map(
+            ({ status, title, hint }) => (
+              <div key={status} className={sectionStyle}>
                 <span className={sectionTitleStyle}>{title}</span>
                 {hint ? <p className={sectionHintStyle}>{hint}</p> : null}
-                {groups[group].map((plan) => (
-                  <PlanListItem key={plan.id} plan={plan} group={group} />
+                {groups[status].map((plan) => (
+                  <PlanListItem key={plan.id} plan={plan} status={status} />
                 ))}
               </div>
             ),

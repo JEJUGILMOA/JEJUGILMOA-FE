@@ -28,11 +28,13 @@ export type DayItinerary = {
 }
 
 /**
- * draft = STEP01만 마치고 아직 "계획 저장하기"를 누르지 않은 상태(계획하다 중간에 나옴).
- * saved = 미리보기에서 저장까지 마친 상태. "진행중인 계획"은 이 saved 중 여행 기간에
- * 오늘이 포함된 경우로, 별도 필드 없이 날짜로만 계산한다 ({@link getPlanGroup}).
+ * 서버의 `TravelPlanStatus`(DRAFT/IN_PROGRESS/COMPLETED)를 그대로 옮긴 것 — `/plan` 목록의
+ * 구간도 이 값 그대로 나눈다(날짜로 추정하지 않음).
+ * - draft: 저장은 됐지만 `POST /api/trips`(여행 시작)를 아직 호출한 적 없는 상태
+ * - ongoing: 여행 시작을 눌러 실제로 진행 중인 상태
+ * - completed: 모든 경유지 방문 인증 후 `POST /api/trips/{tripId}/complete`까지 마친 상태
  */
-export type PlanStatus = 'draft' | 'saved'
+export type PlanStatus = 'draft' | 'ongoing' | 'completed'
 
 export type TravelPlan = {
   id: string

@@ -10,6 +10,7 @@ import type {
   PlanDraft,
   PlanPlaceSearchParams,
   PlanPlaceSearchPage,
+  PlanStatus,
   RecommendationRequest,
   RecommendationResponse,
   TravelCompanion,
@@ -95,13 +96,19 @@ function fromApiDate(date: string): string {
   return date.replaceAll('-', '.')
 }
 
+function fromApiPlanStatus(status: TravelPlanStatus): PlanStatus {
+  if (status === 'DRAFT') return 'draft'
+  if (status === 'IN_PROGRESS') return 'ongoing'
+  return 'completed'
+}
+
 /** `GET /api/plans` 목록 아이템 하나를 로컬 `TravelPlan` 모양으로 변환 */
 export function mapPlanSummaryToTravelPlan(summary: TravelPlanSummary): TravelPlan {
   return {
     id: String(summary.planId),
     title: summary.title,
     destination: DESTINATION,
-    status: summary.status === 'DRAFT' ? 'draft' : 'saved',
+    status: fromApiPlanStatus(summary.status),
     startDate: fromApiDate(summary.startDate),
     endDate: fromApiDate(summary.endDate),
     companionType: DEFAULT_COMPANION_TYPE,
@@ -145,7 +152,7 @@ export function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): Tra
     id: String(detail.planId),
     title: detail.title,
     destination: DESTINATION,
-    status: detail.status === 'DRAFT' ? 'draft' : 'saved',
+    status: fromApiPlanStatus(detail.status),
     startDate: fromApiDate(detail.startDate),
     endDate: fromApiDate(detail.endDate),
     companionType: detail.companion ? COMPANION_API_TO_TYPE[detail.companion] : DEFAULT_COMPANION_TYPE,

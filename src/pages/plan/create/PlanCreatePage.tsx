@@ -83,7 +83,7 @@ export function PlanCreatePage() {
   const hasSyncedEditDraftRef = useRef(false)
   // 저장된 계획은 이미 그 날짜 기준으로 Day별 일정이 짜여 있어서, 날짜를 바꾸면
   // 일부 Day의 일정이 조용히 갈 곳을 잃는다 — 그래서 날짜만 수정 자체를 막는다.
-  const isDateEditLocked = isEditMode && existingPlan?.status === 'saved'
+  const isDateEditLocked = isEditMode && Boolean(existingPlan) && existingPlan?.status !== 'draft'
   // draft는 날짜를 계속 바꿀 수 있지만, 이미 일정을 짜둔 상태에서 날짜를 줄이면
   // 저장된 계획과 같은 문제가 생긴다 — 막지는 않되 줄이기 직전에 한 번 경고한다.
   const lastPlannedDay =

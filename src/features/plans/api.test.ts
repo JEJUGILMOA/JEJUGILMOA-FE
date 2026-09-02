@@ -159,8 +159,8 @@ describe('mapPlanSummaryToTravelPlan', () => {
 
   it.each([
     ['DRAFT', 'draft'],
-    ['IN_PROGRESS', 'saved'],
-    ['COMPLETED', 'saved'],
+    ['IN_PROGRESS', 'ongoing'],
+    ['COMPLETED', 'completed'],
   ] as const)('maps status %s -> %s', (apiStatus, localStatus) => {
     const plan = mapPlanSummaryToTravelPlan(makeSummary({ status: apiStatus }))
     expect(plan.status).toBe(localStatus)
