@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { ChevronLeft, ChevronRight, Share2, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
@@ -132,12 +131,6 @@ export function RecordDetailPage() {
       ? fromExploreRecord(exploreRecord)
       : null
 
-  // 상단 캐러셀은 대표 사진뿐 아니라 방문 장소별 사진까지 드래그로 다 넘겨볼 수 있게 합친다
-  const allPhotoUrls = useMemo(() => {
-    if (!view) return []
-    return Array.from(new Set([...view.photoUrls, ...view.visitedPlaces.flatMap((place) => place.photoUrls)]))
-  }, [view])
-
   const bookmarkMutation = useToggleRecordBookmarkMutation()
   const reactMutation = useReactToRecordMutation()
   const exploreBookmarkMutation = useToggleExploreRecordBookmarkMutation()
@@ -206,7 +199,7 @@ export function RecordDetailPage() {
 
       <div className={pageStyle}>
         <PhotoCarousel
-          photoUrls={allPhotoUrls}
+          photoUrls={view.photoUrls}
           isBookmarked={view.isBookmarked}
           onToggleBookmark={handleToggleBookmark}
         />
@@ -257,7 +250,7 @@ export function RecordDetailPage() {
             </div>
 
             <p className={metaStyle}>
-              방문 장소 {view.visitedPlaces.length}곳 · 사진 {allPhotoUrls.length}장
+              방문 장소 {view.visitedPlaces.length}곳 · 사진 {view.photoUrls.length}장
             </p>
 
             <div className={actionRowStyle}>

@@ -214,6 +214,18 @@ function mapDetailToPhotoUrls(images: TravelRecordImageResponse[]): string[] {
   return sortBySequenceOrder(images).map((image) => image.imageUrl)
 }
 
+/**
+ * 기록 대표 사진(`images`) + 장소별 사진(`places[].images`)을 합친 전체 사진 목록.
+ * 대표 사진 없이 장소 사진만 있는 기록도 목록 썸네일·상세 캐러셀에서 보이게 하려고
+ * 한 곳에서 합쳐서 두 화면이 같은 기준을 쓰게 한다.
+ */
+function collectAllPhotoUrls(detail: TravelRecordDetailResponse): string[] {
+  const placePhotoUrls = detail.places.flatMap((place) =>
+    sortBySequenceOrder(place.images).map((image) => image.imageUrl),
+  )
+  return Array.from(new Set([...mapDetailToPhotoUrls(detail.images), ...placePhotoUrls]))
+}
+
 /** 'yyyy-MM-dd' -> 'yyyy.MM.dd' */
 function formatApiDate(date: string): string {
   return date.replaceAll('-', '.')
@@ -227,7 +239,7 @@ function buildTripDateRangeLabel(startDate: string, endDate: string, visitedPlac
 }
 
 function mapDetailToSavedRecord(detail: TravelRecordDetailResponse): SavedRecord {
-  const photoUrls = mapDetailToPhotoUrls(detail.images)
+  const photoUrls = collectAllPhotoUrls(detail)
   return {
     id: String(detail.recordId),
     tripId: detail.plan ? String(detail.plan.planId) : null,
@@ -250,7 +262,7 @@ function mapDetailToSavedRecord(detail: TravelRecordDetailResponse): SavedRecord
 }
 
 function mapDetailToExploreRecord(detail: TravelRecordDetailResponse): ExploreRecord {
-  const photoUrls = mapDetailToPhotoUrls(detail.images)
+  const photoUrls = collectAllPhotoUrls(detail)
   return {
     id: String(detail.recordId),
     title: detail.title,
