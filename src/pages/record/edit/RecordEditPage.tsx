@@ -20,6 +20,7 @@ import {
   fieldGroupStyle,
   optionListStyle,
   pageStyle,
+  photoHintStyle,
   placeMemoListStyle,
   sectionCountStyle,
   sectionHeaderStyle,
@@ -76,6 +77,9 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
     ),
   )
   const [photos, setPhotos] = useState<(File | string)[]>(record.photoUrls)
+  // 장소별 메모에 첨부한 사진도 "사진" 섹션에 함께 보이도록 미리보기 풀에 포함한다
+  // (생성 화면의 대표사진 고르기와 같은 방식) — 실제 삭제/추가는 각 장소 메모에서만 한다.
+  const placePhotos = Object.values(placeMemos).flatMap((memo) => memo.photos)
   const [visibility, setVisibility] = useState<RecordVisibility>(record.visibility)
   const [isDirty, setIsDirty] = useState(false)
   const [activePlaceId, setActivePlaceId] = useState<string | null>(null)
@@ -178,10 +182,11 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
         <div className={sectionStyle}>
           <div className={sectionHeaderStyle}>
             <span className={sectionLabelStyle}>사진</span>
-            <span className={sectionCountStyle}>{photos.length}장</span>
+            <span className={sectionCountStyle}>{photos.length + placePhotos.length}장</span>
           </div>
           <PhotoGrid
             photos={photos}
+            readOnlyPhotos={placePhotos}
             onAdd={(files) => {
               setPhotos((prev) => [...prev, ...files])
               setIsDirty(true)
@@ -191,6 +196,9 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
               setIsDirty(true)
             }}
           />
+          {placePhotos.length > 0 ? (
+            <p className={photoHintStyle}>"장소" 표시된 사진은 장소별 메모에서 관리돼요</p>
+          ) : null}
         </div>
 
         <div className={divider} />

@@ -123,9 +123,28 @@ function buildPlaceMemoRequests(
     }))
 }
 
-/** 대표 사진 + STEP 03 추가 업로드 사진을 기록 전체 사진첩(`imageObjectKeys`)으로 모은다 */
+/**
+ * 대표 사진 + STEP 03 추가 업로드 사진을 기록 전체 사진첩(`imageObjectKeys`)으로 모은다.
+ * 대표 사진은 장소 사진 풀 또는 extraPhotos 중에서 고르는데, 두 경우 다 같은 File이
+ * 다른 곳에도 이미 들어있는 것이라 그대로 합치면 objectKey가 중복돼 서버가 거부한다
+ * (`RECORD400_3`) — 장소 사진과 겹치면 제외, extraPhotos와 겹치면(대표 사진으로 고른
+ * 그 사진) 한 번만 넣는다.
+ */
 function buildRecordImageObjectKeys(draft: RecordDraft, fileToObjectKey: Map<File, string>): string[] {
-  const files = [...(draft.coverPhoto ? [draft.coverPhoto] : []), ...draft.extraPhotos]
+  const placePhotoFiles = new Set(
+    Object.values(draft.placeMemos).flatMap((memo) =>
+      memo.photos.filter((photo): photo is File => photo instanceof File),
+    ),
+  )
+  const seen = new Set<File>()
+  const files: File[] = []
+  const add = (file: File) => {
+    if (placePhotoFiles.has(file) || seen.has(file)) return
+    seen.add(file)
+    files.push(file)
+  }
+  if (draft.coverPhoto) add(draft.coverPhoto)
+  draft.extraPhotos.forEach(add)
   return files.map((file) => objectKeyOf(file, fileToObjectKey))
 }
 

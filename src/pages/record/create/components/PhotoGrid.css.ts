@@ -97,6 +97,18 @@ export const photoImageStyle = style({
   objectFit: 'cover',
 })
 
+export const readOnlyBadgeStyle = style({
+  position: 'absolute',
+  bottom: vars.space[1],
+  left: vars.space[1],
+  padding: '2px 6px',
+  borderRadius: vars.radius.full,
+  backgroundColor: 'rgba(37, 37, 45, 0.6)',
+  color: colors.text[5],
+  fontSize: '10px',
+  fontWeight: vars.fontWeight.medium,
+})
+
 export const removeButtonStyle = style({
   position: 'absolute',
   top: vars.space[1],

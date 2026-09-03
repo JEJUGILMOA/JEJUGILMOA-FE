@@ -33,6 +33,15 @@ export const thumbnailStyle = style({
   color: colors.text[4],
 })
 
+export const thumbnailButtonStyle = style([
+  thumbnailStyle,
+  {
+    padding: 0,
+    border: 'none',
+    cursor: 'pointer',
+  },
+])
+
 export const thumbnailImageStyle = style({
   width: '100%',
   height: '100%',

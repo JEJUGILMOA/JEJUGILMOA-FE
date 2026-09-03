@@ -38,6 +38,11 @@ export const sectionCountStyle = style({
   color: colors.text[4],
 })
 
+export const photoHintStyle = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})
+
 export const placeMemoListStyle = style({
   display: 'flex',
   flexDirection: 'column',

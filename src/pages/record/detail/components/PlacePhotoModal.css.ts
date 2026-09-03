@@ -2,15 +2,22 @@ import { style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
-/**
- * 부모 pageStyle이 레이아웃 패딩을 이미 취소하므로 풀블리드.
- * 위쪽 여백은 RecordDetailPage의 subHeaderStyle이 처리한다.
- */
+export const overlayStyle = style({
+  position: 'fixed',
+  inset: 0,
+  zIndex: 200,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: 'rgba(15, 15, 20, 0.92)',
+})
+
 export const wrapStyle = style({
   position: 'relative',
-  aspectRatio: '1 / 1',
-  overflow: 'hidden',
-  backgroundColor: colors.surface[4],
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
 })
 
 export const trackStyle = style({
@@ -26,26 +33,15 @@ export const slideImageStyle = style({
   flex: '0 0 100%',
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
+  objectFit: 'contain',
   userSelect: 'none',
 })
 
-export const placeholderStyle = style({
-  display: 'flex',
-  width: '100%',
-  height: '100%',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: vars.space[2],
-  color: colors.text[4],
-  fontSize: vars.fontSize.sm,
-})
-
-export const bookmarkButtonStyle = style({
+export const closeButtonStyle = style({
   position: 'absolute',
-  top: vars.space[3],
-  left: vars.space[3],
+  top: vars.space[4],
+  right: vars.space[4],
+  zIndex: 1,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -53,21 +49,17 @@ export const bookmarkButtonStyle = style({
   height: '36px',
   border: 'none',
   borderRadius: vars.radius.full,
-  backgroundColor: colors.surface[1],
-  color: colors.text[2],
+  backgroundColor: 'rgba(37, 37, 45, 0.6)',
+  color: colors.text[5],
   cursor: 'pointer',
-  boxShadow: vars.shadow.sm,
-})
-
-export const bookmarkActiveStyle = style({
-  color: colors.primary[500],
 })
 
 export const counterStyle = style({
   position: 'absolute',
-  top: vars.space[3],
-  right: vars.space[3],
-  padding: `${vars.space[1]} ${vars.space[2]}`,
+  bottom: vars.space[4],
+  left: '50%',
+  transform: 'translateX(-50%)',
+  padding: `${vars.space[1]} ${vars.space[3]}`,
   borderRadius: vars.radius.full,
   backgroundColor: 'rgba(37, 37, 45, 0.6)',
   color: colors.text[5],
@@ -82,8 +74,8 @@ export const navButtonStyle = style({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '32px',
-  height: '32px',
+  width: '36px',
+  height: '36px',
   border: 'none',
   borderRadius: vars.radius.full,
   backgroundColor: 'rgba(37, 37, 45, 0.4)',
