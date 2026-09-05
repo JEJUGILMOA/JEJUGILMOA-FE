@@ -3,4 +3,5 @@ export type {
   PlaceListItem,
   PlacePage,
   PopularPlace,
+  PopularPlacePage,
 } from './schemas'

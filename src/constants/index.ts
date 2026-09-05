@@ -65,8 +65,15 @@ export const QUERY_KEYS = {
     page?: number
     size?: number
   }) => ['places', 'list', params] as const,
-  popularPlaces: (limit?: number) => ['places', 'popular', limit] as const,
+  popularPlaces: (params?: {
+    category?: string
+    page?: number
+    size?: number
+    limit?: number
+  }) => ['places', 'popular', params] as const,
   place: (id: string) => ['places', id] as const,
+  homePlaces: ['home', 'places'] as const,
+  homeCourses: ['home', 'courses'] as const,
   recommendedCourses: (themes?: readonly string[]) => ['courses', 'recommended', themes] as const,
   plans: ['plans'] as const,
   plan: (id: string) => ['plans', id] as const,

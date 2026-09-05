@@ -36,14 +36,23 @@ function isPlaceFilter(value: unknown): value is PlaceFilter {
 }
 
 function mapPopularPlace(place: PopularPlace): PopularPlaceListItem {
+  const imageUrls =
+    place.imageUrls.length > 0
+      ? place.imageUrls
+      : place.imageUrl
+        ? [place.imageUrl]
+        : []
+
   return {
     id: place.placeId,
     title: place.name,
+    category: place.hashtags[0],
+    address: place.region,
     distance:
       place.visitCount != null
         ? `${place.visitCount.toLocaleString('ko-KR')}회 방문`
         : undefined,
-    imageUrls: place.imageUrl ? [place.imageUrl] : [],
+    imageUrls,
   }
 }
 
@@ -76,7 +85,7 @@ export function PopularPlacesPage() {
   const isUnsupportedCategory = !isAllFilter && !apiCategoryName
 
   const popularQuery = usePopularPlacesQuery(
-    { limit: POPULAR_PAGE_LIMIT },
+    { page: 0, size: POPULAR_PAGE_LIMIT },
     { enabled: isAllFilter },
   )
   const placesQuery = usePlacesQuery(

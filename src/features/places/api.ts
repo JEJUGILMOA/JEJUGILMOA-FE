@@ -3,6 +3,7 @@ import {
   placeDetailSchema,
   placeListItemSchema,
   placePageSchema,
+  popularPlacePageSchema,
   popularPlaceSchema,
   type Place,
   type PlaceListItem,
@@ -18,7 +19,10 @@ export type BrowsePlacesParams = {
 }
 
 export type FetchPopularPlacesParams = {
-  /** 홈 TOP: 3~4, 인기 목록: 20(기본) */
+  category?: string
+  page?: number
+  size?: number
+  /** @deprecated size 사용 */
   limit?: number
 }
 
@@ -69,10 +73,23 @@ export async function fetchPlaceById(placeId: string): Promise<Place> {
   return placeDetailSchema.parse(data)
 }
 
-/** 인기 관광지 (방문 수 상위) */
+/** 인기 관광지 (방문 수 상위) — 페이지 content 반환 */
 export async function fetchPopularPlaces(
   params?: FetchPopularPlacesParams,
 ): Promise<PopularPlace[]> {
-  const data = await apiGet<unknown>('/places/popular', { params })
-  return popularPlaceSchema.array().parse(data)
+  const page = params?.page ?? 0
+  const size = params?.size ?? params?.limit ?? 20
+  const data = await apiGet<unknown>('/places/popular', {
+    params: {
+      category: params?.category,
+      page,
+      size,
+    },
+  })
+
+  if (Array.isArray(data)) {
+    return popularPlaceSchema.array().parse(data)
+  }
+
+  return popularPlacePageSchema.parse(data).content
 }

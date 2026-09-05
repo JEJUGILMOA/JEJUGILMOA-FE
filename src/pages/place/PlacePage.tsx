@@ -1,4 +1,4 @@
-import { ChevronLeft, Globe, MapPin, Phone } from 'lucide-react'
+import { Globe, MapPin, Phone } from 'lucide-react'
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { isApiError } from '@/api/error'
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES } from '@/constants'
 import { usePlaceQuery } from '@/features/places/hooks'
 import type { Place } from '@/features/places/types'
@@ -55,6 +56,8 @@ export function PlacePage() {
   const locationLabel = place?.address?.trim()
   const metaLabel = [categoryLabel, locationLabel].filter(Boolean).join(' · ')
   const hasContactInfo = Boolean(place?.tel || place?.homepage)
+  const headerTitle = place?.name ?? '장소'
+  const goBack = () => navigate(-1)
 
   const heroBackgroundStyle = place?.imageUrl
     ? {
@@ -67,6 +70,7 @@ export function PlacePage() {
   if (!placeId) {
     return (
       <div className={pageStyle}>
+        <PageHeader title="장소" showBack onBack={goBack} />
         <Empty
           title="장소를 찾을 수 없어요"
           description="올바른 장소로 다시 이동해 주세요."
@@ -83,6 +87,7 @@ export function PlacePage() {
   if (isPending) {
     return (
       <div className={pageStyle}>
+        <PageHeader title="장소" showBack onBack={goBack} />
         <Loading label="장소 정보 불러오는 중" />
       </div>
     )
@@ -92,6 +97,7 @@ export function PlacePage() {
     if (isApiError(error) && error.status === 404) {
       return (
         <div className={pageStyle}>
+          <PageHeader title="장소" showBack onBack={goBack} />
           <Empty
             title="장소를 찾을 수 없어요"
             description="삭제되었거나 존재하지 않는 장소예요."
@@ -107,6 +113,7 @@ export function PlacePage() {
 
     return (
       <div className={pageStyle}>
+        <PageHeader title="장소" showBack onBack={goBack} />
         <ErrorState onRetry={() => void refetch()} />
       </div>
     )
@@ -118,16 +125,10 @@ export function PlacePage() {
 
   return (
     <div className={pageStyle}>
+      <PageHeader title={headerTitle} showBack onBack={goBack} />
+
       <section className={heroStyle} style={heroBackgroundStyle} aria-label="장소 이미지">
         <div className={heroActionsStyle}>
-          <button
-            type="button"
-            className={heroIconButtonStyle}
-            aria-label="뒤로 가기"
-            onClick={() => navigate(-1)}
-          >
-            <ChevronLeft size={22} />
-          </button>
           <button
             type="button"
             className={heroIconButtonStyle}

@@ -27,12 +27,61 @@ const mockPopularPlaces = [
     name: '성산일출봉',
     imageUrl: 'https://example.com/seongsan.jpg',
     visitCount: 500,
+    region: '서귀포시 성산읍',
+    hashtags: ['자연'],
+    imageUrls: ['https://example.com/seongsan.jpg'],
   },
   {
     placeId: 2,
     name: '한라산',
     imageUrl: 'https://example.com/hallasan.jpg',
     visitCount: 480,
+    region: '제주시 해안동',
+    hashtags: ['자연'],
+    imageUrls: ['https://example.com/hallasan.jpg'],
+  },
+]
+
+const mockHomePlaces = [
+  {
+    placeId: 1,
+    name: '성산일출봉',
+    categoryName: '자연',
+    region: '서귀포시 성산읍',
+    imageUrl: 'https://example.com/seongsan.jpg',
+    description: '제주특별자치도 서귀포시 성산읍 성산리',
+    curationLabel: 'TODAY_PICK',
+    rating: 4.8,
+    hashtags: ['자연'],
+  },
+  {
+    placeId: 2,
+    name: '협재 해수욕장',
+    categoryName: '자연',
+    region: '제주시 한림읍',
+    imageUrl: 'https://example.com/hyeopjae.jpg',
+    description: '제주특별자치도 제주시 한림읍 협재리',
+    curationLabel: 'TRAVELER_PICK',
+    rating: 4.6,
+    hashtags: ['자연', '해변'],
+  },
+]
+
+const mockHomeCourses = [
+  {
+    courseId: 10,
+    imageUrl: 'https://example.com/aewol-course.jpg',
+    region: '제주시 애월읍',
+    title: '애월 감성 코스',
+    description: '카페와 해안을 잇는 여유 코스',
+    tags: ['카페', '자연'],
+    estimatedMinutes: 180,
+    placeCount: 2,
+    transportMode: 'DRIVE',
+    preview: [
+      { placeId: 11, imageUrl: 'https://example.com/aewol.jpg' },
+      { placeId: 12, imageUrl: 'https://example.com/gwakji.jpg' },
+    ],
   },
 ]
 
@@ -172,7 +221,22 @@ function envelope<T>(result: T) {
 }
 
 export const handlers = [
-  http.get('*/places/popular', () => HttpResponse.json(envelope(mockPopularPlaces))),
+  http.get('*/home/places', () => HttpResponse.json(envelope(mockHomePlaces))),
+  http.get('*/home/courses', () => HttpResponse.json(envelope(mockHomeCourses))),
+  http.get('*/places/popular', ({ request }) => {
+    const url = new URL(request.url)
+    const size = Number(url.searchParams.get('size') ?? '20')
+    return HttpResponse.json(
+      envelope({
+        content: mockPopularPlaces.slice(0, size),
+        page: 0,
+        size,
+        totalElements: mockPopularPlaces.length,
+        totalPages: 1,
+        last: true,
+      }),
+    )
+  }),
   http.get('*/courses/recommended', () => HttpResponse.json(envelope(mockCourses))),
   http.get('*/places', ({ request }) => {
     const url = new URL(request.url)

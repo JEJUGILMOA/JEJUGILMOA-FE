@@ -1,64 +1,53 @@
-import { Bookmark, Star } from 'lucide-react'
-import { type KeyboardEvent, useState } from 'react'
+import { Bookmark, Image } from 'lucide-react'
+import { type KeyboardEvent, useEffect, useState } from 'react'
 import { cn } from '@/utils/cn'
 import {
+  addressStyle,
   badgeStyle,
   bookmarkStyle,
   cardStyle,
   contentStyle,
-  descStyle,
-  eyebrowStyle,
-  heroGradientStyle,
   heroImageStyle,
-  heroRatingStyle,
-  heroRatingValueStyle,
+  heroPlaceholderIconStyle,
+  heroPlaceholderStyle,
   heroStyle,
   regionStyle,
-  tagStyle,
-  tagsStyle,
-  titleRowStyle,
   titleStyle,
 } from './TravelPickCard.css.ts'
 
 export type TravelPickCardProps = {
   title: string
-  eyebrow?: string
+  /** 이미지 좌상단 카테고리 뱃지 */
+  category?: string
+  /** 짧은 지역 (예: 서귀포시 중문관광로) */
   region?: string
-  description?: string
-  tags?: string[]
-  rating?: number
-  duration?: string
-  badge?: string
+  /** 상세 주소 */
+  address?: string
   imageUrl?: string
-  /** 강조색(태그·eyebrow). 기본 primary */
-  accent?: string
-  /** 별 아이콘 색 */
-  starColor?: string
   onClick?: () => void
   className?: string
 }
 
 /**
  * 홈 피드용 관광지 추천 카드.
- * 히어로는 CSS 일러스트 대신 사진 이미지를 사용한다.
  */
 export function TravelPickCard({
   title,
-  eyebrow,
+  category,
   region,
-  description,
-  tags = [],
-  rating,
-  duration,
-  badge,
+  address,
   imageUrl,
-  accent = '#24B95C',
-  starColor = '#FFB721',
   onClick,
   className,
 }: TravelPickCardProps) {
   const [bookmarked, setBookmarked] = useState(false)
+  const [imageError, setImageError] = useState(false)
   const isClickable = Boolean(onClick)
+  const showPlaceholder = !imageUrl || imageError
+
+  useEffect(() => {
+    setImageError(false)
+  }, [imageUrl])
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!onClick) return
@@ -88,21 +77,19 @@ export function TravelPickCard({
       tabIndex={isClickable ? 0 : undefined}
     >
       <div className={heroStyle}>
-        {imageUrl ? <img src={imageUrl} alt="" className={heroImageStyle} /> : null}
-        <div className={heroGradientStyle} />
-        {badge ? <span className={badgeStyle}>{badge}</span> : null}
-        {rating != null || duration ? (
-          <div className={heroRatingStyle}>
-            {rating != null ? (
-              <>
-                <Star size={14} fill={starColor} strokeWidth={0} />
-                <b className={heroRatingValueStyle}>{rating.toFixed(1)}</b>
-              </>
-            ) : null}
-            {rating != null && duration ? <span>· {duration}</span> : null}
-            {rating == null && duration ? <span>{duration}</span> : null}
+        {showPlaceholder ? (
+          <div className={heroPlaceholderStyle} aria-hidden>
+            <Image size={28} className={heroPlaceholderIconStyle} strokeWidth={1.5} />
           </div>
-        ) : null}
+        ) : (
+          <img
+            src={imageUrl}
+            alt=""
+            className={heroImageStyle}
+            onError={() => setImageError(true)}
+          />
+        )}
+        {category ? <span className={badgeStyle}>{category}</span> : null}
         <button
           type="button"
           className={bookmarkStyle}
@@ -114,41 +101,17 @@ export function TravelPickCard({
           }}
         >
           <Bookmark
-            size={14}
-            strokeWidth={2}
+            size={16}
+            strokeWidth={1.75}
             fill={bookmarked ? 'currentColor' : 'none'}
           />
         </button>
       </div>
 
       <div className={contentStyle}>
-        {eyebrow ? (
-          <p className={eyebrowStyle} style={{ color: accent }}>
-            {eyebrow}
-          </p>
-        ) : null}
-        <div className={titleRowStyle}>
-          <h3 className={titleStyle}>{title}</h3>
-          {region ? <span className={regionStyle}>{region}</span> : null}
-        </div>
-        {description ? <p className={descStyle}>{description}</p> : null}
-        {tags.length > 0 ? (
-          <div className={tagsStyle}>
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className={tagStyle}
-                style={{
-                  color: accent,
-                  backgroundColor: `color-mix(in srgb, ${accent} 10%, white)`,
-                  borderColor: `color-mix(in srgb, ${accent} 22%, white)`,
-                }}
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        <h3 className={titleStyle}>{title}</h3>
+        {region ? <p className={regionStyle}>{region}</p> : null}
+        {address ? <p className={addressStyle}>{address}</p> : null}
       </div>
     </article>
   )

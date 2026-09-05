@@ -6,11 +6,11 @@ import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/Horiz
 import { Loading } from '@/components/ui/Loading/Loading'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
-import { useRecommendedCoursesQuery } from '@/features/courses/hooks'
-import { courseThemeLabel, courseThemeTone } from '@/features/courses/format'
-import type { RecommendedCourse } from '@/features/courses/types'
-import { usePlacesQuery, usePopularPlacesQuery } from '@/features/places/hooks'
-import type { PlaceListItem, PopularPlace } from '@/features/places/types'
+import type { CourseImageTag } from '@/data/mockExplore'
+import { useHomeCoursesQuery, useHomePlacesQuery } from '@/features/home/hooks'
+import type { HomeCourse } from '@/features/home/types'
+import { usePopularPlacesQuery } from '@/features/places/hooks'
+import type { PopularPlace } from '@/features/places/types'
 import { TravelPickCard } from './components/TravelPickCard/TravelPickCard'
 import { CourseRecommendCard } from './components/CourseRecommendCard/CourseRecommendCard'
 import { PopularPlaceCard } from './components/PopularPlaceCard/PopularPlaceCard'
@@ -37,36 +37,35 @@ import {
   travelPickRowStyle,
 } from './HomePage.css.ts'
 
-const HOME_PICKS_SIZE = 4
 const HOME_POPULAR_LIMIT = 4
-const HOME_COURSES_LIMIT = 6
 
-function regionFromAddress(address?: string) {
-  if (!address) return undefined
-  const parts = address.split(/\s+/).filter(Boolean)
-  // "제주특별자치도 제주시 애월읍 …" → "제주시 애월읍"
-  if (parts.length >= 3) return `${parts[1]} ${parts[2]}`
-  if (parts.length >= 2) return parts[1]
-  return parts[0]
+const PREVIEW_TAG_TONES: CourseImageTag['tone'][] = ['blue', 'pink', 'green']
+
+function formatEstimatedMinutes(minutes: number) {
+  if (minutes < 60) return `${minutes}분`
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+  return rest > 0 ? `${hours}시간 ${rest}분` : `${hours}시간`
 }
 
-function mapCourseToCard(course: RecommendedCourse) {
-  const waypoints = [...course.waypoints].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-  const themeLabel = courseThemeLabel(course.theme)
-  const cover = waypoints.find((point) => point.imageUrl)?.imageUrl
-
+function mapHomeCourseToCard(course: HomeCourse) {
   return {
     title: course.title,
     description: course.description,
-    imageUrl: cover,
-    imageTags: themeLabel
-      ? [{ label: themeLabel, tone: courseThemeTone(course.theme) as 'blue' | 'pink' | 'green' }]
-      : [],
-    locationLabel: waypoints[0]?.placeName,
-    placeCount: waypoints.length,
-    previewSteps: waypoints.map((point) => ({
-      title: point.placeName,
-      thumbnailUrl: point.imageUrl ?? '',
+    imageUrl: course.imageUrl,
+    imageTags: (course.tags ?? []).map((label, index) => ({
+      label,
+      tone: PREVIEW_TAG_TONES[index % PREVIEW_TAG_TONES.length],
+    })),
+    locationLabel: course.region,
+    duration:
+      course.estimatedMinutes != null
+        ? formatEstimatedMinutes(course.estimatedMinutes)
+        : undefined,
+    placeCount: course.placeCount ?? course.preview.length,
+    previewSteps: course.preview.map((item) => ({
+      title: item.placeId,
+      thumbnailUrl: item.imageUrl ?? '',
     })),
   }
 }
@@ -116,12 +115,12 @@ function SectionStatus({
 export function HomePage() {
   const navigate = useNavigate()
 
-  const picksQuery = usePlacesQuery({ page: 0, size: HOME_PICKS_SIZE })
-  const coursesQuery = useRecommendedCoursesQuery()
-  const popularQuery = usePopularPlacesQuery({ limit: HOME_POPULAR_LIMIT })
+  const picksQuery = useHomePlacesQuery()
+  const coursesQuery = useHomeCoursesQuery()
+  const popularQuery = usePopularPlacesQuery({ page: 0, size: HOME_POPULAR_LIMIT })
 
   const travelPicks = picksQuery.data ?? []
-  const courses = (coursesQuery.data ?? []).slice(0, HOME_COURSES_LIMIT)
+  const courses = coursesQuery.data ?? []
   const popularPlaces = popularQuery.data ?? []
 
   return (
@@ -209,17 +208,15 @@ export function HomePage() {
         />
         {travelPicks.length > 0 ? (
           <div className={travelPickRowStyle}>
-            {travelPicks.map((place: PlaceListItem) => (
+            {travelPicks.map((place) => (
               <TravelPickCard
-                key={place.id}
+                key={place.placeId}
                 title={place.name}
-                eyebrow={place.categoryName}
-                region={regionFromAddress(place.address)}
-                description={place.address}
-                tags={place.categoryName ? [place.categoryName] : []}
-                badge={place.categoryName}
+                category={place.categoryName}
+                region={place.region}
+                address={place.description}
                 imageUrl={place.imageUrl}
-                onClick={() => navigate(placePath(place.id))}
+                onClick={() => navigate(placePath(place.placeId))}
               />
             ))}
           </div>
@@ -247,7 +244,7 @@ export function HomePage() {
             fade={false}
           >
             {courses.map((course) => {
-              const card = mapCourseToCard(course)
+              const card = mapHomeCourseToCard(course)
               return (
                 <CourseRecommendCard
                   key={course.courseId}
@@ -281,7 +278,7 @@ export function HomePage() {
                 key={place.placeId}
                 title={place.name}
                 visitCount={place.visitCount}
-                imageUrl={place.imageUrl}
+                imageUrl={place.imageUrl ?? place.imageUrls[0]}
                 onClick={() => navigate(placePath(place.placeId))}
               />
             ))}

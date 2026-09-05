@@ -39,12 +39,26 @@ export const popularPlaceSchema = z.object({
   name: z.string(),
   imageUrl: optionalString,
   visitCount: optionalNumber,
+  region: optionalString,
+  hashtags: z.array(z.string()).nullish().transform((value) => value ?? []),
+  imageUrls: z.array(z.string()).nullish().transform((value) => value ?? []),
+})
+
+/** GET /places/popular 페이지 응답 */
+export const popularPlacePageSchema = z.object({
+  content: z.array(popularPlaceSchema),
+  page: z.number(),
+  size: z.number(),
+  totalElements: z.number(),
+  totalPages: z.number(),
+  last: z.boolean(),
 })
 
 export type PlaceListItem = z.infer<typeof placeListItemSchema>
 export type PlacePage = z.infer<typeof placePageSchema>
 export type Place = z.infer<typeof placeDetailSchema>
 export type PopularPlace = z.infer<typeof popularPlaceSchema>
+export type PopularPlacePage = z.infer<typeof popularPlacePageSchema>
 
 /** @deprecated PlaceListItem 사용. 하위 호환용 별칭 */
 export const placeSchema = placeDetailSchema

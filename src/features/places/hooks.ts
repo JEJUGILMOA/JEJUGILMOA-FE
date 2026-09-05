@@ -34,7 +34,7 @@ export function usePopularPlacesQuery(
   options?: PopularPlacesQueryOptions,
 ) {
   return useQuery({
-    queryKey: QUERY_KEYS.popularPlaces(params?.limit),
+    queryKey: QUERY_KEYS.popularPlaces(params),
     queryFn: () => fetchPopularPlaces(params),
     enabled: options?.enabled ?? true,
   })

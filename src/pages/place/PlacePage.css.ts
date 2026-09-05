@@ -27,7 +27,7 @@ export const heroActionsStyle = style({
   top: vars.space[4],
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
+  justifyContent: 'flex-end',
 })
 
 export const heroIconButtonStyle = style({
