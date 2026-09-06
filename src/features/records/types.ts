@@ -195,6 +195,11 @@ export type TravelRecordDetailResponse = {
   author: TravelRecordAuthorResponse
   plan: TravelRecordPlanLinkResponse | null
   images: TravelRecordImageResponse[]
+  thumbnailImageId: number | null
+  thumbnailUrl: string | null
+  imageCount: number
+  /** 대표 사진(`images`) + 장소별 사진을 서버가 이미 합쳐서 주는 전체 사진 목록 */
+  allImages: TravelRecordImageResponse[]
   places: TravelRecordPlaceResponse[]
   likeCount: number
   dislikeCount: number
@@ -234,6 +239,8 @@ export type TravelRecordUpdateRequest = {
    * 첨부한 사진만으로 전체 교체한다(그 사이 유지하려던 기존 사진은 유실될 수 있음, 백엔드
    * 확인 필요 — `docs/RECORD_API_INTEGRATION.md` 리스크 참고). */
   imageObjectKeys?: string[]
+  /** 대표(썸네일) 사진으로 지정할 objectKey. 새로 스웨거에 추가된 필드 — 아직 프론트 연동 없음 */
+  thumbnailImageObjectKey?: string
 }
 
 /** 기록 수정 화면에서 장소 하나의 메모 입력 상태 → PATCH 요청으로 변환하기 전 중간 형태 */
