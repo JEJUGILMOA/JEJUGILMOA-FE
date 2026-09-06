@@ -124,11 +124,10 @@ function buildPlaceMemoRequests(
 }
 
 /**
- * 대표 사진 + STEP 03 추가 업로드 사진을 기록 전체 사진첩(`imageObjectKeys`)으로 모은다.
- * 대표 사진은 장소 사진 풀 또는 extraPhotos 중에서 고르는데, 두 경우 다 같은 File이
- * 다른 곳에도 이미 들어있는 것이라 그대로 합치면 objectKey가 중복돼 서버가 거부한다
- * (`RECORD400_3`) — 장소 사진과 겹치면 제외, extraPhotos와 겹치면(대표 사진으로 고른
- * 그 사진) 한 번만 넣는다.
+ * STEP 03 추가 업로드 사진을 기록 전체 사진첩(`imageObjectKeys`)으로 모은다. 장소 사진 풀과
+ * 겹치는 파일은 제외한다 — 같은 objectKey를 장소 쪽과 기록 전체 쪽에 둘 다 넣으면 서버가
+ * 중복으로 거부한다(`RECORD400_3`). 대표 사진 지정은 이제 `thumbnailImageObjectKey`로 따로
+ * 하니, 여기서 대표 사진을 맨 앞에 오도록 순서를 조작할 필요는 없다.
  */
 function buildRecordImageObjectKeys(draft: RecordDraft, fileToObjectKey: Map<File, string>): string[] {
   const placePhotoFiles = new Set(
@@ -136,15 +135,7 @@ function buildRecordImageObjectKeys(draft: RecordDraft, fileToObjectKey: Map<Fil
       memo.photos.filter((photo): photo is File => photo instanceof File),
     ),
   )
-  const seen = new Set<File>()
-  const files: File[] = []
-  const add = (file: File) => {
-    if (placePhotoFiles.has(file) || seen.has(file)) return
-    seen.add(file)
-    files.push(file)
-  }
-  if (draft.coverPhoto) add(draft.coverPhoto)
-  draft.extraPhotos.forEach(add)
+  const files = draft.extraPhotos.filter((file) => !placePhotoFiles.has(file))
   return files.map((file) => objectKeyOf(file, fileToObjectKey))
 }
 
@@ -159,6 +150,7 @@ function buildRecordCreateRequest(
     visibility: toApiVisibility(draft.visibility),
     placeMemos: buildPlaceMemoRequests(draft, fileToObjectKey),
     imageObjectKeys: buildRecordImageObjectKeys(draft, fileToObjectKey),
+    thumbnailImageObjectKey: draft.coverPhoto ? objectKeyOf(draft.coverPhoto, fileToObjectKey) : undefined,
   }
 }
 
@@ -214,6 +206,10 @@ function mapDetailToPhotoUrls(images: TravelRecordImageResponse[]): string[] {
   return sortBySequenceOrder(images).map((image) => image.imageUrl)
 }
 
+function mapImageObjectKeyByUrl(images: TravelRecordImageResponse[]): Record<string, string> {
+  return Object.fromEntries(images.map((image) => [image.imageUrl, image.objectKey]))
+}
+
 /** 'yyyy-MM-dd' -> 'yyyy.MM.dd' */
 function formatApiDate(date: string): string {
   return date.replaceAll('-', '.')
@@ -235,6 +231,7 @@ function mapDetailToSavedRecord(detail: TravelRecordDetailResponse): SavedRecord
     summary: detail.description ?? '',
     thumbnailUrl: detail.thumbnailUrl ?? photoUrls[0] ?? null,
     photoUrls,
+    imageObjectKeyByUrl: mapImageObjectKeyByUrl(detail.allImages),
     tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate, detail.places.length),
     visitedPlaces: mapDetailToVisitedPlaces(detail.places),
     visitedPlaceCount: detail.places.length,
@@ -333,23 +330,33 @@ function buildPlaceUpdateRequests(
     .filter((request): request is TravelRecordPlaceUpdateRequest => request !== null)
 }
 
+function objectKeyOfUrl(url: string, imageObjectKeyByUrl: Record<string, string>): string {
+  const objectKey = imageObjectKeyByUrl[url]
+  if (!objectKey) throw new Error('objectKey를 알 수 없는 사진입니다')
+  return objectKey
+}
+
 /**
- * 서버가 기존 사진의 objectKey를 안 돌려주기 때문에(응답엔 `imageUrl`만 있음) 기존 사진을
- * 유지한 채 일부만 바꾸는 부분 수정은 표현할 수 없다. 안 건드렸으면 생략(유지), 뭐든
- * 바뀌었으면 새로 첨부한 File만으로 전체를 그걸로 교체한다 — 그 사이 남겨두고 싶던
- * 기존 사진은 유실될 수 있다(백엔드 확인 필요, `docs/RECORD_API_INTEGRATION.md` 참고).
+ * 기록 전체 사진 그리드의 최종 상태(기존 사진 유지 + 새로 첨부한 사진 + 삭제)를 그대로
+ * objectKey 배열로 표현한다. 이제 기존 사진도 `objectKey`를 알 수 있어서(TravelRecordImageResponse),
+ * 안 건드린 사진은 그 objectKey를, 새로 첨부한 File은 방금 업로드한 objectKey를 그대로 섞어
+ * 보낼 수 있다 — 예전처럼 뭐든 바뀌면 전체를 새 파일로만 교체할 필요가 없다.
  */
 function buildRecordImageObjectKeysForUpdate(
   photos: (File | string)[] | undefined,
-  original: string[],
+  originalOwnPhotoUrls: string[],
+  imageObjectKeyByUrl: Record<string, string>,
   fileToObjectKey: Map<File, string>,
 ): string[] | undefined {
   if (!photos) return undefined
-  const unchanged = photos.length === original.length && photos.every((photo, index) => photo === original[index])
+  const unchanged =
+    photos.length === originalOwnPhotoUrls.length &&
+    photos.every((photo, index) => photo === originalOwnPhotoUrls[index])
   if (unchanged) return undefined
 
-  const newFiles = photos.filter((photo): photo is File => photo instanceof File)
-  return newFiles.map((file) => objectKeyOf(file, fileToObjectKey))
+  return photos.map((photo) =>
+    typeof photo === 'string' ? objectKeyOfUrl(photo, imageObjectKeyByUrl) : objectKeyOf(photo, fileToObjectKey),
+  )
 }
 
 export async function updateRecord(id: string, patch: RecordUpdatePatch, original: SavedRecord): Promise<void> {
@@ -363,11 +370,21 @@ export async function updateRecord(id: string, patch: RecordUpdatePatch, origina
   // original.photoUrls는 서버가 대표 사진 + 장소별 사진을 합쳐서 주는 값(`allImages`)이라,
   // 기록 자체의 대표 사진첩과 비교하려면 장소 사진과 겹치는 걸 빼야 한다(RecordEditPage의
   // `photos` state도 같은 기준으로 걸러서 만든다 — 안 맞추면 "변경 없음" 판정이 항상 어긋나서
-  // 매번 imageObjectKeys를 빈 배열([]=전체 제거)로 잘못 보내게 된다).
+  // 매번 imageObjectKeys를 필요 이상으로 다시 보내게 된다).
   const originalPlacePhotoUrls = new Set(original.visitedPlaces.flatMap((place) => place.photoUrls))
   const originalOwnPhotoUrls = original.photoUrls.filter((url) => !originalPlacePhotoUrls.has(url))
-  const imageObjectKeys = buildRecordImageObjectKeysForUpdate(patch.photos, originalOwnPhotoUrls, fileToObjectKey)
-  const thumbnailImageObjectKey = patch.coverPhoto ? objectKeyOf(patch.coverPhoto, fileToObjectKey) : undefined
+  const imageObjectKeys = buildRecordImageObjectKeysForUpdate(
+    patch.photos,
+    originalOwnPhotoUrls,
+    original.imageObjectKeyByUrl,
+    fileToObjectKey,
+  )
+  const thumbnailImageObjectKey =
+    patch.coverPhoto === undefined || patch.coverPhoto === null
+      ? undefined
+      : typeof patch.coverPhoto === 'string'
+        ? objectKeyOfUrl(patch.coverPhoto, original.imageObjectKeyByUrl)
+        : objectKeyOf(patch.coverPhoto, fileToObjectKey)
 
   const payload: TravelRecordUpdateRequest = {
     title: patch.title,

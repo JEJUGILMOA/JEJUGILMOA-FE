@@ -87,10 +87,10 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
   // 장소별 메모에 첨부한 사진도 "사진" 섹션에 함께 보이도록 미리보기 풀에 포함한다
   // (생성 화면의 대표사진 고르기와 같은 방식) — 실제 삭제/추가는 각 장소 메모에서만 한다.
   const placePhotos = Object.values(placeMemos).flatMap((memo) => memo.photos)
-  // 대표 사진은 서버가 기존 사진의 objectKey를 안 돌려줘서 새로 첨부한 File 중에서만 고를 수 있다
-  const newPhotoCandidates = [...photos, ...placePhotos].filter((photo): photo is File => photo instanceof File)
-  const [coverPhoto, setCoverPhoto] = useState<File | null>(null)
-  const selectedCoverPhoto = coverPhoto && newPhotoCandidates.includes(coverPhoto) ? coverPhoto : null
+  // "사진" 섹션에 보이는 모든 사진(새로 첨부한 것 + 기존 것) 중에서 대표 사진을 고를 수 있다
+  const coverPhotoCandidates = [...photos, ...placePhotos]
+  const [coverPhoto, setCoverPhoto] = useState<File | string | null>(null)
+  const selectedCoverPhoto = coverPhoto && coverPhotoCandidates.includes(coverPhoto) ? coverPhoto : null
   const [visibility, setVisibility] = useState<RecordVisibility>(record.visibility)
   const [isDirty, setIsDirty] = useState(false)
   const [activePlaceId, setActivePlaceId] = useState<string | null>(null)
@@ -211,14 +211,14 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
             <p className={photoHintStyle}>"장소" 표시된 사진은 장소별 메모에서 관리돼요</p>
           ) : null}
 
-          {newPhotoCandidates.length > 0 ? (
+          {coverPhotoCandidates.length > 0 ? (
             <>
               <p className={subsectionLabelStyle}>대표 사진</p>
               <CoverPhotoSelector
-                candidates={newPhotoCandidates}
+                candidates={coverPhotoCandidates}
                 selected={selectedCoverPhoto}
-                onSelect={(file) => {
-                  setCoverPhoto(file)
+                onSelect={(photo) => {
+                  setCoverPhoto(photo)
                   setIsDirty(true)
                 }}
               />

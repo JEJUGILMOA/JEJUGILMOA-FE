@@ -59,6 +59,8 @@ export type TravelRecordCreateRequest = {
   visibility?: RecordVisibilityApi
   placeMemos?: TravelRecordPlaceMemoRequest[]
   imageObjectKeys?: string[]
+  /** 대표(썸네일) 사진으로 지정할 objectKey. 기록 전체 사진첩·장소 사진 중 아무거나 가능 */
+  thumbnailImageObjectKey?: string
 }
 
 /** `POST /api/records` 응답 */
@@ -93,6 +95,8 @@ export type SavedRecord = {
   thumbnailUrl: string | null
   /** STEP 03 대표 사진 + 장소별 사진을 합친 전체 사진 (캐러셀용) */
   photoUrls: string[]
+  /** 이미지 URL → S3 objectKey. 기록 수정에서 기존 사진을 대표 사진으로 재지정할 때 사용 */
+  imageObjectKeyByUrl: Record<string, string>
   /** 이 기록이 기반한 여행의 일정 라벨 (예: "2026.05.02 - 05.05 · 3박4일") */
   tripDateRangeLabel: string
   visitedPlaces: VisitedPlaceRecord[]
@@ -157,6 +161,8 @@ export type TravelRecordAuthorResponse = {
 export type TravelRecordImageResponse = {
   imageId: number
   imageUrl: string
+  /** 대표 사진 지정(`thumbnailImageObjectKey`)에 그대로 되돌려보낼 수 있는 S3 objectKey */
+  objectKey: string
   sequenceOrder: number
 }
 
@@ -258,7 +264,7 @@ export type RecordUpdatePatch = {
   visitedPlaces?: RecordPlaceMemoUpdate[]
   /** 기록 전체 사진 그리드의 현재 상태 (File=새로 첨부, string=기존 사진 URL 유지) */
   photos?: (File | string)[]
-  /** 대표(썸네일) 사진으로 새로 지정할 사진. `photos`나 장소별 사진 중 새로 첨부한 File이어야
-   * objectKey를 구할 수 있다(기존 사진은 서버가 objectKey를 안 돌려줘서 지정 불가) */
-  coverPhoto?: File | null
+  /** 대표(썸네일) 사진으로 새로 지정할 사진. `photos`나 장소별 사진 중 하나(새로 첨부한
+   * File 또는 기존 사진 URL 문자열) */
+  coverPhoto?: File | string | null
 }

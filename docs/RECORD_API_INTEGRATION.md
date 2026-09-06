@@ -26,13 +26,14 @@
 - **좋아요/싫어요 API가 생김**: `POST /api/records/{id}/reactions`(설정)/`DELETE /api/records/{id}/reactions`(취소)로 실 연동. `hooks.ts`의 로컬 캐시 토글 제거하고 성공 시 캐시 무효화 방식으로 교체.
 - **`travelCourseId` = 여행(trip)의 `waypointId`로 확인됨**: `POST /api/trips/{tripId}/waypoints/{waypointId}/skip`(경유지 건너뛰기, 신규 API) 스웨거 설명에 `waypointId`를 "건너뛸 경유지(**TravelCourse**) ID"라고 명시해둔 걸 확인 — 기록 생성 요청의 `travelCourseId`와 같은 개념·같은 값이라는 뜻. 기존에 `waypointId`를 그대로 보내던 가정이 맞았음.
 - **`GET /api/records/{recordId}` 응답에 `thumbnailUrl`/`thumbnailImageId`/`imageCount`/`allImages`(대표 사진 + 장소별 사진을 서버가 합쳐서 주는 전체 목록) 추가됨** — 프론트에서 하던 "대표 사진 + 장소 사진 합치기" 로직(`collectAllPhotoUrls`)을 걷어내고 `allImages`/`thumbnailUrl`을 그대로 씀(`mapDetailToSavedRecord`/`mapDetailToExploreRecord`, `records/api.ts`).
-- **`PATCH /api/records/{recordId}`에 `thumbnailImageObjectKey` 필드 추가됨**: 대표(썸네일) 사진을 명시적으로 지정할 수 있게 됨. 타입(`TravelRecordUpdateRequest.thumbnailImageObjectKey`)만 반영해뒀고, 실제 "대표 사진 바꾸기" UI/로직은 아직 안 붙임 — 예전 리스크였던 "커버 이미지 변경 불가"가 기술적으로는 풀렸으니 필요하면 붙일 것.
+- **`TravelRecordImageResponse`에 `objectKey` 필드 추가됨** (`imageId`/`imageUrl`/`objectKey`/`sequenceOrder`) — 기존에 저장된 사진도 이제 objectKey를 알 수 있음. `SavedRecord.imageObjectKeyByUrl`(url → objectKey)로 노출해서 씀.
+- **대표(썸네일) 사진 지정이 생성·수정 둘 다 실제로 연결됨**: `PATCH`뿐 아니라 `POST /api/records`에도 `thumbnailImageObjectKey`가 추가돼서, 생성 시 장소 사진을 대표로 골라도(=기록 전체 사진첩엔 안 들어가는 사진이어도) 문제없이 반영됨(`buildRecordCreateRequest`). 수정 화면(`CoverPhotoSelector`)에서도 새로 첨부한 사진뿐 아니라 **기존 사진 중에서도** 대표로 재지정 가능.
+- **수정(PATCH) 시 기록 전체 사진(`imageObjectKeys`) 부분 교체 제약도 풀림**: 위 `objectKey` 추가 덕분에 기존 사진 유지 + 새 사진 추가 + 일부 삭제를 한 번에 정확히 표현 가능(`buildRecordImageObjectKeysForUpdate`, `records/api.ts`) — 더 이상 "뭐든 바뀌면 새로 첨부한 것만으로 전체 교체" 방식이 아님.
 
 ## 아직 남은 리스크
 
 - **`GET /api/records` 목록 응답 스키마가 swagger에 여전히 미완성**이다 (`content: {}` 제네릭). 목록에서는 `recordId`만 신뢰하고 나머지는 `GET /api/records/{recordId}`(문서화된 상세)로 재조회하는 N+1 방식(`fetchRecordDetails`, `records/api.ts`)으로 우회 중. 목록 응답이 확정되면 최적화할 것.
 - **`mine=false`(둘러보기)가 본인의 공개 기록도 포함하는지 미검증**. mock 시절 의도(전체공개 내 기록이 둘러보기에도 보임)를 그대로 따른다고 가정 — 서버가 실제로 그렇게 동작하는지 확인 필요.
-- **수정(PATCH) 시 기록 전체 사진(`imageObjectKeys`) 부분 교체가 여전히 불가능**: `TravelRecordImageResponse`(응답의 `images`/`allImages` 항목)엔 여전히 `objectKey`가 없고 `imageUrl`만 있어서 "기존 몇 장 유지 + 몇 장만 교체"를 표현할 방법이 없다. 안 건드리면 생략(유지), 뭐든 바뀌면 새로 첨부한 File만으로 전체 교체(`buildRecordImageObjectKeysForUpdate`, `records/api.ts`) — 그 사이 유지하려던 기존 사진은 유실될 수 있음. **장소별 사진은 REPLACE/REMOVE 액션 방식이라 이 문제 없음** (배열화도 반영됨). 단, 대표 사진 하나만 바꾸는 거라면 이제 `thumbnailImageObjectKey`로 가능(위 참고).
 - **북마크는 여전히 API가 없어서 로컬(React Query 캐시) 전용** — 새로고침하면 사라짐.
 - 위 리스크들은 실제로 로그인해서 기록 생성·조회·수정을 눌러보고 네트워크 탭으로 확인해야 최종 확정됨.
 
