@@ -14,6 +14,7 @@ import type { PlaceMemo, RecordVisibility, SavedRecord } from '@/features/record
 import { PhotoGrid } from '@/pages/record/create/components/PhotoGrid'
 import { PlaceMemoSheet } from '@/pages/record/create/components/PlaceMemoSheet'
 import { SelectableOption } from '@/pages/record/create/components/SelectableOption'
+import { CoverPhotoSelector } from './components/CoverPhotoSelector'
 import { EditPlaceMemoRow } from './components/EditPlaceMemoRow'
 import {
   divider,
@@ -26,6 +27,7 @@ import {
   sectionHeaderStyle,
   sectionLabelStyle,
   sectionStyle,
+  subsectionLabelStyle,
 } from './RecordEditPage.css.ts'
 
 const EMPTY_MEMO: PlaceMemo = { note: '', photos: [] }
@@ -80,6 +82,10 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
   // 장소별 메모에 첨부한 사진도 "사진" 섹션에 함께 보이도록 미리보기 풀에 포함한다
   // (생성 화면의 대표사진 고르기와 같은 방식) — 실제 삭제/추가는 각 장소 메모에서만 한다.
   const placePhotos = Object.values(placeMemos).flatMap((memo) => memo.photos)
+  // 대표 사진은 서버가 기존 사진의 objectKey를 안 돌려줘서 새로 첨부한 File 중에서만 고를 수 있다
+  const newPhotoCandidates = [...photos, ...placePhotos].filter((photo): photo is File => photo instanceof File)
+  const [coverPhoto, setCoverPhoto] = useState<File | null>(null)
+  const selectedCoverPhoto = coverPhoto && newPhotoCandidates.includes(coverPhoto) ? coverPhoto : null
   const [visibility, setVisibility] = useState<RecordVisibility>(record.visibility)
   const [isDirty, setIsDirty] = useState(false)
   const [activePlaceId, setActivePlaceId] = useState<string | null>(null)
@@ -116,7 +122,7 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
       {
         id: record.id,
         original: record,
-        patch: { title, summary, visibility, visitedPlaces, photos },
+        patch: { title, summary, visibility, visitedPlaces, photos, coverPhoto: selectedCoverPhoto },
       },
       {
         onSuccess: () => {
@@ -198,6 +204,20 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
           />
           {placePhotos.length > 0 ? (
             <p className={photoHintStyle}>"장소" 표시된 사진은 장소별 메모에서 관리돼요</p>
+          ) : null}
+
+          {newPhotoCandidates.length > 0 ? (
+            <>
+              <p className={subsectionLabelStyle}>대표 사진</p>
+              <CoverPhotoSelector
+                candidates={newPhotoCandidates}
+                selected={selectedCoverPhoto}
+                onSelect={(file) => {
+                  setCoverPhoto(file)
+                  setIsDirty(true)
+                }}
+              />
+            </>
           ) : null}
         </div>
 

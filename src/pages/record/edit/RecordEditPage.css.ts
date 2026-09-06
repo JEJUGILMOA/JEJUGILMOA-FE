@@ -43,6 +43,13 @@ export const photoHintStyle = style({
   color: colors.text[4],
 })
 
+export const subsectionLabelStyle = style({
+  marginTop: vars.space[2],
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.medium,
+  color: colors.text[3],
+})
+
 export const placeMemoListStyle = style({
   display: 'flex',
   flexDirection: 'column',

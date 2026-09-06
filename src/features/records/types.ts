@@ -258,4 +258,7 @@ export type RecordUpdatePatch = {
   visitedPlaces?: RecordPlaceMemoUpdate[]
   /** 기록 전체 사진 그리드의 현재 상태 (File=새로 첨부, string=기존 사진 URL 유지) */
   photos?: (File | string)[]
+  /** 대표(썸네일) 사진으로 새로 지정할 사진. `photos`나 장소별 사진 중 새로 첨부한 File이어야
+   * objectKey를 구할 수 있다(기존 사진은 서버가 objectKey를 안 돌려줘서 지정 불가) */
+  coverPhoto?: File | null
 }

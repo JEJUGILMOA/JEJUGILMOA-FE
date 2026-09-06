@@ -282,23 +282,38 @@ export async function fetchExploreRecords(): Promise<ExploreRecord[]> {
   return details.map(mapDetailToExploreRecord).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
+/** `updateRecord`에서 새로 첨부된 File을 딱 한 번씩만 업로드하려고 patch 전체를 훑어 모은다 */
+function collectUniqueUpdateFiles(patch: RecordUpdatePatch): File[] {
+  const seen = new Set<File>()
+  const files: File[] = []
+  const add = (photo: File | string) => {
+    if (typeof photo === 'string') return
+    if (seen.has(photo)) return
+    seen.add(photo)
+    files.push(photo)
+  }
+  patch.photos?.forEach(add)
+  patch.visitedPlaces?.forEach((place) => place.photos.forEach(add))
+  return files
+}
+
 /**
- * 장소 하나의 메모 수정을 PATCH 요청 항목으로 변환. 사진 REPLACE는 새로 첨부한 File들을
- * 업로드해서 그 objectKey 배열을 보내면 되고, REMOVE는 액션 플래그만 있으면 되니 기존
- * objectKey가 없어도 표현 가능하다(장소 사진은 문제없음 — 기록 전체 사진첩과 다른 점).
+ * 장소 하나의 메모 수정을 PATCH 요청 항목으로 변환. 사진 REPLACE는 이미 업로드해둔
+ * objectKey 배열을 보내면 되고, REMOVE는 액션 플래그만 있으면 되니 기존 objectKey가
+ * 없어도 표현 가능하다(장소 사진은 문제없음 — 기록 전체 사진첩과 다른 점).
  */
-async function buildPlaceUpdateRequest(
+function buildPlaceUpdateRequest(
   place: RecordPlaceMemoUpdate,
   before: VisitedPlaceRecord | undefined,
-): Promise<TravelRecordPlaceUpdateRequest | null> {
+  fileToObjectKey: Map<File, string>,
+): TravelRecordPlaceUpdateRequest | null {
   const newFiles = place.photos.filter((photo): photo is File => photo instanceof File)
   const hadPhotos = Boolean(before?.photoUrls.length)
   const noteChanged = (before?.note ?? '') !== place.note
 
   let image: TravelRecordPlaceUpdateRequest['image']
   if (newFiles.length > 0) {
-    const objectKeys = await Promise.all(newFiles.map((file) => uploadImageAndGetObjectKey(file)))
-    image = { action: 'REPLACE', objectKeys }
+    image = { action: 'REPLACE', objectKeys: newFiles.map((file) => objectKeyOf(file, fileToObjectKey)) }
   } else if (place.photos.length === 0 && hadPhotos) {
     image = { action: 'REMOVE', objectKeys: [] }
   }
@@ -307,40 +322,46 @@ async function buildPlaceUpdateRequest(
   return { recordPlaceId: place.recordPlaceId, memo: place.note, image }
 }
 
-async function buildPlaceUpdateRequests(
+function buildPlaceUpdateRequests(
   places: RecordPlaceMemoUpdate[],
   original: VisitedPlaceRecord[],
-): Promise<TravelRecordPlaceUpdateRequest[]> {
+  fileToObjectKey: Map<File, string>,
+): TravelRecordPlaceUpdateRequest[] {
   const originalById = new Map(original.map((place) => [place.recordPlaceId, place]))
-  const results = await Promise.all(
-    places.map((place) => buildPlaceUpdateRequest(place, originalById.get(place.recordPlaceId))),
-  )
-  return results.filter((request): request is TravelRecordPlaceUpdateRequest => request !== null)
+  return places
+    .map((place) => buildPlaceUpdateRequest(place, originalById.get(place.recordPlaceId), fileToObjectKey))
+    .filter((request): request is TravelRecordPlaceUpdateRequest => request !== null)
 }
 
 /**
  * 서버가 기존 사진의 objectKey를 안 돌려주기 때문에(응답엔 `imageUrl`만 있음) 기존 사진을
  * 유지한 채 일부만 바꾸는 부분 수정은 표현할 수 없다. 안 건드렸으면 생략(유지), 뭐든
- * 바뀌었으면 새로 첨부한 File만 업로드해서 전체를 그걸로 교체한다 — 그 사이 남겨두고 싶던
+ * 바뀌었으면 새로 첨부한 File만으로 전체를 그걸로 교체한다 — 그 사이 남겨두고 싶던
  * 기존 사진은 유실될 수 있다(백엔드 확인 필요, `docs/RECORD_API_INTEGRATION.md` 참고).
  */
-async function buildRecordImageObjectKeysForUpdate(
+function buildRecordImageObjectKeysForUpdate(
   photos: (File | string)[] | undefined,
   original: string[],
-): Promise<string[] | undefined> {
+  fileToObjectKey: Map<File, string>,
+): string[] | undefined {
   if (!photos) return undefined
   const unchanged = photos.length === original.length && photos.every((photo, index) => photo === original[index])
   if (unchanged) return undefined
 
   const newFiles = photos.filter((photo): photo is File => photo instanceof File)
-  return Promise.all(newFiles.map((file) => uploadImageAndGetObjectKey(file)))
+  return newFiles.map((file) => objectKeyOf(file, fileToObjectKey))
 }
 
 export async function updateRecord(id: string, patch: RecordUpdatePatch, original: SavedRecord): Promise<void> {
+  const files = collectUniqueUpdateFiles(patch)
+  const objectKeys = await Promise.all(files.map((file) => uploadImageAndGetObjectKey(file)))
+  const fileToObjectKey = new Map(files.map((file, index) => [file, objectKeys[index]]))
+
   const places = patch.visitedPlaces
-    ? await buildPlaceUpdateRequests(patch.visitedPlaces, original.visitedPlaces)
+    ? buildPlaceUpdateRequests(patch.visitedPlaces, original.visitedPlaces, fileToObjectKey)
     : undefined
-  const imageObjectKeys = await buildRecordImageObjectKeysForUpdate(patch.photos, original.photoUrls)
+  const imageObjectKeys = buildRecordImageObjectKeysForUpdate(patch.photos, original.photoUrls, fileToObjectKey)
+  const thumbnailImageObjectKey = patch.coverPhoto ? objectKeyOf(patch.coverPhoto, fileToObjectKey) : undefined
 
   const payload: TravelRecordUpdateRequest = {
     title: patch.title,
@@ -348,6 +369,7 @@ export async function updateRecord(id: string, patch: RecordUpdatePatch, origina
     visibility: patch.visibility ? toApiVisibility(patch.visibility) : undefined,
     places: places && places.length > 0 ? places : undefined,
     imageObjectKeys,
+    thumbnailImageObjectKey,
   }
   await apiPatch(`/records/${id}`, payload)
 }
