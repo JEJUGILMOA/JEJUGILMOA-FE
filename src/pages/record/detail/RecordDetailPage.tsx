@@ -19,6 +19,7 @@ import {
 import type { ExploreRecord, ReactionType, SavedRecord } from '@/features/records/types'
 import { useAuthStore } from '@/stores/authStore'
 import { RecordManageSheet } from '@/pages/record/components/RecordManageSheet'
+import { EarnedBadgeCallout } from './components/EarnedBadgeCallout'
 import { PhotoCarousel } from './components/PhotoCarousel'
 import { RoutePreview } from './components/RoutePreview'
 import { VisitedPlaceList } from './components/VisitedPlaceList'
@@ -252,6 +253,17 @@ export function RecordDetailPage() {
             <p className={metaStyle}>
               방문 장소 {view.visitedPlaces.length}곳 · 사진 {view.photoUrls.length}장
             </p>
+
+            {view.isOwn ? (
+              // TODO: 더미 데이터 — GET /api/records/{id} 응답에 "이 기록으로 새로 딴 배지" 정보가
+              // 아직 없어서(배지는 /api/badges/me·트립 완료 응답에만 있음), 백엔드 지원 전까지는
+              // UI만 먼저 만들어둔다.
+              <EarnedBadgeCallout
+                badgeName="첫 발걸음"
+                additionalCount={1}
+                onViewAll={() => navigate(ROUTES.myBadges)}
+              />
+            ) : null}
 
             <div className={actionRowStyle}>
               <button
