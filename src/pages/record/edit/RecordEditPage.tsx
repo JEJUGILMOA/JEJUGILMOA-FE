@@ -14,7 +14,6 @@ import type { PlaceMemo, RecordVisibility, SavedRecord } from '@/features/record
 import { PhotoGrid } from '@/pages/record/create/components/PhotoGrid'
 import { PlaceMemoSheet } from '@/pages/record/create/components/PlaceMemoSheet'
 import { SelectableOption } from '@/pages/record/create/components/SelectableOption'
-import { CoverPhotoSelector } from './components/CoverPhotoSelector'
 import { EditPlaceMemoRow } from './components/EditPlaceMemoRow'
 import {
   divider,
@@ -27,7 +26,6 @@ import {
   sectionHeaderStyle,
   sectionLabelStyle,
   sectionStyle,
-  subsectionLabelStyle,
 } from './RecordEditPage.css.ts'
 
 const EMPTY_MEMO: PlaceMemo = { note: '', photos: [] }
@@ -89,7 +87,9 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
   const placePhotos = Object.values(placeMemos).flatMap((memo) => memo.photos)
   // "사진" 섹션에 보이는 모든 사진(새로 첨부한 것 + 기존 것) 중에서 대표 사진을 고를 수 있다
   const coverPhotoCandidates = [...photos, ...placePhotos]
-  const [coverPhoto, setCoverPhoto] = useState<File | string | null>(null)
+  // 지금 대표 사진(record.thumbnailUrl)을 초기값으로 잡아서 편집 화면을 열자마자 어떤 사진이
+  // 대표인지 테두리로 바로 보이게 한다.
+  const [coverPhoto, setCoverPhoto] = useState<File | string | null>(() => record.thumbnailUrl ?? null)
   const selectedCoverPhoto = coverPhoto && coverPhotoCandidates.includes(coverPhoto) ? coverPhoto : null
   const [visibility, setVisibility] = useState<RecordVisibility>(record.visibility)
   const [isDirty, setIsDirty] = useState(false)
@@ -206,23 +206,17 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
               setPhotos((prev) => prev.filter((_, i) => i !== index))
               setIsDirty(true)
             }}
+            coverPhoto={selectedCoverPhoto}
+            onSelectCover={(photo) => {
+              setCoverPhoto(photo)
+              setIsDirty(true)
+            }}
           />
           {placePhotos.length > 0 ? (
             <p className={photoHintStyle}>"장소" 표시된 사진은 장소별 메모에서 관리돼요</p>
           ) : null}
-
           {coverPhotoCandidates.length > 0 ? (
-            <>
-              <p className={subsectionLabelStyle}>대표 사진</p>
-              <CoverPhotoSelector
-                candidates={coverPhotoCandidates}
-                selected={selectedCoverPhoto}
-                onSelect={(photo) => {
-                  setCoverPhoto(photo)
-                  setIsDirty(true)
-                }}
-              />
-            </>
+            <p className={photoHintStyle}>사진을 탭하면 대표 사진으로 지정돼요</p>
           ) : null}
         </div>
 
