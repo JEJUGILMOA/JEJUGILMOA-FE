@@ -360,7 +360,13 @@ export async function updateRecord(id: string, patch: RecordUpdatePatch, origina
   const places = patch.visitedPlaces
     ? buildPlaceUpdateRequests(patch.visitedPlaces, original.visitedPlaces, fileToObjectKey)
     : undefined
-  const imageObjectKeys = buildRecordImageObjectKeysForUpdate(patch.photos, original.photoUrls, fileToObjectKey)
+  // original.photoUrls는 서버가 대표 사진 + 장소별 사진을 합쳐서 주는 값(`allImages`)이라,
+  // 기록 자체의 대표 사진첩과 비교하려면 장소 사진과 겹치는 걸 빼야 한다(RecordEditPage의
+  // `photos` state도 같은 기준으로 걸러서 만든다 — 안 맞추면 "변경 없음" 판정이 항상 어긋나서
+  // 매번 imageObjectKeys를 빈 배열([]=전체 제거)로 잘못 보내게 된다).
+  const originalPlacePhotoUrls = new Set(original.visitedPlaces.flatMap((place) => place.photoUrls))
+  const originalOwnPhotoUrls = original.photoUrls.filter((url) => !originalPlacePhotoUrls.has(url))
+  const imageObjectKeys = buildRecordImageObjectKeysForUpdate(patch.photos, originalOwnPhotoUrls, fileToObjectKey)
   const thumbnailImageObjectKey = patch.coverPhoto ? objectKeyOf(patch.coverPhoto, fileToObjectKey) : undefined
 
   const payload: TravelRecordUpdateRequest = {

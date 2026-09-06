@@ -78,7 +78,12 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
       ]),
     ),
   )
-  const [photos, setPhotos] = useState<(File | string)[]>(record.photoUrls)
+  // record.photoUrls는 서버가 대표 사진 + 장소별 사진을 이미 합쳐서 주는 값이라(`allImages`),
+  // 장소 사진과 겹치는 건 빼야 아래 placePhotos("장소" 배지)랑 중복으로 안 보인다.
+  const [photos, setPhotos] = useState<(File | string)[]>(() => {
+    const placePhotoUrls = new Set(record.visitedPlaces.flatMap((place) => place.photoUrls))
+    return record.photoUrls.filter((url) => !placePhotoUrls.has(url))
+  })
   // 장소별 메모에 첨부한 사진도 "사진" 섹션에 함께 보이도록 미리보기 풀에 포함한다
   // (생성 화면의 대표사진 고르기와 같은 방식) — 실제 삭제/추가는 각 장소 메모에서만 한다.
   const placePhotos = Object.values(placeMemos).flatMap((memo) => memo.photos)
