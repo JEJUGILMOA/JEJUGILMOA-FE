@@ -134,6 +134,9 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
           toast.success('기록을 수정했어요')
           goToDetail()
         },
+        onError: () => {
+          toast.error('기록 수정에 실패했어요. 다시 시도해 주세요.')
+        },
       },
     )
   }
