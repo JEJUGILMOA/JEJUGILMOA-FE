@@ -199,6 +199,20 @@ export const reactionButtonRecipe = recipe({
   },
 })
 
+/** 본인 기록엔 반응(좋아요/싫어요)을 누를 수 없어서(서버가 타인 기록에만 허용) 숫자만 읽기전용으로 보여준다 */
+export const reactionSummaryStyle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: vars.space[1],
+  padding: `${vars.space[1]} ${vars.space[3]}`,
+  borderRadius: vars.radius.full,
+  border: `1px solid ${colors.border[1]}`,
+  backgroundColor: colors.surface[1],
+  color: colors.text[3],
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.medium,
+})
+
 export const shareButtonStyle = style({
   display: 'inline-flex',
   alignItems: 'center',

@@ -40,6 +40,7 @@ import {
   metaStyle,
   pageStyle,
   reactionButtonRecipe,
+  reactionSummaryStyle,
   shareButtonStyle,
   subHeaderStyle,
   summaryStyle,
@@ -266,30 +267,46 @@ export function RecordDetailPage() {
             ) : null}
 
             <div className={actionRowStyle}>
-              <button
-                type="button"
-                className={reactionButtonRecipe({
-                  tone: 'like',
-                  active: view.myReaction === 'like',
-                })}
-                aria-pressed={view.myReaction === 'like'}
-                onClick={() => handleReact('like')}
-              >
-                <ThumbsUp size={14} aria-hidden />
-                좋아요 {view.likeCount}
-              </button>
-              <button
-                type="button"
-                className={reactionButtonRecipe({
-                  tone: 'dislike',
-                  active: view.myReaction === 'dislike',
-                })}
-                aria-pressed={view.myReaction === 'dislike'}
-                onClick={() => handleReact('dislike')}
-              >
-                <ThumbsDown size={14} aria-hidden />
-                싫어요 {view.dislikeCount}
-              </button>
+              {view.isOwn ? (
+                // 서버가 반응을 "타인의 공개 기록"에만 허용해서, 본인 기록은 숫자만 읽기전용으로 보여준다
+                <>
+                  <span className={reactionSummaryStyle}>
+                    <ThumbsUp size={14} aria-hidden />
+                    좋아요 {view.likeCount}
+                  </span>
+                  <span className={reactionSummaryStyle}>
+                    <ThumbsDown size={14} aria-hidden />
+                    싫어요 {view.dislikeCount}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className={reactionButtonRecipe({
+                      tone: 'like',
+                      active: view.myReaction === 'like',
+                    })}
+                    aria-pressed={view.myReaction === 'like'}
+                    onClick={() => handleReact('like')}
+                  >
+                    <ThumbsUp size={14} aria-hidden />
+                    좋아요 {view.likeCount}
+                  </button>
+                  <button
+                    type="button"
+                    className={reactionButtonRecipe({
+                      tone: 'dislike',
+                      active: view.myReaction === 'dislike',
+                    })}
+                    aria-pressed={view.myReaction === 'dislike'}
+                    onClick={() => handleReact('dislike')}
+                  >
+                    <ThumbsDown size={14} aria-hidden />
+                    싫어요 {view.dislikeCount}
+                  </button>
+                </>
+              )}
               <button type="button" className={shareButtonStyle} onClick={handleShare}>
                 <Share2 size={14} aria-hidden />
                 공유

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query'
+import { toast } from '@/components/ui/Toast/Toast'
 import { QUERY_KEYS } from '@/constants'
 import {
   createRecord,
@@ -133,6 +134,9 @@ function useRecordReactionMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exploreRecords })
+    },
+    onError: () => {
+      toast.error('반응을 처리하지 못했어요. 다시 시도해 주세요.')
     },
   })
 }
