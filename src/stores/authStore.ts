@@ -25,7 +25,8 @@ type AuthState = {
 }
 
 export const authStore = createStore<AuthState>()((set) => ({
-  accessToken: useDevAuth ? 'dev-token' : null,
+  // 쿠키 세션이 본체. DEV_AUTH는 UI용 로그인 상태만 켜고 Bearer는 붙이지 않는다.
+  accessToken: null,
   user: useDevAuth ? DEV_USER : null,
   isAuthenticated: useDevAuth,
   setAuth: ({ user, accessToken = null }) =>

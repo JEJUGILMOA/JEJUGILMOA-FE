@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 import { BookOpen, ChevronRight, MapPin, Settings, Share2, Sparkles } from 'lucide-react'
 import { getErrorMessage } from '@/api/error'
 import { Button } from '@/components/ui/Button/Button'
+import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { toast } from '@/components/ui/Toast/Toast'
 import { useDevLoginMutation, useMyProfileQuery } from '@/features/auth/hooks'
 import { useAuthStore } from '@/stores/authStore'
@@ -18,6 +19,9 @@ import {
   profileButtonStyle,
   profileMetaStyle,
   profileRowStyle,
+  profileSkeletonAvatarStyle,
+  profileSkeletonEmailStyle,
+  profileSkeletonNameStyle,
 } from './MyPage.css.ts'
 
 const MENU_ITEMS = [
@@ -38,6 +42,7 @@ export function MyPage() {
   const nickname = profile?.nickname ?? user?.nickname ?? ''
   const email = profile?.email
   const imageUrl = profile?.profileImageUrl ?? user?.profileImageUrl
+  const showProfileSkeleton = isAuthenticated && isPending && !profile
 
   const handleDevLogin = async () => {
     try {
@@ -59,28 +64,35 @@ export function MyPage() {
         aria-label={isAuthenticated ? '프로필 보기' : '로그인'}
       >
         <div className={profileRowStyle}>
-          <ProfileAvatar
-            nickname={isAuthenticated ? nickname || '사용자' : '게스트'}
-            imageUrl={isAuthenticated ? imageUrl : undefined}
-            size="md"
-          />
+          {showProfileSkeleton ? (
+            <Skeleton width={74} height={74} className={profileSkeletonAvatarStyle} />
+          ) : (
+            <ProfileAvatar
+              nickname={isAuthenticated ? nickname || '사용자' : '게스트'}
+              imageUrl={isAuthenticated ? imageUrl : undefined}
+              size="md"
+            />
+          )}
           <div className={profileMetaStyle}>
-            <span className={nameStyle}>
-              {!isAuthenticated
-                ? '로그인하기'
-                : isPending
-                  ? '불러오는 중…'
-                  : nickname || '사용자'}
-            </span>
-            <span className={emailStyle}>
-              {!isAuthenticated
-                ? '로그인이 필요해요'
-                : isPending
-                  ? '프로필을 가져오는 중'
-                  : isError
-                    ? getErrorMessage(error, '프로필을 불러오지 못했어요')
-                    : (email ?? '이메일 없음')}
-            </span>
+            {showProfileSkeleton ? (
+              <>
+                <Skeleton width="42%" height={22} className={profileSkeletonNameStyle} />
+                <Skeleton width="68%" height={14} className={profileSkeletonEmailStyle} />
+              </>
+            ) : (
+              <>
+                <span className={nameStyle}>
+                  {!isAuthenticated ? '로그인하기' : nickname || '사용자'}
+                </span>
+                <span className={emailStyle}>
+                  {!isAuthenticated
+                    ? '로그인이 필요해요'
+                    : isError
+                      ? getErrorMessage(error, '프로필을 불러오지 못했어요')
+                      : (email ?? '이메일 없음')}
+                </span>
+              </>
+            )}
           </div>
           <ChevronRight className={chevronStyle} size={16} strokeWidth={2} aria-hidden />
         </div>

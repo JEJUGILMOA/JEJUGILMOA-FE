@@ -9,7 +9,7 @@ import {
   updateMySettings,
   withdrawMyAccount,
 } from './api'
-import type { UserSettingsUpdate, UserUpdateRequest } from './schemas'
+import type { UserSettings, UserSettingsUpdate, UserUpdateRequest } from './schemas'
 import { applyDevLoginResult } from './session'
 import { authStore, useAuthStore } from '@/stores/authStore'
 
@@ -69,6 +69,22 @@ export function useUpdateMySettingsMutation() {
 
   return useMutation({
     mutationFn: (body: UserSettingsUpdate) => updateMySettings(body),
+    onMutate: async (patch) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.mySettings })
+      const previous = queryClient.getQueryData<UserSettings>(QUERY_KEYS.mySettings)
+      if (previous) {
+        queryClient.setQueryData<UserSettings>(QUERY_KEYS.mySettings, {
+          ...previous,
+          ...patch,
+        })
+      }
+      return { previous }
+    },
+    onError: (_error, _patch, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(QUERY_KEYS.mySettings, context.previous)
+      }
+    },
     onSuccess: (settings) => {
       queryClient.setQueryData(QUERY_KEYS.mySettings, settings)
     },

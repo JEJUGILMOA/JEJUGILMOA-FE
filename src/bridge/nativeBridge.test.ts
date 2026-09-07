@@ -18,15 +18,8 @@ describe('bridge messageSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('parses SET_HEADER message', () => {
-    const result = webToNativeMessageSchema.safeParse({
-      type: 'SET_HEADER',
-      title: '설정',
-      showBack: true,
-      visible: true,
-      rightText: '1 / 4',
-      actions: [{ id: 'save', label: '저장', tone: 'primary' }],
-    })
+  it('parses LOGOUT message', () => {
+    const result = webToNativeMessageSchema.safeParse({ type: 'LOGOUT' })
     expect(result.success).toBe(true)
   })
 
@@ -73,6 +66,22 @@ describe('bridge messageSchema', () => {
       actions: [{ id: 'm1#0', label: '취소', variant: 'ghost' }],
     })
     expect(result.success).toBe(true)
+  })
+
+  it('parses TAB_POP_TO_ROOT message', () => {
+    const result = nativeToWebMessageSchema.safeParse({
+      type: 'TAB_POP_TO_ROOT',
+      path: '/plan',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects invalid TAB_POP_TO_ROOT path', () => {
+    const result = nativeToWebMessageSchema.safeParse({
+      type: 'TAB_POP_TO_ROOT',
+      path: '/place/123',
+    })
+    expect(result.success).toBe(false)
   })
 })
 

@@ -1,7 +1,8 @@
-import { Bookmark, ChevronLeft, MoreVertical } from 'lucide-react'
-import { type ReactNode, useEffect, useMemo, useRef } from 'react'
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useLocation, useMatches } from 'react-router'
+import { useNativeHeaderOverride } from '@/bridge/NativeHeaderProvider'
 import { nativeBridge } from '@/bridge/nativeBridge'
-import { heading2 } from '@/styles/typography.css.ts'
+import type { RouteHandle } from '@/components/layout/AppLayout/AppLayout'
 import { cn } from '@/utils/cn'
 import {
   backButton,
@@ -9,6 +10,7 @@ import {
   pageHeaderActionMuted,
   pageHeaderActionPrimary,
   pageHeaderHidden,
+  pageHeaderIcon,
   pageHeaderLeft,
   pageHeaderRight,
   pageHeaderRightText,
@@ -52,14 +54,87 @@ function serializeActions(actions: PageHeaderAction[] | undefined) {
   }))
 }
 
+/** APP PageHeader SVG와 동일한 path (lucide와 미세한 시각 차이 제거) */
+function ChevronLeftIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg
+      className={pageHeaderIcon}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M15 18 9 12l6-6"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function MoreIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      className={pageHeaderIcon}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM12 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM12 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+function BookmarkIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      className={pageHeaderIcon}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <path
+        d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function ActionIcon({ icon }: { icon: PageHeaderActionIcon }) {
-  if (icon === 'bookmark') return <Bookmark size={20} />
-  return <MoreVertical size={16} />
+  if (icon === 'bookmark') return <BookmarkIcon />
+  return <MoreIcon />
+}
+
+/** 라우트 handle의 showHeader(마지막 match 우선). true면 네이티브 헤더 사용 */
+function useRouteShowNativeHeader() {
+  const matches = useMatches()
+  let showHeader = false
+  for (const match of matches) {
+    const handle = match.handle as RouteHandle | undefined
+    if (handle?.showHeader !== undefined) showHeader = handle.showHeader
+  }
+  return showHeader
 }
 
 /**
  * 페이지 상단 헤더. 뒤로 가기와 우측 액션을 지원합니다.
- * 네이티브 WebView에서는 숨기고 SET_HEADER로 앱 헤더에 위임합니다.
+ * 라우트 showHeader가 true인 WebView에서는 숨기고 네이티브 헤더로 위임합니다.
+ * showHeader가 false면(마이 하위 등) WebView에서도 웹 헤더를 그대로 씁니다.
  */
 export function PageHeader({
   title,
@@ -70,39 +145,54 @@ export function PageHeader({
   rightSlot,
   className,
 }: PageHeaderProps) {
-  const hideInNative = nativeBridge.isNativeWebView()
+  const showNativeHeader = useRouteShowNativeHeader()
+  const hideInNative = nativeBridge.isNativeWebView() && showNativeHeader
+  const { pathname } = useLocation()
+  const { setOverride, clearOverride } = useNativeHeaderOverride()
   const onBackRef = useRef(onBack)
   const actionsRef = useRef(actions)
   onBackRef.current = onBack
   actionsRef.current = actions
 
-  const serializedActions = useMemo(() => JSON.stringify(serializeActions(actions)), [actions])
+  const actionsKey = useMemo(() => JSON.stringify(serializeActions(actions)), [actions])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!nativeBridge.isNativeWebView()) return
 
-    nativeBridge.postToNative({
-      type: 'SET_HEADER',
+    if (!showNativeHeader) {
+      // 네이티브 헤더를 끄고 웹 PageHeader를 쓴다
+      setOverride({ pathname, visible: false })
+      return () => {
+        clearOverride(pathname)
+      }
+    }
+
+    setOverride({
+      pathname,
       title,
       showBack,
       visible: true,
       rightText,
-      actions: serializeActions(actions),
+      actions: JSON.parse(actionsKey) as ReturnType<typeof serializeActions>,
     })
 
     return () => {
-      nativeBridge.postToNative({
-        type: 'SET_HEADER',
-        title: '',
-        showBack: false,
-        visible: false,
-        rightText: '',
-        actions: [],
-      })
+      clearOverride(pathname)
     }
-  }, [title, showBack, rightText, serializedActions])
+  }, [
+    pathname,
+    title,
+    showBack,
+    rightText,
+    actionsKey,
+    showNativeHeader,
+    setOverride,
+    clearOverride,
+  ])
 
   useEffect(() => {
+    if (!showNativeHeader) return
+
     const onHeaderBack = (event: Event) => {
       if (!showBack) return
       event.preventDefault()
@@ -120,7 +210,7 @@ export function PageHeader({
       window.removeEventListener('gilmoa:header-back', onHeaderBack)
       window.removeEventListener('gilmoa:header-action', onHeaderAction)
     }
-  }, [showBack])
+  }, [showBack, showNativeHeader])
 
   const hasRight = Boolean(rightText || (actions && actions.length > 0) || rightSlot)
 
@@ -132,10 +222,10 @@ export function PageHeader({
       <div className={pageHeaderLeft}>
         {showBack ? (
           <button type="button" className={backButton} onClick={onBack} aria-label="뒤로 가기">
-            <ChevronLeft size={22} strokeWidth={2} />
+            <ChevronLeftIcon />
           </button>
         ) : null}
-        <h1 className={cn(heading2, pageHeaderTitle)}>{title}</h1>
+        <h1 className={pageHeaderTitle}>{title}</h1>
       </div>
       {hasRight ? (
         <div className={pageHeaderRight}>

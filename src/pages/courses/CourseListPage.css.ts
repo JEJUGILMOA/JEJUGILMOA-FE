@@ -23,3 +23,34 @@ export const listStyle = style({
   gap: vars.space[4],
   paddingBottom: vars.space[2],
 })
+
+export const skeletonCardStyle = style({
+  display: 'flex',
+  alignItems: 'stretch',
+  minHeight: '200px',
+  overflow: 'hidden',
+  borderRadius: '16px',
+  border: `1px solid ${colors.border[1]}`,
+  backgroundColor: colors.surface[1],
+})
+
+export const skeletonMediaStyle = style({
+  flex: '1 1 0',
+  minWidth: 0,
+  alignSelf: 'stretch',
+})
+
+export const skeletonContentStyle = style({
+  flex: '2 1 0',
+  minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+  padding: vars.space[4],
+})
+
+export const skeletonPreviewRowStyle = style({
+  display: 'flex',
+  gap: '8px',
+  marginTop: 'auto',
+})

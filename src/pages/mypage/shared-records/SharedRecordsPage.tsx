@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
-import { Loading } from '@/components/ui/Loading/Loading'
+import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { mapRecordCardToSharedRecord } from '@/features/records/format'
@@ -12,11 +12,42 @@ import { SharedRecordCard } from './components/SharedRecordCard'
 import {
   listStyle,
   pageStyle,
+  skeletonBodyStyle,
+  skeletonCardStyle,
+  skeletonCoverStyle,
   statsItemStyle,
   statsLabelStyle,
   statsRowStyle,
   statsValueStyle,
 } from './SharedRecordsPage.css.ts'
+
+function SharedRecordsSkeleton() {
+  return (
+    <>
+      <div className={statsRowStyle} aria-hidden>
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className={statsItemStyle}>
+            <Skeleton width={36} height={20} />
+            <Skeleton width={40} height={12} />
+          </div>
+        ))}
+      </div>
+      <div className={listStyle} aria-hidden>
+        {Array.from({ length: 2 }, (_, index) => (
+          <div key={index} className={skeletonCardStyle}>
+            <Skeleton width="100%" height={78} className={skeletonCoverStyle} />
+            <div className={skeletonBodyStyle}>
+              <Skeleton width="70%" height={18} />
+              <Skeleton width="52%" height={14} />
+              <Skeleton width="40%" height={12} />
+              <Skeleton width="100%" height={36} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
 
 export function SharedRecordsPage() {
   const navigate = useNavigate()
@@ -51,7 +82,7 @@ export function SharedRecordsPage() {
     <div className={pageStyle}>
       <PageHeader title="공유한 기록" showBack onBack={() => navigate(ROUTES.my)} />
 
-      {recordsQuery.isLoading ? <Loading label="공유 기록 불러오는 중" /> : null}
+      {recordsQuery.isLoading ? <SharedRecordsSkeleton /> : null}
       {recordsQuery.isError ? <ErrorState onRetry={() => void recordsQuery.refetch()} /> : null}
 
       {!recordsQuery.isLoading && !recordsQuery.isError ? (

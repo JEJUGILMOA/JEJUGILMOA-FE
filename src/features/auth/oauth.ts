@@ -1,4 +1,5 @@
 import type { OAuthProvider } from '@/api/types'
+import { nativeBridge } from '@/bridge/nativeBridge'
 
 const OAUTH_STATE_KEY = 'gilmoa_oauth_state'
 const OAUTH_PROVIDER_KEY = 'gilmoa_oauth_provider'
@@ -101,6 +102,17 @@ export function buildOAuthAuthorizeUrl(provider: OAuthProvider, options?: { retu
 
 export function startOAuthLogin(provider: OAuthProvider, options?: { returnTo?: string }) {
   const url = buildOAuthAuthorizeUrl(provider, options)
+  if (nativeBridge.isNativeWebView()) {
+    const title =
+      provider === 'kakao' ? '카카오 로그인' : provider === 'naver' ? '네이버 로그인' : 'Google 로그인'
+    nativeBridge.postToNative({
+      type: 'OPEN_OAUTH_LOGIN',
+      url,
+      title,
+      provider,
+    })
+    return
+  }
   window.location.assign(url)
 }
 

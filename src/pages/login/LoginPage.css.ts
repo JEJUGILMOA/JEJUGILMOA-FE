@@ -20,17 +20,21 @@ export const headerStyle = style({
 })
 
 export const logoMarkStyle = style({
-  width: 72,
-  height: 72,
-  borderRadius: 16,
-  backgroundColor: '#1D803B',
-  color: '#FFFFFF',
+  width: 112,
+  height: 112,
+  borderRadius: 24,
+  overflow: 'hidden',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: vars.fontSize.xl,
-  fontWeight: vars.fontWeight.bold,
-  letterSpacing: '-0.02em',
+  flexShrink: 0,
+})
+
+export const logoImageStyle = style({
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
 })
 
 export const titleStyle = style({

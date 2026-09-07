@@ -1,5 +1,11 @@
 import { apiGet } from '@/api/http'
-import { recommendedCourseSchema, type CourseTheme, type RecommendedCourse } from './schemas'
+import {
+  recommendedCourseDetailSchema,
+  recommendedCourseSchema,
+  type CourseTheme,
+  type RecommendedCourse,
+  type RecommendedCourseDetail,
+} from './schemas'
 
 export type FetchRecommendedCoursesParams = {
   /** 테마 필터. 미입력 시 전체 (담기 횟수 내림차순) */
@@ -17,4 +23,12 @@ export async function fetchRecommendedCourses(
     },
   })
   return recommendedCourseSchema.array().parse(data)
+}
+
+/** GET /courses/recommended/{courseId} */
+export async function fetchRecommendedCourseDetail(
+  courseId: string,
+): Promise<RecommendedCourseDetail> {
+  const data = await apiGet<unknown>(`/courses/recommended/${courseId}`)
+  return recommendedCourseDetailSchema.parse(data)
 }

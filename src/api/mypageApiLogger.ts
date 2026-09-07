@@ -11,7 +11,7 @@ type LoggedConfig = InternalAxiosRequestConfig & {
 }
 
 function shouldLogMyPageApi(): boolean {
-  return import.meta.env.DEV
+  return false
 }
 
 export function getRequestUrl(config: InternalAxiosRequestConfig): string {

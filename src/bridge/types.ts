@@ -78,6 +78,19 @@ export type WebToNativeMessage =
       nextLabel?: string
       sheetTitle?: string
     }
+  | { type: 'REQUEST_APPLE_LOGIN' }
+  | {
+      type: 'OPEN_OAUTH_LOGIN'
+      url: string
+      title?: string
+      provider?: 'kakao' | 'google' | 'naver'
+    }
+  | {
+      type: 'LOGIN_SUCCESS'
+      provider?: 'kakao' | 'google' | 'naver' | 'apple' | 'temp'
+      returnTo?: string
+    }
+  | { type: 'LOGOUT' }
 
 /** 네이티브 → 웹 */
 export type NativeToWebMessage =
@@ -103,6 +116,18 @@ export type NativeToWebMessage =
   | { type: 'ITINERARY_DEPARTURE_CANCEL' }
   | { type: 'NATIVE_LAYOUT'; screenHeight: number }
   | { type: 'KEYBOARD_VISIBLE'; visible: boolean; height?: number }
+  /** 같은 탭 재탭 시 탭 루트 경로로 이동 */
+  | { type: 'TAB_POP_TO_ROOT'; path: string }
+  | {
+      type: 'APPLE_CREDENTIAL'
+      identityToken: string
+      rawNonce: string
+      authorizationCode?: string
+      email?: string
+      fullName?: { givenName?: string | null; familyName?: string | null }
+    }
+  | { type: 'APPLE_LOGIN_CANCELLED' }
+  | { type: 'APPLE_LOGIN_ERROR'; message: string }
 
 declare global {
   interface Window {

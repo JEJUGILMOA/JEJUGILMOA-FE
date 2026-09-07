@@ -24,6 +24,11 @@ export type TravelPickCardProps = {
   /** 상세 주소 */
   address?: string
   imageUrl?: string
+  /** 즐겨찾기 여부 */
+  bookmarked?: boolean
+  /** 즐겨찾기 토글 중 */
+  isBookmarkPending?: boolean
+  onToggleBookmark?: () => void
   onClick?: () => void
   className?: string
 }
@@ -37,10 +42,12 @@ export function TravelPickCard({
   region,
   address,
   imageUrl,
+  bookmarked = false,
+  isBookmarkPending = false,
+  onToggleBookmark,
   onClick,
   className,
 }: TravelPickCardProps) {
-  const [bookmarked, setBookmarked] = useState(false)
   const [imageError, setImageError] = useState(false)
   const isClickable = Boolean(onClick)
   const showPlaceholder = !imageUrl || imageError
@@ -93,11 +100,12 @@ export function TravelPickCard({
         <button
           type="button"
           className={bookmarkStyle}
-          aria-label={bookmarked ? '북마크 해제' : '북마크'}
+          aria-label={bookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
           aria-pressed={bookmarked}
+          disabled={isBookmarkPending || !onToggleBookmark}
           onClick={(event) => {
             event.stopPropagation()
-            setBookmarked((prev) => !prev)
+            onToggleBookmark?.()
           }}
         >
           <Bookmark

@@ -1,7 +1,12 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/api/http'
 import { apiClient } from '@/api/axios'
 import { unwrapApiResult } from '@/api/unwrap'
-import type { OAuthLoginRequest, OAuthLoginResult, OAuthProvider } from '@/api/types'
+import type {
+  AppleLoginRequest,
+  OAuthLoginRequest,
+  OAuthLoginResult,
+  OAuthProvider,
+} from '@/api/types'
 import {
   userProfileSchema,
   userSettingsSchema,
@@ -13,9 +18,17 @@ import {
   type DevAuthResponse,
 } from './schemas'
 
-/** 소셜 로그인 — 성공 시 백엔드가 인증 쿠키를 심는다 */
+/** 소셜 로그인 — 성공 시 백엔드가 인증 쿠키를 심는다 (kakao/google/naver) */
 export function loginWithOAuth(provider: OAuthProvider, body: OAuthLoginRequest) {
   return apiPost<OAuthLoginResult>(`/auth/oauth/${provider}/login`, body)
+}
+
+/**
+ * iOS Apple 로그인 — POST /api/auth/apple/login
+ * @see https://gilmoa-dev.gyeonseo.com/swagger-ui/index.html#/%EC%9D%B8%EC%A6%9D/appleLogin
+ */
+export function loginWithApple(body: AppleLoginRequest) {
+  return apiPost<OAuthLoginResult>('/auth/apple/login', body)
 }
 
 /** 액세스/리프레시 쿠키 재발급 */

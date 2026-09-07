@@ -8,6 +8,10 @@ import { vars } from '@/styles/vars.css.ts'
  */
 export const PAGE_HEADER_BLEED_VAR = '--gilmoa-header-bleed'
 
+/**
+ * JEJUGILMOA-APP `PageHeader` / `PageHeaderTokens` 와 동일한 스펙.
+ * height 56 · title 20/700 · padding 8 4 8 10 · gap 8 · touch 44
+ */
 export const pageHeaderRoot = style({
   display: 'flex',
   alignItems: 'center',
@@ -15,13 +19,11 @@ export const pageHeaderRoot = style({
   gap: vars.space[2],
   boxSizing: 'border-box',
   minHeight: vars.size.header,
-  /** main 패딩(12px) 안으로 올려 스크롤 컨테이너 상단에 붙인다 */
-  marginTop: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, 0px))`,
   marginInline: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, 0px))`,
   padding: `${vars.space[2]} 4px ${vars.space[2]} 10px`,
   backgroundColor: colors.surface[1],
   position: 'sticky',
-  top: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, 0px))`,
+  top: 0,
   zIndex: vars.zIndex.sticky,
 })
 
@@ -44,7 +46,12 @@ export const pageHeaderTitle = style({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+  fontFamily: vars.fontFamily.sans,
+  fontSize: vars.fontSize.xl,
+  fontWeight: vars.fontWeight.bold,
+  lineHeight: vars.lineHeight.tight,
   letterSpacing: '-0.6px',
+  color: colors.text[1],
 })
 
 export const backButton = style({
@@ -86,6 +93,7 @@ export const pageHeaderRight = style({
 
 export const pageHeaderRightText = style({
   fontSize: vars.fontSize.xs,
+  lineHeight: vars.lineHeight.normal,
   color: colors.text[4],
   whiteSpace: 'nowrap',
   paddingRight: 14,
@@ -103,14 +111,23 @@ export const pageHeaderAction = style({
   backgroundColor: 'transparent',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
+  fontFamily: vars.fontFamily.sans,
   fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.regular,
+  lineHeight: vars.lineHeight.normal,
   color: colors.text[1],
+  transition: `background-color ${vars.duration.fast}, color ${vars.duration.fast}`,
   selectors: {
     '&:hover': {
       backgroundColor: colors.surface[4],
     },
     '&:active': {
       backgroundColor: colors.surface[4],
+    },
+  },
+  '@media': {
+    '(prefers-reduced-motion: reduce)': {
+      transition: 'none',
     },
   },
 })
@@ -133,4 +150,9 @@ export const pageHeaderActionMuted = style({
 export const pageHeaderActionPrimary = style({
   fontWeight: vars.fontWeight.semibold,
   color: colors.primary[700],
+})
+
+export const pageHeaderIcon = style({
+  display: 'block',
+  flexShrink: 0,
 })

@@ -73,3 +73,25 @@ export type PlanDraft = {
   /** 여행 제목. 비우면 날짜 기준으로 자동 생성 */
   title: string
 }
+
+/** 마이페이지 내 여행 카드용 UI 상태 */
+export type PlanTripCardStatus = 'ongoing' | 'planned' | 'completed'
+
+/** GET /plans PlanSummary → 내 여행 카드 view model */
+export type PlanTripCardModel = {
+  id: string
+  title: string
+  status: PlanTripCardStatus
+  /** 헤더 좌측 상태 뱃지: 진행중 / 계획중 / 완료 */
+  statusBadge: string
+  /** 진행중: "2일차 / 4일" */
+  dayProgressLabel?: string
+  /** 계획중: D-day 뱃지 */
+  dDayBadge?: string
+  /** 본문 좌측: 기간 · 박일 */
+  dateLine: string
+  /** 본문 우측: 경유지 n곳 */
+  waypointLabel: string
+  /** 진행중 프로그레스 0~1 (날짜 기준 추정) */
+  progress?: number
+}

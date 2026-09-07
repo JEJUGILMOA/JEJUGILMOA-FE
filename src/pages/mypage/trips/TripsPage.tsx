@@ -4,13 +4,20 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { SegmentedControl } from '@/components/ui/SegmentedControl/SegmentedControl'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
-import { Loading } from '@/components/ui/Loading/Loading'
+import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { ROUTES } from '@/constants'
 import { mapPlanSummaryToTrip } from '@/features/plans/format'
 import { usePlanSummariesQuery } from '@/features/plans/hooks'
 import type { PlanApiStatus } from '@/features/plans/schemas'
 import { TripCard } from './components/TripCard'
-import { listStyle, pageStyle } from './TripsPage.css.ts'
+import {
+  listStyle,
+  pageStyle,
+  skeletonBodyStyle,
+  skeletonCardStyle,
+  skeletonHeaderStyle,
+  skeletonMetaRowStyle,
+} from './TripsPage.css.ts'
 
 const FILTERS = [
   { value: 'all', label: '전체' },
@@ -25,6 +32,25 @@ const API_STATUS_BY_FILTER: Record<Exclude<FilterValue, 'all'>, PlanApiStatus> =
   ongoing: 'IN_PROGRESS',
   planned: 'DRAFT',
   completed: 'COMPLETED',
+}
+
+function TripsSkeleton() {
+  return (
+    <div className={listStyle} aria-hidden>
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className={skeletonCardStyle}>
+          <div className={skeletonHeaderStyle} />
+          <div className={skeletonBodyStyle}>
+            <Skeleton width="55%" height={20} />
+            <div className={skeletonMetaRowStyle}>
+              <Skeleton width="58%" height={14} />
+              <Skeleton width="24%" height={14} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export function TripsPage() {
@@ -50,7 +76,7 @@ export function TripsPage() {
         aria-label="여행 상태 필터"
       />
 
-      {tripsQuery.isLoading ? <Loading label="여행 목록 불러오는 중" /> : null}
+      {tripsQuery.isLoading ? <TripsSkeleton /> : null}
 
       {tripsQuery.isError ? <ErrorState onRetry={() => void tripsQuery.refetch()} /> : null}
 
@@ -63,15 +89,13 @@ export function TripsPage() {
               <TripCard
                 key={trip.id}
                 trip={trip}
-                onClick={() => {
-                  if (trip.status === 'ongoing') {
-                    navigate(ROUTES.planItinerary(trip.id))
-                    return
-                  }
-                  if (trip.status === 'planned') {
-                    navigate(ROUTES.planPreview(trip.id))
-                  }
-                }}
+                onClick={
+                  trip.status === 'ongoing'
+                    ? () => navigate(ROUTES.planItinerary(trip.id))
+                    : trip.status === 'planned'
+                      ? () => navigate(ROUTES.planPreview(trip.id))
+                      : undefined
+                }
               />
             ))}
           </div>

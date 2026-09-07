@@ -48,14 +48,14 @@ export type CourseListPreviewStep = {
 
 export type CourseListCardProps = {
   title: string
-  description: string
-  imageUrl: string
-  imageTags: CourseImageTag[]
-  locationLabel: string
-  duration: string
+  description?: string
+  imageUrl?: string
+  imageTags?: CourseImageTag[]
+  locationLabel?: string
+  duration?: string
   placeCount: number
-  transport: string
-  distanceFromMe: string
+  transport?: string
+  distanceFromMe?: string
   previewSteps: CourseListPreviewStep[]
   onViewClick?: () => void
   className?: string
@@ -66,6 +66,8 @@ function ImageTagIcon({ tone }: { tone: CourseImageTag['tone'] }) {
   return <Waves size={11} strokeWidth={2.5} aria-hidden />
 }
 
+type MetaItem = { key: string; icon: 'clock' | 'map' | 'car'; label: string }
+
 /**
  * 추천 코스 목록(`/courses`)용 가로형 카드.
  * 좌측 이미지 : 우측 텍스트 ≈ 1:2
@@ -74,7 +76,7 @@ export function CourseListCard({
   title,
   description,
   imageUrl,
-  imageTags,
+  imageTags = [],
   locationLabel,
   duration,
   placeCount,
@@ -87,83 +89,108 @@ export function CourseListCard({
   const visiblePreviews = previewSteps.slice(0, VISIBLE_PREVIEWS)
   const extraCount = Math.max(0, previewSteps.length - VISIBLE_PREVIEWS)
 
+  const metaItems: MetaItem[] = [
+    duration ? { key: 'duration', icon: 'clock' as const, label: duration } : null,
+    placeCount > 0 ? { key: 'places', icon: 'map' as const, label: `${placeCount}곳` } : null,
+    transport ? { key: 'transport', icon: 'car' as const, label: transport } : null,
+  ].filter((item): item is MetaItem => item != null)
+
   return (
     <article className={cn(cardStyle, className)}>
       <div className={mainRowStyle}>
         <div className={mediaStyle}>
-          <img src={imageUrl} alt="" className={mediaImageStyle} />
-          <div className={imageTagListStyle}>
-            {imageTags.map((tag) => (
-              <span key={tag.label} className={imageTagRecipe({ tone: tag.tone })}>
-                <ImageTagIcon tone={tag.tone} />
-                {tag.label}
-              </span>
-            ))}
-          </div>
+          {imageUrl ? <img src={imageUrl} alt="" className={mediaImageStyle} /> : null}
+          {imageTags.length > 0 ? (
+            <div className={imageTagListStyle}>
+              {imageTags.map((tag) => (
+                <span key={tag.label} className={imageTagRecipe({ tone: tag.tone })}>
+                  <ImageTagIcon tone={tag.tone} />
+                  {tag.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className={contentStyle}>
           <div className={infoStyle}>
-            <p className={locationStyle}>
-              <MapPin size={12} strokeWidth={2.5} aria-hidden />
-              {locationLabel}
-            </p>
+            {locationLabel ? (
+              <p className={locationStyle}>
+                <MapPin size={12} strokeWidth={2.5} aria-hidden />
+                {locationLabel}
+              </p>
+            ) : null}
             <h3 className={titleStyle}>{title}</h3>
-            <p className={descStyle}>{description}</p>
+            {description ? <p className={descStyle}>{description}</p> : null}
 
-            <div className={metaRowStyle}>
-              <span className={metaItemStyle}>
-                <Clock size={12} strokeWidth={2} aria-hidden />
-                {duration}
-              </span>
-              <span className={metaDotStyle} aria-hidden />
-              <span className={metaItemStyle}>
-                <MapPin size={12} strokeWidth={2} aria-hidden />
-                {placeCount}곳
-              </span>
-              <span className={metaDotStyle} aria-hidden />
-              <span className={metaItemStyle}>
-                <Car size={12} strokeWidth={2} aria-hidden />
-                {transport}
-              </span>
-            </div>
+            {metaItems.length > 0 ? (
+              <div className={metaRowStyle}>
+                {metaItems.flatMap((item, index) => {
+                  const icon =
+                    item.icon === 'clock' ? (
+                      <Clock size={12} strokeWidth={2} aria-hidden />
+                    ) : item.icon === 'map' ? (
+                      <MapPin size={12} strokeWidth={2} aria-hidden />
+                    ) : (
+                      <Car size={12} strokeWidth={2} aria-hidden />
+                    )
+
+                  return [
+                    index > 0 ? (
+                      <span key={`${item.key}-dot`} className={metaDotStyle} aria-hidden />
+                    ) : null,
+                    <span key={item.key} className={metaItemStyle}>
+                      {icon}
+                      {item.label}
+                    </span>,
+                  ]
+                })}
+              </div>
+            ) : null}
           </div>
 
-          <div className={dividerStyle} />
-
-          <div className={previewSectionStyle}>
-            <h4 className={previewTitleStyle}>코스 미리보기</h4>
-            <div className={previewRowStyle}>
-              {visiblePreviews.map((step, index) => (
-                <div key={`${step.title}-${index}`} className={previewItemStyle}>
-                  <img
-                    src={step.thumbnailUrl}
-                    alt=""
-                    className={previewThumbStyle}
-                  />
-                  <div className={previewLabelStyle}>
-                    <span className={stepNumStyle}>{index + 1}</span>
-                    <span className={stepNameStyle}>{step.title}</span>
-                  </div>
+          {previewSteps.length > 0 ? (
+            <>
+              <div className={dividerStyle} />
+              <div className={previewSectionStyle}>
+                <h4 className={previewTitleStyle}>코스 미리보기</h4>
+                <div className={previewRowStyle}>
+                  {visiblePreviews.map((step, index) => (
+                    <div key={`${step.title}-${index}`} className={previewItemStyle}>
+                      {step.thumbnailUrl ? (
+                        <img src={step.thumbnailUrl} alt="" className={previewThumbStyle} />
+                      ) : (
+                        <div className={previewThumbStyle} aria-hidden />
+                      )}
+                      <div className={previewLabelStyle}>
+                        <span className={stepNumStyle}>{index + 1}</span>
+                        <span className={stepNameStyle}>{step.title}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {extraCount > 0 ? (
+                    <div className={previewMoreStyle}>
+                      +{extraCount}
+                      <br />
+                      더보기
+                    </div>
+                  ) : null}
                 </div>
-              ))}
-              {extraCount > 0 ? (
-                <div className={previewMoreStyle}>
-                  +{extraCount}
-                  <br />
-                  더보기
-                </div>
-              ) : null}
-            </div>
-          </div>
+              </div>
+            </>
+          ) : null}
         </div>
       </div>
 
       <div className={footerStyle}>
-        <span className={distanceStyle}>
-          <Navigation size={14} strokeWidth={2} aria-hidden />
-          내 위치에서 {distanceFromMe}
-        </span>
+        {distanceFromMe ? (
+          <span className={distanceStyle}>
+            <Navigation size={14} strokeWidth={2} aria-hidden />
+            내 위치에서 {distanceFromMe}
+          </span>
+        ) : (
+          <span />
+        )}
         <button type="button" className={ctaButtonStyle} onClick={onViewClick}>
           코스 보기
           <ChevronRight size={14} strokeWidth={2.5} aria-hidden />

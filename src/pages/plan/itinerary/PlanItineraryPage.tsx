@@ -873,10 +873,7 @@ function ItineraryNativeChromeSync({
 
   useEffect(() => {
     if (!nativeBridge.isNativeWebView()) return
-    nativeBridge.postToNative({
-      type: 'SET_HEADER',
-      visible: false,
-    })
+    // 헤더는 라우트 handle(showHeader: false) + NativeHeaderProvider가 담당
     nativeBridge.postToNative({
       type: 'SET_ITINERARY_CHROME',
       visible: true,

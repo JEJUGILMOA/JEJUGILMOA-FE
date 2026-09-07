@@ -75,6 +75,7 @@ export const QUERY_KEYS = {
   homePlaces: ['home', 'places'] as const,
   homeCourses: ['home', 'courses'] as const,
   recommendedCourses: (themes?: readonly string[]) => ['courses', 'recommended', themes] as const,
+  recommendedCourse: (courseId: string) => ['courses', 'recommended', courseId] as const,
   plans: ['plans'] as const,
   plan: (id: string) => ['plans', id] as const,
   reviews: (placeId: string) => ['reviews', placeId] as const,
@@ -86,4 +87,6 @@ export const QUERY_KEYS = {
   mySettings: ['users', 'me', 'settings'] as const,
   myBadges: ['badges', 'me'] as const,
   planSummaries: (status?: string) => ['plans', 'summaries', status] as const,
+  favorites: (page?: number, size?: number) => ['favorites', page, size] as const,
+  favoritePlaceIds: ['favorites', 'ids'] as const,
 } as const

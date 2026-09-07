@@ -1,49 +1,65 @@
-import type { MyTrip } from '@/pages/mypage/data/mockMyPage'
+import type { PlanTripCardModel } from '@/features/plans/types'
 import {
-  badgeStyle,
+  bodyStyle,
+  bodyTitleStyle,
   cardStyle,
-  detailStyle,
-  progressBarStyle,
+  dayProgressStyle,
+  dDayBadgeStyle,
+  headerStyle,
+  headerTitleStyle,
+  headerTopStyle,
+  metaRowStyle,
+  metaTextStyle,
   progressFillStyle,
-  summaryStyle,
-  titleStyle,
-  ongoingHeaderStyle,
+  progressTrackStyle,
+  statusBadgeStyle,
 } from './TripCard.css.ts'
 
 export type TripCardProps = {
-  trip: MyTrip
+  trip: PlanTripCardModel
   onClick?: () => void
 }
 
 export function TripCard({ trip, onClick }: TripCardProps) {
+  const isClickable = Boolean(onClick)
   const isOngoing = trip.status === 'ongoing'
+  const titleInHeader = isOngoing
 
   return (
-    <button type="button" className={cardStyle({ ongoing: isOngoing })} onClick={onClick}>
-      {isOngoing ? (
-        <div className={ongoingHeaderStyle}>
-          <p className={summaryStyle}>{trip.summary}</p>
-          <p className={titleStyle}>{trip.title}</p>
+    <button
+      type="button"
+      className={cardStyle}
+      onClick={onClick}
+      disabled={!isClickable}
+    >
+      <div className={headerStyle({ tone: trip.status })}>
+        <div className={headerTopStyle}>
+          <span className={statusBadgeStyle({ tone: trip.status })}>
+            {trip.statusBadge}
+            {trip.dayProgressLabel ? (
+              <span className={dayProgressStyle}>{trip.dayProgressLabel}</span>
+            ) : null}
+          </span>
+          {trip.dDayBadge ? <span className={dDayBadgeStyle}>{trip.dDayBadge}</span> : null}
         </div>
-      ) : (
-        <>
-          {trip.badge ? <span className={badgeStyle}>{trip.badge}</span> : null}
-          <p className={titleStyle}>{trip.title}</p>
-          <p className={summaryStyle}>{trip.summary}</p>
-        </>
-      )}
+        {titleInHeader ? <p className={headerTitleStyle}>{trip.title}</p> : null}
+      </div>
 
-      {isOngoing && trip.detail ? (
-        <div>
-          <p className={detailStyle}>{trip.detail}</p>
-          <div className={progressBarStyle}>
+      <div className={bodyStyle}>
+        {!titleInHeader ? <p className={bodyTitleStyle}>{trip.title}</p> : null}
+        <div className={metaRowStyle}>
+          <p className={metaTextStyle}>{trip.dateLine}</p>
+          <p className={metaTextStyle}>{trip.waypointLabel}</p>
+        </div>
+        {isOngoing && trip.progress != null ? (
+          <div className={progressTrackStyle} aria-hidden>
             <div
               className={progressFillStyle}
-              style={{ width: `${Math.round((trip.progress ?? 0) * 100)}%` }}
+              style={{ width: `${Math.round(Math.min(1, Math.max(0, trip.progress)) * 100)}%` }}
             />
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </button>
   )
 }

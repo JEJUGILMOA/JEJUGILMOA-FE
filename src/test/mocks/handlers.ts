@@ -113,6 +113,35 @@ const mockCourses = [
   },
 ]
 
+const mockCourseDetail = {
+  courseId: 10,
+  imageUrl: 'https://example.com/aewol-course.jpg',
+  title: '애월 감성 코스',
+  region: '제주시 애월읍',
+  isFree: true,
+  rating: 4.8,
+  transportMode: 'DRIVE',
+  placeCount: 2,
+  estimatedMinutes: 180,
+  description: '카페와 해안을 잇는 여유 코스',
+  stops: [
+    {
+      sequenceOrder: 1,
+      placeId: 11,
+      placeName: '애월 카페거리',
+      placeImageUrl: 'https://example.com/aewol.jpg',
+      travelTimeToNext: 15,
+    },
+    {
+      sequenceOrder: 2,
+      placeId: 12,
+      placeName: '곽지해수욕장',
+      placeImageUrl: 'https://example.com/gwakji.jpg',
+      travelTimeToNext: null,
+    },
+  ],
+}
+
 const mockProfile = {
   nickname: '김여행',
   email: 'travel_kim@email.com',
@@ -156,6 +185,17 @@ const mockPlans = [
     nights: 0,
     days: 1,
     dDay: 9,
+  },
+  {
+    planId: 3,
+    title: '제주 1박2일',
+    startDate: '2026-05-10',
+    endDate: '2026-05-11',
+    status: 'COMPLETED',
+    waypointCount: 4,
+    nights: 1,
+    days: 2,
+    dDay: -90,
   },
 ]
 
@@ -238,6 +278,15 @@ export const handlers = [
     )
   }),
   http.get('*/courses/recommended', () => HttpResponse.json(envelope(mockCourses))),
+  http.get('*/courses/recommended/:courseId', ({ params }) => {
+    if (String(params.courseId) !== String(mockCourseDetail.courseId)) {
+      return HttpResponse.json(
+        { isSuccess: false, message: 'Not found', code: 'COURSE404', result: null },
+        { status: 404 },
+      )
+    }
+    return HttpResponse.json(envelope(mockCourseDetail))
+  }),
   http.get('*/places', ({ request }) => {
     const url = new URL(request.url)
     const size = Number(url.searchParams.get('size') ?? '20')
@@ -334,8 +383,32 @@ export const handlers = [
       }),
     ),
   ),
+  http.post('*/auth/apple/login', () =>
+    HttpResponse.json(
+      envelope({
+        userId: 1,
+        nickname: mockProfile.nickname,
+        role: 'USER' as const,
+        newUser: false,
+      }),
+    ),
+  ),
   http.post('*/auth/reissue', () => HttpResponse.json(envelope(null))),
   http.post('*/auth/logout', () => HttpResponse.json(envelope(null))),
+  http.get('*/favorites', () =>
+    HttpResponse.json(
+      envelope({
+        content: [],
+        page: 0,
+        size: 20,
+        totalElements: 0,
+        totalPages: 0,
+        last: true,
+      }),
+    ),
+  ),
+  http.post('*/favorites', () => HttpResponse.json(envelope(null), { status: 201 })),
+  http.delete('*/favorites/:placeId', () => HttpResponse.json(envelope(null))),
   http.post('*/dev/auth/login', async ({ request }) => {
     const body = (await request.json()) as { email?: string }
     return HttpResponse.json(

@@ -2,82 +2,159 @@ import { style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
-import { bodySmall, captionSm, titleLarge, titleSmall } from '@/styles/typography.css.ts'
+import { bodySmall, titleLarge } from '@/styles/typography.css.ts'
 
-export const cardStyle = recipe({
+export const cardStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  width: '100%',
+  padding: 0,
+  overflow: 'hidden',
+  border: 'none',
+  borderRadius: '20px',
+  backgroundColor: colors.surface[1],
+  boxShadow: '0 4px 16px rgba(37, 37, 45, 0.08)',
+  cursor: 'pointer',
+  textAlign: 'left',
+  fontFamily: vars.fontFamily.sans,
+  selectors: {
+    '&:disabled': {
+      cursor: 'default',
+    },
+  },
+})
+
+export const headerStyle = recipe({
   base: {
     display: 'flex',
     flexDirection: 'column',
-    gap: vars.space[2],
-    width: '100%',
-    padding: 0,
-    overflow: 'hidden',
-    borderRadius: vars.radius.lg,
-    border: `1px solid ${colors.border[1]}`,
-    backgroundColor: colors.surface[1],
-    cursor: 'pointer',
-    textAlign: 'left',
+    gap: vars.space[3],
+    minHeight: '92px',
+    padding: vars.space[4],
   },
   variants: {
-    ongoing: {
-      true: {
-        border: 'none',
-        boxShadow: vars.shadow.sm,
+    tone: {
+      ongoing: {
+        backgroundImage: `linear-gradient(115deg, ${colors.secondary[500]} 0%, ${colors.primary[600]} 100%)`,
       },
-      false: {
-        padding: vars.space[3],
+      planned: {
+        backgroundImage: 'linear-gradient(115deg, #FFB45A 0%, #F08A6B 100%)',
+      },
+      completed: {
+        backgroundColor: '#C8C2B8',
+        backgroundImage: 'none',
       },
     },
   },
   defaultVariants: {
-    ongoing: false,
+    tone: 'ongoing',
   },
 })
 
-export const ongoingHeaderStyle = style({
-  padding: vars.space[3],
-  backgroundColor: colors.primary[700],
+export const headerTopStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space[2],
 })
 
-export const titleStyle = style([
+export const statusBadgeStyle = recipe({
+  base: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '5px 10px',
+    borderRadius: '10px',
+    backgroundColor: colors.surface[1],
+    fontSize: '12px',
+    fontWeight: vars.fontWeight.semibold,
+    lineHeight: 1.2,
+    whiteSpace: 'nowrap',
+  },
+  variants: {
+    tone: {
+      ongoing: {
+        color: colors.secondary[600],
+      },
+      planned: {
+        color: '#E67A3A',
+      },
+      completed: {
+        backgroundColor: colors.text[3],
+        color: colors.text[5],
+      },
+    },
+  },
+  defaultVariants: {
+    tone: 'ongoing',
+  },
+})
+
+export const dayProgressStyle = style({
+  color: colors.text[4],
+  fontWeight: vars.fontWeight.medium,
+})
+
+export const dDayBadgeStyle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: '5px 10px',
+  borderRadius: '10px',
+  backgroundColor: colors.surface[1],
+  color: colors.text[1],
+  fontSize: '12px',
+  fontWeight: vars.fontWeight.bold,
+  lineHeight: 1.2,
+})
+
+export const headerTitleStyle = style([
+  titleLarge,
+  {
+    margin: 0,
+    marginTop: 'auto',
+    color: colors.text[5],
+    fontWeight: vars.fontWeight.bold,
+    letterSpacing: '-0.03em',
+  },
+])
+
+export const bodyStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+  padding: `${vars.space[3]} ${vars.space[4]} ${vars.space[4]}`,
+  backgroundColor: colors.surface[1],
+})
+
+export const bodyTitleStyle = style([
   titleLarge,
   {
     margin: 0,
     color: colors.text[1],
-    selectors: {
-      [`${ongoingHeaderStyle} &`]: {
-        color: colors.text[5],
-      },
-    },
+    fontWeight: vars.fontWeight.bold,
+    letterSpacing: '-0.03em',
   },
 ])
 
-export const summaryStyle = style([
-  captionSm,
-  {
-    margin: 0,
-    color: colors.text[4],
-    selectors: {
-      [`${ongoingHeaderStyle} &`]: {
-        color: colors.text[5],
-        opacity: 0.85,
-      },
-    },
-  },
-])
+export const metaRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space[3],
+})
 
-export const detailStyle = style([
+export const metaTextStyle = style([
   bodySmall,
   {
     margin: 0,
-    padding: `${vars.space[3]} ${vars.space[3]} ${vars.space[1]}`,
-    color: colors.text[2],
+    color: colors.text[4],
+    fontSize: '13px',
   },
 ])
 
-export const progressBarStyle = style({
-  height: 5,
-  margin: `0 ${vars.space[3]} ${vars.space[3]}`,
+export const progressTrackStyle = style({
+  height: 6,
+  marginTop: vars.space[1],
   borderRadius: vars.radius.full,
   backgroundColor: colors.surface[4],
   overflow: 'hidden',
@@ -86,16 +163,5 @@ export const progressBarStyle = style({
 export const progressFillStyle = style({
   height: '100%',
   borderRadius: vars.radius.full,
-  backgroundColor: colors.primary[500],
+  backgroundColor: colors.secondary[500],
 })
-
-export const badgeStyle = style([
-  titleSmall,
-  {
-    alignSelf: 'flex-end',
-    padding: `${vars.space[1]} ${vars.space[2]}`,
-    borderRadius: vars.radius.sm,
-    backgroundColor: colors.surface[4],
-    color: colors.text[2],
-  },
-])

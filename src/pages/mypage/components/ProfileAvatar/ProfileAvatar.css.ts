@@ -1,12 +1,15 @@
 import { style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
+import { colors } from '@/styles/colors.css.ts'
 
 export const avatarStyle = style({
   position: 'relative',
   overflow: 'hidden',
   borderRadius: '50%',
-  backgroundImage: 'linear-gradient(135deg, #F5A623 0%, #17783C 100%)',
+  backgroundColor: 'transparent',
   flexShrink: 0,
+  boxSizing: 'border-box',
+  border: `2px solid ${colors.border[1]}`,
 })
 
 export const sizeRecipe = recipe({
@@ -23,8 +26,11 @@ export const sizeRecipe = recipe({
 })
 
 export const avatarImageStyle = style({
+  position: 'absolute',
+  inset: 0,
   width: '100%',
   height: '100%',
   objectFit: 'cover',
+  objectPosition: 'center',
   display: 'block',
 })

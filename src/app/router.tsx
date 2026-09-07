@@ -42,10 +42,17 @@ import { ROUTES } from '@/constants'
 
 export type { RouteHandle }
 
-/** 마이 하위 화면: 하단 탭 숨김 + 페이지 자체 패딩 사용 */
+/** PageHeader를 쓰는 화면: 라우트 시점에 네이티브 헤더를 맞춤 */
+const withPageHeader = {
+  showHeader: true,
+  showBack: true,
+} as const satisfies Partial<RouteHandle>
+
+/** 마이 하위 화면: 하단 탭 숨김 + 페이지 자체 패딩 + 웹 PageHeader(네이티브 헤더 미사용) */
 const mySubPageHandle = {
   hideNav: true,
   flush: true,
+  showHeader: false,
 } as const satisfies Partial<RouteHandle>
 
 const authPageHandle = {
@@ -95,6 +102,7 @@ export const router = createBrowserRouter([
           title: '장소',
           hideNav: true,
           flush: true,
+          ...withPageHeader,
         } satisfies RouteHandle,
       },
       {
@@ -104,6 +112,7 @@ export const router = createBrowserRouter([
           title: '인기 관광지',
           hideNav: true,
           flush: true,
+          ...withPageHeader,
         } satisfies RouteHandle,
       },
       {
@@ -113,6 +122,7 @@ export const router = createBrowserRouter([
           title: '오늘의 추천 코스',
           hideNav: true,
           flush: true,
+          ...withPageHeader,
         } satisfies RouteHandle,
       },
       {
@@ -122,6 +132,7 @@ export const router = createBrowserRouter([
           title: '코스 상세',
           hideNav: true,
           flush: true,
+          ...withPageHeader,
         } satisfies RouteHandle,
       },
       {
@@ -132,27 +143,32 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.planCreate.slice(1),
         Component: PlanCreatePage,
-        handle: { title: '여행 계획 만들기' } satisfies RouteHandle,
+        handle: { title: '여행 계획 만들기', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: 'plan/:planId/edit',
         Component: PlanCreatePage,
-        handle: { title: '여행 정보 수정' } satisfies RouteHandle,
+        handle: { title: '여행 정보 수정', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: 'plan/:planId/itinerary',
         Component: PlanItineraryPage,
-        handle: { title: '일정편집', hideNav: true, flush: true } satisfies RouteHandle,
+        handle: {
+          title: '일정편집',
+          hideNav: true,
+          flush: true,
+          showHeader: false,
+        } satisfies RouteHandle,
       },
       {
         path: 'plan/:planId/budget',
         Component: PlanBudgetPage,
-        handle: { title: '예산 입력' } satisfies RouteHandle,
+        handle: { title: '예산 입력', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: 'plan/:planId/preview',
         Component: PlanPreviewPage,
-        handle: { title: '계획 미리보기' } satisfies RouteHandle,
+        handle: { title: '계획 미리보기', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: ROUTES.record.slice(1),
@@ -162,7 +178,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.recordCreate.slice(1),
         Component: RecordCreatePage,
-        handle: { title: '기록 작성' } satisfies RouteHandle,
+        handle: { title: '기록 작성', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: 'record/:recordId',
@@ -172,12 +188,12 @@ export const router = createBrowserRouter([
       {
         path: 'record/:recordId/plan',
         Component: RecordPlanPage,
-        handle: { title: '여행 계획' } satisfies RouteHandle,
+        handle: { title: '여행 계획', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: 'record/:recordId/edit',
         Component: RecordEditPage,
-        handle: { title: '기록 수정' } satisfies RouteHandle,
+        handle: { title: '기록 수정', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: ROUTES.my.slice(1),
@@ -216,17 +232,17 @@ export const router = createBrowserRouter([
           {
             path: 'favorites',
             Component: FavoritesPage,
-            handle: { title: '즐겨찾기', ...mySubPageHandle } satisfies RouteHandle,
+            handle: { title: '즐겨찾기 장소', ...mySubPageHandle } satisfies RouteHandle,
           },
           {
             path: 'badges',
             Component: BadgesPage,
-            handle: { title: '배지', ...mySubPageHandle } satisfies RouteHandle,
+            handle: { title: '획득 배지', ...mySubPageHandle } satisfies RouteHandle,
           },
           {
             path: 'shared-records',
             Component: SharedRecordsPage,
-            handle: { title: '공유기록', ...mySubPageHandle } satisfies RouteHandle,
+            handle: { title: '공유한 기록', ...mySubPageHandle } satisfies RouteHandle,
           },
           {
             path: 'notices',
@@ -263,7 +279,7 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.test[0].slice(1),
         Component: TestPageJinsung,
-        handle: { title: '테스트' } satisfies RouteHandle,
+        handle: { title: '테스트', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: ROUTES.test[1].slice(1),

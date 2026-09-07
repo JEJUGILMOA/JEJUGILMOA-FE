@@ -10,7 +10,7 @@ export const pageStyle = style({
   gap: vars.space[4],
   padding: vars.space[4],
   paddingTop: 0,
-  backgroundColor: colors.surface[1],
+  backgroundColor: colors.background[2],
   vars: {
     [PAGE_HEADER_BLEED_VAR]: vars.space[4],
   },
@@ -19,5 +19,32 @@ export const pageStyle = style({
 export const listStyle = style({
   display: 'flex',
   flexDirection: 'column',
+  gap: vars.space[4],
+})
+
+export const skeletonCardStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+  borderRadius: '20px',
+  backgroundColor: colors.surface[1],
+  boxShadow: '0 4px 16px rgba(37, 37, 45, 0.08)',
+})
+
+export const skeletonHeaderStyle = style({
+  height: 92,
+  backgroundColor: colors.surface[4],
+})
+
+export const skeletonBodyStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+  padding: `${vars.space[3]} ${vars.space[4]} ${vars.space[4]}`,
+})
+
+export const skeletonMetaRowStyle = style({
+  display: 'flex',
+  justifyContent: 'space-between',
   gap: vars.space[3],
 })
