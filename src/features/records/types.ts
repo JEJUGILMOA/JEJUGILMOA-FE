@@ -195,7 +195,8 @@ export type TravelRecordDetailResponse = {
   description: string | null
   visibility: RecordVisibilityApi
   actualStartDate: string
-  actualEndDate: string
+  /** 여행이 아직 안 끝난(방문 인증 미완료) 기록은 null로 온다 */
+  actualEndDate: string | null
   createdAt: string
   updatedAt: string
   author: TravelRecordAuthorResponse

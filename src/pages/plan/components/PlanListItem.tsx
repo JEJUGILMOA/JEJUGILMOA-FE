@@ -24,7 +24,8 @@ import {
 
 export type PlanListItemProps = {
   plan: TravelPlan
-  /** 관리 메뉴(⋯)는 draft(여행 시작 전)에서만 렌더링한다 — 진행중·완료된 계획은 수정·삭제 불가 */
+  /** 관리 메뉴(⋯)는 draft(여행 시작 전)에서만 렌더링한다 — 진행중·완료된 계획은 서버가 수정
+   * 자체를 막아서(PUT /api/plans는 DRAFT 전용, 그 외엔 PLAN400_17) 애초에 진입점을 안 보여준다 */
   status: PlanStatus
 }
 

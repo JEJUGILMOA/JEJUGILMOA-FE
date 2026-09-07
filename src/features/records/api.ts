@@ -177,12 +177,21 @@ async function fetchRecordDetail(recordId: number): Promise<TravelRecordDetailRe
  * `GET /api/records`(목록) 응답 스키마가 swagger에 미완성이라, 목록에서 `recordId`만 뽑아
  * 각각 `GET /api/records/{recordId}`(문서화된 상세)로 다시 조회해서 채운다. 기록이 많아지면
  * N+1이 되니, 목록 응답 스키마가 확정되면 최적화할 것 (`docs/RECORD_API_INTEGRATION.md` 참고).
+ *
+ * `Promise.all` 대신 `allSettled`를 쓴다 — 기록 하나의 상세 조회만 실패해도(예: 데이터가
+ * 깨진 기록 하나) `Promise.all`이면 목록 전체가 통째로 안 뜨게 된다. 실패한 항목은 콘솔에
+ * 경고만 남기고 나머지는 정상적으로 보여준다.
  */
 async function fetchRecordDetails(mine: boolean): Promise<TravelRecordDetailResponse[]> {
   const page = await apiGet<PageResponseObject<RecordListItem>>('/records', {
     params: { mine, view: 'CARD' },
   })
-  return Promise.all(page.content.map((item) => fetchRecordDetail(item.recordId)))
+  const results = await Promise.allSettled(page.content.map((item) => fetchRecordDetail(item.recordId)))
+  return results.flatMap((result, index) => {
+    if (result.status === 'fulfilled') return [result.value]
+    console.warn(`기록 상세 조회 실패 (recordId=${page.content[index].recordId})`, result.reason)
+    return []
+  })
 }
 
 function sortBySequenceOrder<T extends { sequenceOrder: number }>(items: T[]): T[] {
@@ -215,9 +224,16 @@ function formatApiDate(date: string): string {
   return date.replaceAll('-', '.')
 }
 
-function buildTripDateRangeLabel(startDate: string, endDate: string, visitedPlaceCount: number): string {
+/**
+ * `actualEndDate`는 여행이 끝나지 않은(방문 인증이 다 안 된) 기록에서 null로 올 수 있다
+ * (실제로 recordId 7에서 확인됨) — null이면 시작일만으로 라벨을 만든다. 이걸 안 막으면
+ * `null.replaceAll(...)`에서 터져서, 이 기록이 섞인 목록 전체(`Promise.all(...).map(...)`)가
+ * 통째로 실패해 "둘러보기"가 텅 비어 보이는 문제가 있었다.
+ */
+function buildTripDateRangeLabel(startDate: string, endDate: string | null, visitedPlaceCount: number): string {
   const visitedLabel = `${visitedPlaceCount}곳 방문`
   const start = formatApiDate(startDate)
+  if (!endDate) return `${start} · ${visitedLabel}`
   const end = formatApiDate(endDate)
   return start === end ? `${start} · ${visitedLabel}` : `${start} - ${end.slice(5)} · ${visitedLabel}`
 }

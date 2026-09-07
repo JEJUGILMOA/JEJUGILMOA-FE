@@ -140,6 +140,10 @@ export function PlanPreviewPage() {
     return { day, places }
   })
 
+  // 여행이 시작된 뒤(진행중·완료)엔 서버가 계획 수정 자체를 막는다(PUT /api/plans는 DRAFT
+  // 전용, 그 외엔 PLAN400_17) — 어차피 저장이 막히니 수정 진입점 자체를 안 보여준다.
+  const canEdit = plan.status === 'draft'
+
   const hasBudget =
     plan.budgetTransportation !== null ||
     plan.budgetAccommodation !== null ||
@@ -169,7 +173,7 @@ export function PlanPreviewPage() {
                 aria-label="계획 제목"
                 autoFocus
               />
-            ) : (
+            ) : canEdit ? (
               <button
                 type="button"
                 className={titleButtonStyle}
@@ -178,15 +182,19 @@ export function PlanPreviewPage() {
               >
                 <h2 className={tripTitleStyle}>{plan.title}</h2>
               </button>
+            ) : (
+              <h2 className={tripTitleStyle}>{plan.title}</h2>
             )}
-            <button
-              type="button"
-              className={editButtonStyle}
-              onClick={goEditInfo}
-              aria-label="여행 정보 수정하러 가기"
-            >
-              <Pencil size={16} />
-            </button>
+            {canEdit ? (
+              <button
+                type="button"
+                className={editButtonStyle}
+                onClick={goEditInfo}
+                aria-label="여행 정보 수정하러 가기"
+              >
+                <Pencil size={16} />
+              </button>
+            ) : null}
           </div>
           <p className={tripMetaStyle}>
             {plan.startDate} - {plan.endDate} · {durationLabel}
@@ -204,14 +212,16 @@ export function PlanPreviewPage() {
           <Card as="section">
             <div className={sectionHeaderRowStyle}>
               <span className={sectionTitleStyle}>일정 요약</span>
-              <button
-                type="button"
-                className={editButtonStyle}
-                onClick={goEditItinerary}
-                aria-label="일정 수정하러 가기"
-              >
-                <Pencil size={16} />
-              </button>
+              {canEdit ? (
+                <button
+                  type="button"
+                  className={editButtonStyle}
+                  onClick={goEditItinerary}
+                  aria-label="일정 수정하러 가기"
+                >
+                  <Pencil size={16} />
+                </button>
+              ) : null}
             </div>
             <div className={dayListStyle}>
               {days.map(({ day, places }) => {
@@ -232,14 +242,16 @@ export function PlanPreviewPage() {
           <Card as="section">
             <div className={sectionHeaderRowStyle}>
               <span className={sectionTitleStyle}>예산 요약</span>
-              <button
-                type="button"
-                className={editButtonStyle}
-                onClick={goEditBudget}
-                aria-label="예산 수정하러 가기"
-              >
-                <Pencil size={16} />
-              </button>
+              {canEdit ? (
+                <button
+                  type="button"
+                  className={editButtonStyle}
+                  onClick={goEditBudget}
+                  aria-label="예산 수정하러 가기"
+                >
+                  <Pencil size={16} />
+                </button>
+              ) : null}
             </div>
             {hasBudget ? (
               <>
@@ -262,14 +274,11 @@ export function PlanPreviewPage() {
           </Card>
         </div>
 
-        <Button
-          fullWidth
-          size="lg"
-          isLoading={isSaving}
-          onClick={handleSave}
-        >
-          계획 저장하기
-        </Button>
+        {canEdit ? (
+          <Button fullWidth size="lg" isLoading={isSaving} onClick={handleSave}>
+            계획 저장하기
+          </Button>
+        ) : null}
       </div>
     </div>
   )
