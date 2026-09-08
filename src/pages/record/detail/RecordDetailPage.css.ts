@@ -125,6 +125,8 @@ export const avatarStyle = style({
   fontWeight: vars.fontWeight.semibold,
 })
 
+export const avatarImageStyle = style([avatarStyle, { objectFit: 'cover' }])
+
 export const authorNameStyle = style({
   fontSize: vars.fontSize.sm,
   fontWeight: vars.fontWeight.medium,
@@ -186,7 +188,9 @@ export const reactionButtonRecipe = recipe({
       variants: { tone: 'dislike', active: true },
       style: {
         borderColor: colors.error[300],
-        backgroundColor: colors.error[100],
+        // error[100]은 파스텔이 아니라 채도 높은 빨강이라(#FF4C4C) 좋아요(primary[100]) 배경보다
+        // 훨씬 진해 보였다 — 연한 배경을 직접 지정해서 좋아요 버튼과 같은 톤 무게로 맞춘다.
+        backgroundColor: '#FDECEC',
         color: colors.error[300],
       },
     },
@@ -195,6 +199,20 @@ export const reactionButtonRecipe = recipe({
     tone: 'like',
     active: false,
   },
+})
+
+/** 본인 기록엔 반응(좋아요/싫어요)을 누를 수 없어서(서버가 타인 기록에만 허용) 숫자만 읽기전용으로 보여준다 */
+export const reactionSummaryStyle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: vars.space[1],
+  padding: `${vars.space[1]} ${vars.space[3]}`,
+  borderRadius: vars.radius.full,
+  border: `1px solid ${colors.border[1]}`,
+  backgroundColor: colors.surface[1],
+  color: colors.text[3],
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.medium,
 })
 
 export const shareButtonStyle = style({

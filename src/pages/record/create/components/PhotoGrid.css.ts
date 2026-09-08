@@ -97,6 +97,32 @@ export const photoImageStyle = style({
   objectFit: 'cover',
 })
 
+export const imageButtonStyle = style({
+  display: 'block',
+  width: '100%',
+  height: '100%',
+  padding: 0,
+  border: 'none',
+  backgroundColor: 'transparent',
+  cursor: 'pointer',
+})
+
+export const photoTileSelectedStyle = style({
+  boxShadow: `0 0 0 2px ${colors.primary[500]}`,
+})
+
+export const readOnlyBadgeStyle = style({
+  position: 'absolute',
+  bottom: vars.space[1],
+  left: vars.space[1],
+  padding: '2px 6px',
+  borderRadius: vars.radius.full,
+  backgroundColor: 'rgba(37, 37, 45, 0.6)',
+  color: colors.text[5],
+  fontSize: '10px',
+  fontWeight: vars.fontWeight.medium,
+})
+
 export const removeButtonStyle = style({
   position: 'absolute',
   top: vars.space[1],

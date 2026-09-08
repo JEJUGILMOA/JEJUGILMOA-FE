@@ -10,10 +10,18 @@ import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/Horiz
 import { Loading } from '@/components/ui/Loading/Loading'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { toast } from '@/components/ui/Toast/Toast'
-import { PLACE_CATEGORY_LABELS, ROUTES } from '@/constants'
+import { ROUTES } from '@/constants'
 import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
-import { usePlanQuery, useUpdatePlanItineraryMutation } from '@/features/plans/hooks'
-import { rankNearbyPlaces } from '@/features/plans/nearbyPlaces'
+import { usePlanDraft, useRecommendationsQuery, useSearchPlanPlacesQuery } from '@/features/plans/hooks'
+import { planDraftStore } from '@/features/plans/planDraftStore'
+import { TRAVEL_THEMES, TRAVEL_THEME_LABELS } from '@/features/plans/travelTheme'
+import type {
+  DepartureInfo,
+  GeoCoordinate,
+  RecommendationRequest,
+  TravelTheme,
+  Waypoint,
+} from '@/features/plans/types'
 import {
   backButtonStyle,
   courseRowStyle,
@@ -55,8 +63,6 @@ import { ScheduleList } from './components/ScheduleList'
 import { WaypointPlaceRow } from './components/WaypointPlaceRow'
 
 const DATE_FORMAT = 'yyyy.MM.dd'
-const ALL_CATEGORY = '전체'
-const CATEGORY_FILTERS = [ALL_CATEGORY, ...PLACE_CATEGORY_LABELS]
 /** "꼭 가고 싶은 장소"는 개수 제한이 없다 — 대신 Day 하나에 담을 수 있는 일정 전체를 10곳으로 제한한다 */
 const MAX_DAY_PLACES = 10
 
@@ -69,6 +75,9 @@ const STOP_INTERVAL_MINUTES = 90
 const ARRIVAL_BUFFER_MINUTES = 60
 /** 출발 전 공항/항구에 도착해 있어야 하는 여유 시간 */
 const DEPARTURE_BUFFER_MINUTES = 90
+// 제주 도착/출발 시각은 현재 입력 UI가 없어 고정값을 쓴다.
+const FIXED_ARRIVAL_TIME = '09:00'
+const FIXED_DEPARTURE_TIME = '18:00'
 
 function parseTimeToMinutes(time: string) {
   const [hours, minutes] = time.split(':').map(Number)
@@ -90,20 +99,20 @@ function formatMinutesToTime(totalMinutes: number) {
  */
 function computeScheduleTimes(
   stopCount: number,
-  options: { isFirstDay: boolean; isLastDay: boolean; arrivalTime: string; departureTime: string },
+  options: { isFirstDay: boolean; isLastDay: boolean },
 ) {
   if (stopCount === 0) return []
 
-  const { isFirstDay, isLastDay, arrivalTime, departureTime } = options
+  const { isFirstDay, isLastDay } = options
 
   let dayStart = isFirstDay
-    ? Math.max(DAY_START_MINUTES, parseTimeToMinutes(arrivalTime) + ARRIVAL_BUFFER_MINUTES)
+    ? Math.max(DAY_START_MINUTES, parseTimeToMinutes(FIXED_ARRIVAL_TIME) + ARRIVAL_BUFFER_MINUTES)
     : DAY_START_MINUTES
 
   let interval = STOP_INTERVAL_MINUTES
 
   if (isLastDay) {
-    const dayEndLimit = parseTimeToMinutes(departureTime) - DEPARTURE_BUFFER_MINUTES
+    const dayEndLimit = parseTimeToMinutes(FIXED_DEPARTURE_TIME) - DEPARTURE_BUFFER_MINUTES
 
     if (stopCount === 1) {
       dayStart = Math.min(dayStart, dayEndLimit)
@@ -118,33 +127,158 @@ function computeScheduleTimes(
   )
 }
 
-function placeTitle(placeId: string) {
-  return MOCK_PLACES.find((place) => place.id === placeId)?.title ?? placeId
+type PlaceInfo = {
+  title: string
+  categoryLabel: string
+  latitude: number
+  longitude: number
 }
 
 export function PlanItineraryPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const { data: plan, isPending, isError, refetch } = usePlanQuery(planId)
-  const updateItineraryMutation = useUpdatePlanItineraryMutation()
+  const { plan, isPending, isError, refetch } = usePlanDraft(planId)
 
   const [selectedDay, setSelectedDay] = useState(1)
   const [customTimes, setCustomTimes] = useState<Record<string, string>>({})
   const [sheetTab, setSheetTab] = useState<SheetTab>('schedule')
   const [recommendQuery, setRecommendQuery] = useState('')
   const [recommendMode, setRecommendMode] = useState<RecommendMode>('popular')
-  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY)
+  const [activeTheme, setActiveTheme] = useState<TravelTheme | null>(null)
   const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
   const [showAnchorPrompt, setShowAnchorPrompt] = useState(false)
   const headerSearchInputRef = useRef<HTMLInputElement>(null)
   const [isSelectingDeparture, setIsSelectingDeparture] = useState(false)
+  // 검색·추천 API 응답에서 본 장소들의 이름·좌표를 기억해둔다 — MOCK_PLACES에 없는
+  // 실제 장소를 담았을 때도 제목을 보여주고, 담긴 장소를 앵커 추천의 좌표로 쓰기 위함.
+  const [placeInfoCache, setPlaceInfoCache] = useState<Record<string, PlaceInfo>>({})
+  // 새로고침을 누를 때마다 지금까지 화면에 보여준 장소를 여기 누적해서, 다음 요청에서
+  // 서버가 다른 장소를 돌려주게 한다. 서버가 이전 결과를 기억하지 않는 stateless API라서다.
+  const [refreshedPlaceIds, setRefreshedPlaceIds] = useState<number[]>([])
+  const [refreshedContentIds, setRefreshedContentIds] = useState<string[]>([])
 
   // 미리보기의 연필 아이콘으로 들어왔으면 저장 후 다음 STEP(예산입력)으로 이어가지 않고
   // 미리보기로 바로 돌아간다 — 이 화면만 고쳐달라고 들어온 거라 나머지 단계를 강제로 거칠 필요가 없다.
   const fromPreview = Boolean((location.state as { fromPreview?: boolean } | null)?.fromPreview)
 
   const goBack = () => navigate(-1)
+
+  const placeTitle = (placeId: string) =>
+    placeInfoCache[placeId]?.title ?? MOCK_PLACES.find((place) => place.id === placeId)?.title ?? placeId
+
+  // 아래 훅들은 조건 없이 항상 같은 순서로 호출돼야 해서, plan이 아직 로딩 중이라
+  // undefined일 수 있는 시점에도 옵셔널 체이닝으로 미리 계산해둔다. isPending/isError
+  // 가드는 이 훅 호출들이 다 끝난 뒤에 있어야 한다.
+  const currentDayEntry = plan?.itinerary[selectedDay]
+  const currentDayWaypoints = currentDayEntry?.waypoints ?? []
+  const currentDayPlaceIds = currentDayWaypoints.map((waypoint) => waypoint.placeId)
+  // "가까운 장소"는 이 Day에 꼭 가고 싶은 장소(앵커)를 정해뒀으면 그곳들이 앵커 추천의 기준이 되고,
+  // 아직 안 정했으면 출발지·이미 담은 장소로 대신한다.
+  const currentDayMustVisitIds = currentDayWaypoints
+    .filter((waypoint) => waypoint.isPreferred)
+    .map((waypoint) => waypoint.placeId)
+  const fallbackReferencePlaceIds = [
+    ...(currentDayEntry?.departure ? [currentDayEntry.departure.placeId] : []),
+    ...currentDayPlaceIds,
+  ]
+  const referencePlaceIds =
+    currentDayMustVisitIds.length > 0 ? currentDayMustVisitIds : fallbackReferencePlaceIds
+
+  // 이미 어느 Day엔가(장소·출발지로) 쓰인 곳은 추천/검색 후보에서 뺀다 —
+  // 같은 장소가 여러 Day에 중복 배정되는 걸 막는다.
+  const assignedEverywhere = new Set(
+    Object.values(plan?.itinerary ?? {}).flatMap((day) => [
+      ...(day.departure ? [day.departure.placeId] : []),
+      ...day.waypoints.map((waypoint) => waypoint.placeId),
+    ]),
+  )
+
+  const toGeoCoordinate = (placeId: string): GeoCoordinate | null => {
+    const info = placeInfoCache[placeId]
+    return info ? { latitude: info.latitude, longitude: info.longitude } : null
+  }
+
+  // 출발지는 이제 선택 시점에 실제 좌표를 그 자리에서 저장해두므로 캐시 조회가 필요 없다.
+  const departureCoord = currentDayEntry?.departure
+    ? { latitude: currentDayEntry.departure.latitude, longitude: currentDayEntry.departure.longitude }
+    : null
+  const preferredWaypoints =
+    recommendMode === 'nearby'
+      ? currentDayMustVisitIds.map(toGeoCoordinate).filter((coord): coord is GeoCoordinate => coord !== null)
+      : []
+  const baseExcludedPlaceIds = [...assignedEverywhere]
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id))
+
+  const recommendationRequest: RecommendationRequest = {
+    departureCoord,
+    preferredWaypoints,
+    excludedPlaceIds: [...new Set([...baseExcludedPlaceIds, ...refreshedPlaceIds])],
+    excludeContentIds: refreshedContentIds,
+    category: activeTheme,
+  }
+
+  // Day나 테마·모드가 바뀌면 새로고침 누적분은 리셋 — 새 맥락에서 다시 처음부터 추천받는다.
+  // effect 대신, 렌더 중에 이전 값과 비교해서 바뀌었을 때만 상태를 리셋하는 방식
+  // (React가 공식적으로 권장하는 "prop이 바뀌면 state를 리셋" 패턴)을 쓴다.
+  const recommendContextKey = `${selectedDay}:${activeTheme}:${recommendMode}`
+  const [lastRecommendContextKey, setLastRecommendContextKey] = useState(recommendContextKey)
+  if (lastRecommendContextKey !== recommendContextKey) {
+    setLastRecommendContextKey(recommendContextKey)
+    setRefreshedPlaceIds([])
+    setRefreshedContentIds([])
+  }
+
+  const trimmedRecommendQuery = recommendQuery.trim()
+  const isRecommendTabActive = Boolean(plan) && sheetTab === 'recommend' && !isSelectingDeparture
+  const shouldFetchRecommendations =
+    isRecommendTabActive &&
+    !trimmedRecommendQuery &&
+    (recommendMode === 'popular' || referencePlaceIds.length > 0)
+  const shouldSearchPlaces = isRecommendTabActive && Boolean(trimmedRecommendQuery)
+  // 출발지 검색도 같은 장소 검색 API를 재사용한다 — 검색어가 있을 때만 실행
+  const shouldSearchDeparture = isSelectingDeparture && Boolean(trimmedRecommendQuery)
+
+  const recommendationsQuery = useRecommendationsQuery(recommendationRequest, shouldFetchRecommendations)
+  const placeSearchQuery = useSearchPlanPlacesQuery(
+    { keyword: trimmedRecommendQuery },
+    shouldSearchPlaces || shouldSearchDeparture,
+  )
+
+  // 새로 본 장소는 이름·좌표를 캐시에 기억해둔다 (제목 표시, 다음 앵커 좌표 계산용)
+  useEffect(() => {
+    if (!recommendationsQuery.data) return
+    setPlaceInfoCache((prev) => {
+      const next = { ...prev }
+      for (const item of recommendationsQuery.data.items) {
+        if (item.placeId === null) continue
+        next[String(item.placeId)] = {
+          title: item.name,
+          categoryLabel: item.categoryName ?? '',
+          latitude: item.latitude,
+          longitude: item.longitude,
+        }
+      }
+      return next
+    })
+  }, [recommendationsQuery.data])
+
+  useEffect(() => {
+    if (!placeSearchQuery.data) return
+    setPlaceInfoCache((prev) => {
+      const next = { ...prev }
+      for (const item of placeSearchQuery.data.content) {
+        next[String(item.id)] = {
+          title: item.name,
+          categoryLabel: item.categoryName ?? '',
+          latitude: item.latitude,
+          longitude: item.longitude,
+        }
+      }
+      return next
+    })
+  }, [placeSearchQuery.data])
 
   if (isPending) {
     return (
@@ -170,144 +304,140 @@ export function PlanItineraryPage() {
   const dayCount = Math.max(differenceInCalendarDays(endDate, startDate) + 1, 1)
   const dayDateLabel = format(addDays(startDate, selectedDay - 1), 'M.d(EEE)', { locale: ko })
 
-  const currentDayEntry = plan.itinerary[selectedDay]
-  const currentDayPlaceIds = currentDayEntry?.placeIds ?? []
-
   const isFirstDay = selectedDay === 1
   const isLastDay = selectedDay === dayCount
 
-  const departurePlace = currentDayEntry?.departurePlaceId
-    ? { id: currentDayEntry.departurePlaceId, title: placeTitle(currentDayEntry.departurePlaceId) }
+  const departurePlace = currentDayEntry?.departure
+    ? { id: currentDayEntry.departure.placeId, title: currentDayEntry.departure.title }
     : null
 
   // 전날 출발지(예: 숙소)는 오늘도 그대로 출발지일 가능성이 높으니, 아직 안 정했으면
-  // 출발지 검색 목록 맨 위에 추천으로 보여준다 — 다른 Day에서 이미 쓰인 장소라
-  // candidatePlaces에서는 걸러지므로 이렇게 따로 찾아와야 한다.
-  const previousDayDeparturePlaceId =
-    selectedDay > 1 ? (plan.itinerary[selectedDay - 1]?.departurePlaceId ?? null) : null
+  // 출발지 검색 목록 맨 위에 추천으로 보여준다.
+  const previousDayDeparture =
+    selectedDay > 1 ? (plan.itinerary[selectedDay - 1]?.departure ?? null) : null
   const previousDayDeparturePlace =
-    previousDayDeparturePlaceId && previousDayDeparturePlaceId !== currentDayEntry?.departurePlaceId
-      ? MOCK_PLACES.find((place) => place.id === previousDayDeparturePlaceId)
+    previousDayDeparture && previousDayDeparture.placeId !== currentDayEntry?.departure?.placeId
+      ? previousDayDeparture
       : undefined
 
-  const stops = currentDayPlaceIds.map((id) => ({ id, title: placeTitle(id) }))
-  const stopTimes = computeScheduleTimes(currentDayPlaceIds.length, {
-    isFirstDay,
-    isLastDay,
-    arrivalTime: plan.arrivalTime,
-    departureTime: plan.departureTime,
-  })
+  const stops = currentDayWaypoints.map((waypoint) => ({ id: waypoint.placeId, title: waypoint.title }))
+  const stopTimes = computeScheduleTimes(currentDayPlaceIds.length, { isFirstDay, isLastDay })
   const scheduleItems = stops.map((stop, index) => ({
     id: stop.id,
     title: stop.title,
     time: customTimes[stop.id] ?? stopTimes[index],
   }))
 
-  // 이미 어느 Day엔가(장소·출발지·필수 장소로) 쓰인 곳은 추천/검색 후보에서 뺀다 —
-  // 같은 장소가 여러 Day에 중복 배정되는 걸 막는다.
-  const assignedEverywhere = new Set(
-    Object.values(plan.itinerary).flatMap((day) => [
-      ...(day.departurePlaceId ? [day.departurePlaceId] : []),
-      ...day.mustVisitPlaceIds,
-      ...day.placeIds,
-    ]),
-  )
-  const candidatePlaces = MOCK_PLACES.filter((place) => !assignedEverywhere.has(place.id))
-
-  // "가까운 장소"는 이 Day에 꼭 가고 싶은 장소(앵커)를 정해뒀으면 그곳들 기준으로만 추천해서
-  // 하루 일정이 그 앵커 주변으로 짜이게 하고, 아직 안 정했으면 출발지·이미 담은 장소로 대신한다.
-  const currentDayMustVisitIds = currentDayEntry?.mustVisitPlaceIds ?? []
   // 출발지만 정해진 상태는 아직 "빈 일정"으로 본다 — 출발지는 참고 지점일 뿐 실제
   // 방문 계획이 아니라서, 출발지만 있고 꼭 가고 싶은 장소·일정이 없으면 코스 추천을
   // 계속 보여준다. 반대로 꼭 가고 싶은 장소가 있는데 일정이 비어 있으면(예: 담았던
   // 곳을 다시 뺀 경우) 이미 앵커를 잡아둔 상태라 코스 추천 대신 안내 문구를 보여준다.
   const hasMustVisitWithoutStops = currentDayMustVisitIds.length > 0
-  const fallbackReferencePlaceIds = [
-    ...(currentDayEntry?.departurePlaceId ? [currentDayEntry.departurePlaceId] : []),
-    ...currentDayPlaceIds,
-  ]
-  const referencePlaceIds =
-    currentDayMustVisitIds.length > 0 ? currentDayMustVisitIds : fallbackReferencePlaceIds
-  const nearbyRanked = rankNearbyPlaces(referencePlaceIds, candidatePlaces)
-  const travelLabelByPlaceId = new Map(
-    nearbyRanked.map((item) => [item.place.id, item.travelLabel]),
+
+  const departureCandidates: DepartureInfo[] = (placeSearchQuery.data?.content ?? [])
+    .filter((item) => !assignedEverywhere.has(String(item.id)))
+    .map((item) => ({
+      placeId: String(item.id),
+      title: item.name,
+      address: item.address,
+      latitude: item.latitude,
+      longitude: item.longitude,
+    }))
+
+  type DisplayPlace = {
+    id: string
+    title: string
+    categoryLabel: string
+    imageUrl: string | null
+    addable: boolean
+  }
+
+  const searchDisplayPlaces: DisplayPlace[] = (placeSearchQuery.data?.content ?? [])
+    .filter((item) => !assignedEverywhere.has(String(item.id)))
+    .map((item) => ({
+      id: String(item.id),
+      title: item.name,
+      categoryLabel: item.categoryName ?? '',
+      imageUrl: item.imageUrl,
+      addable: true,
+    }))
+
+  // TourAPI 폴백 결과(placeId === null)는 아직 DB에 없는 장소라 경유지로 바로 담을 수 없다 —
+  // 목록엔 보여주되 담기·별표를 비활성화한다.
+  const recommendDisplayPlaces: DisplayPlace[] = (recommendationsQuery.data?.items ?? []).map((item) =>
+    item.placeId !== null
+      ? {
+          id: String(item.placeId),
+          title: item.name,
+          categoryLabel: item.categoryName ?? '',
+          imageUrl: item.imageUrl,
+          addable: true,
+        }
+      : {
+          id: `tourapi-${item.contentId}`,
+          title: item.name,
+          categoryLabel: item.categoryName ?? '',
+          imageUrl: item.imageUrl,
+          addable: false,
+        },
   )
-  const nearestPlaceTitleByPlaceId = new Map(
-    nearbyRanked.map((item) => [item.place.id, placeTitle(item.nearestToPlaceId)]),
-  )
 
-  const matchesCategory = (category: string) =>
-    activeCategory === ALL_CATEGORY || category === activeCategory
+  const displayPlaces = trimmedRecommendQuery ? searchDisplayPlaces : recommendDisplayPlaces
+  const isLoadingDisplayPlaces = trimmedRecommendQuery
+    ? placeSearchQuery.isLoading
+    : recommendationsQuery.isLoading
+  const hasDisplayPlacesError = trimmedRecommendQuery ? placeSearchQuery.isError : recommendationsQuery.isError
+  const recommendHasMore = !trimmedRecommendQuery && (recommendationsQuery.data?.hasMore ?? false)
 
-  const trimmedRecommendQuery = recommendQuery.trim()
-  const recommendSearchResults = trimmedRecommendQuery
-    ? candidatePlaces.filter((place) => {
-        const keyword = trimmedRecommendQuery.toLowerCase()
-        return (
-          place.title.toLowerCase().includes(keyword) ||
-          place.location.toLowerCase().includes(keyword)
-        )
-      })
-    : null
-
-  const recommendedPlaces =
-    recommendSearchResults ??
-    (recommendMode === 'popular'
-      ? candidatePlaces.filter((place) => matchesCategory(place.category))
-      : nearbyRanked
-          .filter((item) => matchesCategory(item.place.category))
-          .map((item) => item.place))
-
-  const showTravelLabel = !trimmedRecommendQuery && recommendMode === 'nearby'
-  // 출발지 검색은 헤더 검색창을 그대로 재사용한다 — 카테고리·코스 추천과 무관한
-  // 단순 검색이라 popular 후보군에 검색어만 적용하면 된다.
-  const departureCandidates = recommendSearchResults ?? candidatePlaces
+  const handleRefreshRecommendations = () => {
+    const data = recommendationsQuery.data
+    if (!data) return
+    const newPlaceIds = data.items.map((item) => item.placeId).filter((id): id is number => id !== null)
+    const newContentIds = data.items.map((item) => item.contentId).filter((id): id is string => id !== null)
+    setRefreshedPlaceIds((prev) => [...prev, ...newPlaceIds])
+    setRefreshedContentIds((prev) => [...prev, ...newContentIds])
+  }
 
   const mapStops = stops
   // 탭은 바텀시트 안 내용만 나눈다 — 지도 자체는 네이버맵처럼 어느 탭에 있든 늘
   // 오늘 동선 + 추천 핀을 함께 보여준다.
-  const unassignedPlacesForMap = recommendedPlaces.map((place) => ({
-    id: place.id,
-    title: place.title,
-  }))
+  const unassignedPlacesForMap = displayPlaces
+    .filter((place) => place.addable)
+    .map((place) => ({ id: place.id, title: place.title }))
 
+  // v2는 STEP6에서 딱 한 번만 서버로 보낸다 — 일정 편집은 여기서 로컬 draft만 갱신한다.
   const persistDay = (
     updates: Partial<{
-      departurePlaceId: string | null
-      mustVisitPlaceIds: string[]
-      placeIds: string[]
+      departure: DepartureInfo | null
+      waypoints: Waypoint[]
     }>,
     onSuccessMessage?: string,
   ) => {
-    const nextItinerary = {
-      ...plan.itinerary,
-      [selectedDay]: {
-        departurePlaceId: currentDayEntry?.departurePlaceId ?? null,
-        mustVisitPlaceIds: currentDayMustVisitIds,
-        placeIds: currentDayPlaceIds,
-        ...updates,
-      },
-    }
-    updateItineraryMutation.mutate(
-      { planId, itinerary: nextItinerary },
-      {
-        onSuccess: () => {
-          if (onSuccessMessage) toast.success(onSuccessMessage)
-        },
-        onError: () => {
-          toast.error('일정 변경에 실패했어요. 다시 시도해 주세요.')
+    planDraftStore.getState().updateDraft((current) => ({
+      ...current,
+      itinerary: {
+        ...current.itinerary,
+        [selectedDay]: {
+          departure: currentDayEntry?.departure ?? null,
+          waypoints: currentDayWaypoints,
+          ...updates,
         },
       },
-    )
+    }))
+    if (onSuccessMessage) toast.success(onSuccessMessage)
   }
 
   const handleReorder = (nextOrderIds: string[]) => {
-    persistDay({ placeIds: nextOrderIds })
+    const waypointByPlaceId = new Map(currentDayWaypoints.map((waypoint) => [waypoint.placeId, waypoint]))
+    const nextWaypoints = nextOrderIds.map(
+      (placeId) => waypointByPlaceId.get(placeId) ?? { placeId, title: placeTitle(placeId), isPreferred: false },
+    )
+    persistDay({ waypoints: nextWaypoints })
   }
 
   const handleRemove = (id: string) => {
     persistDay(
-      { placeIds: currentDayPlaceIds.filter((placeId) => placeId !== id) },
+      { waypoints: currentDayWaypoints.filter((waypoint) => waypoint.placeId !== id) },
       `${placeTitle(id)}를 Day ${selectedDay} 일정에서 뺐어요`,
     )
   }
@@ -324,10 +454,10 @@ export function PlanItineraryPage() {
     const shouldMarkMustVisit = recommendMode === 'popular'
     persistDay(
       {
-        placeIds: [...currentDayPlaceIds, id],
-        mustVisitPlaceIds: shouldMarkMustVisit
-          ? [...currentDayMustVisitIds, id]
-          : currentDayMustVisitIds,
+        waypoints: [
+          ...currentDayWaypoints,
+          { placeId: id, title: placeTitle(id), isPreferred: shouldMarkMustVisit },
+        ],
       },
       shouldMarkMustVisit
         ? `${placeTitle(id)}를 Day ${selectedDay}의 꼭 가고 싶은 장소로 담았어요`
@@ -360,8 +490,10 @@ export function PlanItineraryPage() {
       // "꼭 가고 싶은 장소"로 함께 찍는다.
       persistDay(
         {
-          placeIds: [...currentDayPlaceIds, ...addedPlaceIds],
-          mustVisitPlaceIds: [...currentDayMustVisitIds, ...addedPlaceIds],
+          waypoints: [
+            ...currentDayWaypoints,
+            ...addedPlaceIds.map((placeId) => ({ placeId, title: placeTitle(placeId), isPreferred: true })),
+          ],
         },
         addedPlaceIds.length < coursePlaceIds.length
           ? `Day ${selectedDay}은 최대 ${MAX_DAY_PLACES}곳까지만 담을 수 있어 일부만 담았어요`
@@ -382,10 +514,10 @@ export function PlanItineraryPage() {
 
     setCustomTimes((prev) => ({ ...prev, ...timesById }))
 
-    const sortedPlaceIds = [...currentDayPlaceIds].sort((a, b) =>
-      timesById[a].localeCompare(timesById[b]),
+    const sortedWaypoints = [...currentDayWaypoints].sort((a, b) =>
+      timesById[a.placeId].localeCompare(timesById[b.placeId]),
     )
-    persistDay({ placeIds: sortedPlaceIds })
+    persistDay({ waypoints: sortedWaypoints })
   }
 
   // 별 토글: 이미 담긴 장소면 그대로 꼭 가고 싶은 장소로만 정하고, 아직 안 담은
@@ -401,13 +533,13 @@ export function PlanItineraryPage() {
       return
     }
 
-    const nextMustVisitPlaceIds = isUnsetting
-      ? currentDayMustVisitIds.filter((placeId) => placeId !== id)
-      : [...currentDayMustVisitIds, id]
-    const nextPlaceIds =
-      isUnsetting || isAlreadyInSchedule ? currentDayPlaceIds : [...currentDayPlaceIds, id]
+    const nextWaypoints = isAlreadyInSchedule
+      ? currentDayWaypoints.map((waypoint) =>
+          waypoint.placeId === id ? { ...waypoint, isPreferred: !isUnsetting } : waypoint,
+        )
+      : [...currentDayWaypoints, { placeId: id, title: placeTitle(id), isPreferred: true }]
     persistDay(
-      { mustVisitPlaceIds: nextMustVisitPlaceIds, placeIds: nextPlaceIds },
+      { waypoints: nextWaypoints },
       isUnsetting
         ? '꼭 가고 싶은 장소 설정을 해제했어요'
         : `${placeTitle(id)}를 Day ${selectedDay}의 꼭 가고 싶은 장소로 정했어요`,
@@ -429,8 +561,8 @@ export function PlanItineraryPage() {
     setSheetTab('schedule')
   }
 
-  const handleSelectDeparture = (id: string) => {
-    persistDay({ departurePlaceId: id }, '출발지를 저장했어요')
+  const handleSelectDeparture = (departure: DepartureInfo) => {
+    persistDay({ departure }, '출발지를 저장했어요')
     setIsSelectingDeparture(false)
     setRecommendQuery('')
     setSheetTab('schedule')
@@ -701,14 +833,17 @@ export function PlanItineraryPage() {
             {!trimmedRecommendQuery && !isSelectingDeparture ? (
               <HorizontalScrollArea>
                 <div className={courseRowStyle}>
-                  {CATEGORY_FILTERS.map((category) => (
+                  <Chip colorScheme="primary" isSelected={activeTheme === null} onClick={() => setActiveTheme(null)}>
+                    전체
+                  </Chip>
+                  {TRAVEL_THEMES.map((theme) => (
                     <Chip
-                      key={category}
+                      key={theme}
                       colorScheme="primary"
-                      isSelected={category === activeCategory}
-                      onClick={() => setActiveCategory(category)}
+                      isSelected={theme === activeTheme}
+                      onClick={() => setActiveTheme(theme)}
                     >
-                      {category}
+                      {TRAVEL_THEME_LABELS[theme]}
                     </Chip>
                   ))}
                 </div>
@@ -721,30 +856,36 @@ export function PlanItineraryPage() {
                   <button
                     type="button"
                     className={departureResultRowStyle}
-                    onClick={() => handleSelectDeparture(previousDayDeparturePlace.id)}
+                    onClick={() => handleSelectDeparture(previousDayDeparturePlace)}
                   >
                     <span className={departureResultTextStyle}>
                       <span className={departureSuggestionBadgeStyle}>이전 Day와 동일</span>
                       <span className={fieldResultTitleStyle}>{previousDayDeparturePlace.title}</span>
-                      <span className={fieldResultMetaStyle}>{previousDayDeparturePlace.location}</span>
+                      <span className={fieldResultMetaStyle}>{previousDayDeparturePlace.address}</span>
                     </span>
                     <ChevronRight size={18} className={departureResultChevronStyle} aria-hidden />
                   </button>
                 ) : null}
 
-                {departureCandidates.length === 0 ? (
+                {!trimmedRecommendQuery ? (
+                  previousDayDeparturePlace ? null : (
+                    <p className={emptyTextStyle}>출발지를 검색해보세요.</p>
+                  )
+                ) : placeSearchQuery.isLoading ? (
+                  <p className={emptyTextStyle}>불러오는 중…</p>
+                ) : departureCandidates.length === 0 ? (
                   <p className={emptyTextStyle}>검색 결과가 없어요.</p>
                 ) : (
                   departureCandidates.map((place) => (
                     <button
-                      key={place.id}
+                      key={place.placeId}
                       type="button"
                       className={departureResultRowStyle}
-                      onClick={() => handleSelectDeparture(place.id)}
+                      onClick={() => handleSelectDeparture(place)}
                     >
                       <span className={departureResultTextStyle}>
                         <span className={fieldResultTitleStyle}>{place.title}</span>
-                        <span className={fieldResultMetaStyle}>{place.location}</span>
+                        <span className={fieldResultMetaStyle}>{place.address}</span>
                       </span>
                       <ChevronRight size={18} className={departureResultChevronStyle} aria-hidden />
                     </button>
@@ -757,34 +898,56 @@ export function PlanItineraryPage() {
               <p className={emptyTextStyle}>
                 출발지나 장소를 먼저 담아야 가까운 장소를 추천해드릴 수 있어요.
               </p>
-            ) : recommendedPlaces.length === 0 ? (
+            ) : isLoadingDisplayPlaces ? (
+              <p className={emptyTextStyle}>불러오는 중…</p>
+            ) : hasDisplayPlacesError ? (
+              <>
+                <p className={emptyTextStyle}>
+                  {trimmedRecommendQuery ? '검색' : '추천'}을 불러오지 못했어요. 다시 시도해 주세요.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    void (trimmedRecommendQuery ? placeSearchQuery.refetch() : recommendationsQuery.refetch())
+                  }
+                >
+                  다시 시도
+                </Button>
+              </>
+            ) : displayPlaces.length === 0 ? (
               <p className={emptyTextStyle}>표시할 장소가 없어요.</p>
             ) : (
-              recommendedPlaces.map((place) => (
-                <WaypointPlaceRow
-                  key={place.id}
-                  title={place.title}
-                  category={
-                    showTravelLabel && travelLabelByPlaceId.get(place.id)
-                      ? `${place.categoryLabel ?? place.category} · ${nearestPlaceTitleByPlaceId.get(place.id)} 근처 · ${travelLabelByPlaceId.get(place.id)}`
-                      : (place.categoryLabel ?? place.category)
-                  }
-                  added={false}
-                  onToggle={() => handleAssign(place.id)}
-                  isMustVisit={currentDayMustVisitIds.includes(place.id)}
-                  onToggleMustVisit={() => handleToggleMustVisit(place.id)}
-                />
-              ))
+              <>
+                {displayPlaces.map((place) => (
+                  <WaypointPlaceRow
+                    key={place.id}
+                    title={place.title}
+                    category={place.categoryLabel}
+                    imageUrl={place.imageUrl}
+                    added={false}
+                    onToggle={() => (place.addable ? handleAssign(place.id) : undefined)}
+                    isMustVisit={currentDayMustVisitIds.includes(place.id)}
+                    onToggleMustVisit={() => (place.addable ? handleToggleMustVisit(place.id) : undefined)}
+                    disabled={!place.addable}
+                  />
+                ))}
+                {!trimmedRecommendQuery ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!recommendHasMore || recommendationsQuery.isFetching}
+                    onClick={handleRefreshRecommendations}
+                  >
+                    {recommendationsQuery.isFetching ? '불러오는 중…' : '새로고침'}
+                  </Button>
+                ) : null}
+              </>
             )}
           </div>
         )}
 
-        <Button
-          fullWidth
-          size="lg"
-          isLoading={updateItineraryMutation.isPending}
-          onClick={handleNext}
-        >
+        <Button fullWidth size="lg" onClick={handleNext}>
           {nextLabel}
         </Button>
       </ItineraryBottomSheet>

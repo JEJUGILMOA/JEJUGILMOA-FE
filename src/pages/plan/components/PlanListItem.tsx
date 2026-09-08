@@ -8,8 +8,7 @@ import { Popover } from '@/components/ui/Popover/Popover'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { useDeletePlanMutation } from '@/features/plans/hooks'
-import type { PlanGroup } from '@/features/plans/planStatus'
-import type { TravelPlan } from '@/features/plans/types'
+import type { PlanStatus, TravelPlan } from '@/features/plans/types'
 import {
   clickableCardStyle,
   dateRangeStyle,
@@ -23,22 +22,15 @@ import {
   triggerWrapStyle,
 } from './PlanListItem.css.ts'
 
-const COMPANION_LABELS: Record<TravelPlan['companionType'], string> = {
-  solo: '혼자',
-  couple: '연인과',
-  family: '가족과',
-  friends: '친구와',
-  colleague: '동료와',
-}
-
 export type PlanListItemProps = {
   plan: TravelPlan
-  /** 진행중인 계획은 관리 메뉴(⋯)를 아예 렌더링하지 않아 삭제할 수 없다. */
-  group: PlanGroup
+  /** 관리 메뉴(⋯)는 draft(여행 시작 전)에서만 렌더링한다 — 진행중·완료된 계획은 서버가 수정
+   * 자체를 막아서(PUT /api/plans는 DRAFT 전용, 그 외엔 PLAN400_17) 애초에 진입점을 안 보여준다 */
+  status: PlanStatus
 }
 
 /** `/plan` 목록의 계획 카드 1개 항목. 클릭하면 계획 미리보기(수정 가능)로 이동한다. */
-export function PlanListItem({ plan, group }: PlanListItemProps) {
+export function PlanListItem({ plan, status }: PlanListItemProps) {
   const navigate = useNavigate()
   const deletePlanMutation = useDeletePlanMutation()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -85,19 +77,19 @@ export function PlanListItem({ plan, group }: PlanListItemProps) {
     >
       <div className={titleRowStyle}>
         <h3 className={titleTextStyle}>{plan.title}</h3>
-        {group === 'ongoing' ? <Badge status="info">진행중</Badge> : null}
-        {group === 'draft' ? <Badge status="neutral">임시저장</Badge> : null}
+        {status === 'ongoing' ? <Badge status="info">진행중</Badge> : null}
+        {status === 'draft' ? <Badge status="neutral">예정된 여행</Badge> : null}
+        {status === 'completed' ? <Badge status="success">완료</Badge> : null}
       </div>
 
       <p className={dateRangeStyle}>
         {plan.startDate} - {plan.endDate}
       </p>
-      <p className={metaStyle}>
-        {plan.transportMode}로 출발 · {COMPANION_LABELS[plan.companionType]}
-        {plan.companionType !== 'solo' ? ` · ${plan.travelerCount}명` : ''}
-      </p>
+      {plan.waypointCount !== undefined ? (
+        <p className={metaStyle}>경유지 {plan.waypointCount}곳</p>
+      ) : null}
 
-      {group !== 'ongoing' ? (
+      {status === 'draft' ? (
         <div
           className={triggerWrapStyle}
           onClick={(event: MouseEvent) => event.stopPropagation()}

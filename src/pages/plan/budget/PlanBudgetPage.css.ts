@@ -28,14 +28,6 @@ export const descriptionStyle = style({
   color: colors.text[4],
 })
 
-export const suggestionHintStyle = style({
-  fontSize: vars.fontSize.xs,
-  color: colors.primary[700],
-  backgroundColor: colors.primary[100],
-  borderRadius: vars.radius.sm,
-  padding: `${vars.space[2]} ${vars.space[3]}`,
-})
-
 export const skipButtonStyle = style({
   border: 'none',
   background: 'transparent',

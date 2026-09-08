@@ -19,6 +19,7 @@ import {
 import type { ExploreRecord, ReactionType, SavedRecord } from '@/features/records/types'
 import { useAuthStore } from '@/stores/authStore'
 import { RecordManageSheet } from '@/pages/record/components/RecordManageSheet'
+import { EarnedBadgeCallout } from './components/EarnedBadgeCallout'
 import { PhotoCarousel } from './components/PhotoCarousel'
 import { RoutePreview } from './components/RoutePreview'
 import { VisitedPlaceList } from './components/VisitedPlaceList'
@@ -27,6 +28,7 @@ import {
   authorNameStyle,
   authorRowStyle,
   authorTimeStyle,
+  avatarImageStyle,
   avatarStyle,
   backButtonStyle,
   badgeRowStyle,
@@ -38,6 +40,7 @@ import {
   metaStyle,
   pageStyle,
   reactionButtonRecipe,
+  reactionSummaryStyle,
   shareButtonStyle,
   subHeaderStyle,
   summaryStyle,
@@ -59,12 +62,13 @@ type DetailViewModel = {
   dislikeCount: number
   myReaction: ReactionType | null
   authorName: string
+  authorProfileImageUrl: string | null
   visibilityLabel: string
   linkedPlanLabel: string | null
   isOwn: boolean
 }
 
-function fromOwnRecord(record: SavedRecord, nickname: string): DetailViewModel {
+function fromOwnRecord(record: SavedRecord, nickname: string, profileImageUrl: string | null): DetailViewModel {
   return {
     id: record.id,
     title: record.title,
@@ -78,6 +82,7 @@ function fromOwnRecord(record: SavedRecord, nickname: string): DetailViewModel {
     dislikeCount: record.dislikeCount,
     myReaction: record.myReaction,
     authorName: nickname,
+    authorProfileImageUrl: profileImageUrl,
     visibilityLabel: record.visibility === 'public' ? '전체 공개' : '비공개',
     linkedPlanLabel: record.tripDateRangeLabel ? `${record.title} 계획 보기` : null,
     isOwn: true,
@@ -98,6 +103,7 @@ function fromExploreRecord(record: ExploreRecord): DetailViewModel {
     dislikeCount: record.dislikeCount,
     myReaction: record.myReaction,
     authorName: record.authorName,
+    authorProfileImageUrl: record.authorProfileImageUrl,
     visibilityLabel: '전체 공개',
     linkedPlanLabel: record.linkedPlanTitle ? `${record.linkedPlanTitle} 계획 보기` : null,
     isOwn: false,
@@ -109,6 +115,7 @@ export function RecordDetailPage() {
   const { recordId } = useParams<{ recordId: string }>()
   const navigate = useNavigate()
   const nickname = useAuthStore((state) => state.user?.nickname) ?? '나'
+  const profileImageUrl = useAuthStore((state) => state.user?.profileImageUrl) ?? null
 
   const myRecordsQuery = useMyRecordsQuery()
   const exploreRecordsQuery = useExploreRecordsQuery()
@@ -121,7 +128,7 @@ export function RecordDetailPage() {
   const isLoading = myRecordsQuery.isLoading || (!ownRecord && exploreRecordsQuery.isLoading)
 
   const view = ownRecord
-    ? fromOwnRecord(ownRecord, nickname)
+    ? fromOwnRecord(ownRecord, nickname, profileImageUrl)
     : exploreRecord
       ? fromExploreRecord(exploreRecord)
       : null
@@ -141,8 +148,9 @@ export function RecordDetailPage() {
 
   const handleReact = (reaction: ReactionType) => {
     if (!view) return
-    if (view.isOwn) reactMutation.mutate({ id: view.id, reaction })
-    else exploreReactMutation.mutate({ id: view.id, reaction })
+    const payload = { id: view.id, reaction, currentReaction: view.myReaction }
+    if (view.isOwn) reactMutation.mutate(payload)
+    else exploreReactMutation.mutate(payload)
   }
 
   const handleShare = async () => {
@@ -230,9 +238,13 @@ export function RecordDetailPage() {
             <p className={summaryStyle}>{view.summary}</p>
 
             <div className={authorRowStyle}>
-              <span className={avatarStyle} aria-hidden>
-                {view.authorName[0]}
-              </span>
+              {view.authorProfileImageUrl ? (
+                <img className={avatarImageStyle} src={view.authorProfileImageUrl} alt="" />
+              ) : (
+                <span className={avatarStyle} aria-hidden>
+                  {view.authorName[0]}
+                </span>
+              )}
               <span className={authorNameStyle}>{view.authorName}</span>
               <span className={authorTimeStyle}>
                 {formatDistanceToNow(new Date(view.createdAt), { locale: ko, addSuffix: true })}
@@ -243,31 +255,58 @@ export function RecordDetailPage() {
               방문 장소 {view.visitedPlaces.length}곳 · 사진 {view.photoUrls.length}장
             </p>
 
+            {view.isOwn ? (
+              // TODO: 더미 데이터 — GET /api/records/{id} 응답에 "이 기록으로 새로 딴 배지" 정보가
+              // 아직 없어서(배지는 /api/badges/me·트립 완료 응답에만 있음), 백엔드 지원 전까지는
+              // UI만 먼저 만들어둔다.
+              <EarnedBadgeCallout
+                badgeName="첫 발걸음"
+                additionalCount={1}
+                onViewAll={() => navigate(ROUTES.myBadges)}
+              />
+            ) : null}
+
             <div className={actionRowStyle}>
-              <button
-                type="button"
-                className={reactionButtonRecipe({
-                  tone: 'like',
-                  active: view.myReaction === 'like',
-                })}
-                aria-pressed={view.myReaction === 'like'}
-                onClick={() => handleReact('like')}
-              >
-                <ThumbsUp size={14} aria-hidden />
-                좋아요 {view.likeCount}
-              </button>
-              <button
-                type="button"
-                className={reactionButtonRecipe({
-                  tone: 'dislike',
-                  active: view.myReaction === 'dislike',
-                })}
-                aria-pressed={view.myReaction === 'dislike'}
-                onClick={() => handleReact('dislike')}
-              >
-                <ThumbsDown size={14} aria-hidden />
-                싫어요 {view.dislikeCount}
-              </button>
+              {view.isOwn ? (
+                // 서버가 반응을 "타인의 공개 기록"에만 허용해서, 본인 기록은 숫자만 읽기전용으로 보여준다
+                <>
+                  <span className={reactionSummaryStyle}>
+                    <ThumbsUp size={14} aria-hidden />
+                    좋아요 {view.likeCount}
+                  </span>
+                  <span className={reactionSummaryStyle}>
+                    <ThumbsDown size={14} aria-hidden />
+                    싫어요 {view.dislikeCount}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className={reactionButtonRecipe({
+                      tone: 'like',
+                      active: view.myReaction === 'like',
+                    })}
+                    aria-pressed={view.myReaction === 'like'}
+                    onClick={() => handleReact('like')}
+                  >
+                    <ThumbsUp size={14} aria-hidden />
+                    좋아요 {view.likeCount}
+                  </button>
+                  <button
+                    type="button"
+                    className={reactionButtonRecipe({
+                      tone: 'dislike',
+                      active: view.myReaction === 'dislike',
+                    })}
+                    aria-pressed={view.myReaction === 'dislike'}
+                    onClick={() => handleReact('dislike')}
+                  >
+                    <ThumbsDown size={14} aria-hidden />
+                    싫어요 {view.dislikeCount}
+                  </button>
+                </>
+              )}
               <button type="button" className={shareButtonStyle} onClick={handleShare}>
                 <Share2 size={14} aria-hidden />
                 공유
