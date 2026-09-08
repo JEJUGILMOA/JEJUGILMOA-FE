@@ -7,6 +7,7 @@ import type { ExploreRecord } from '@/features/records/types'
 import {
   authorNameStyle,
   authorRowStyle,
+  avatarImageStyle,
   avatarStyle,
   bodyStyle,
   cardStyle,
@@ -29,7 +30,7 @@ export function ExploreRecordCard({ record }: ExploreRecordCardProps) {
   const reactMutation = useReactToExploreRecordMutation()
 
   const handleReact = (reaction: 'like' | 'dislike') => {
-    reactMutation.mutate({ id: record.id, reaction })
+    reactMutation.mutate({ id: record.id, reaction, currentReaction: record.myReaction })
   }
 
   const goToDetail = () => navigate(ROUTES.recordDetail(record.id))
@@ -58,9 +59,13 @@ export function ExploreRecordCard({ record }: ExploreRecordCardProps) {
         <h3 className={titleStyle}>{record.title}</h3>
         <p className={summaryStyle}>{record.summary}</p>
         <div className={authorRowStyle}>
-          <span className={avatarStyle} aria-hidden>
-            {record.authorName[0]}
-          </span>
+          {record.authorProfileImageUrl ? (
+            <img className={avatarImageStyle} src={record.authorProfileImageUrl} alt="" />
+          ) : (
+            <span className={avatarStyle} aria-hidden>
+              {record.authorName[0]}
+            </span>
+          )}
           <span className={authorNameStyle}>{record.authorName}</span>
           {record.linkedPlanTitle ? (
             <Button

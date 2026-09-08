@@ -1,5 +1,6 @@
 import { useEffect, useId, useState, type ChangeEvent } from 'react'
 import { Plus, X } from 'lucide-react'
+import { cn } from '@/utils/cn'
 import {
   addRowStyle,
   addTileStyle,
@@ -8,8 +9,11 @@ import {
   compactWrapStyle,
   gridStyle,
   hiddenInput,
+  imageButtonStyle,
   photoImageStyle,
+  photoTileSelectedStyle,
   photoTileStyle,
+  readOnlyBadgeStyle,
   removeButtonStyle,
 } from './PhotoGrid.css.ts'
 
@@ -53,12 +57,27 @@ export type PhotoGridProps = {
   addLabel?: string
   /** true면 정사각형 그리드 대신 가로로 넓은 한 줄 추가 버튼으로 표시 */
   compact?: boolean
+  /** 다른 곳(장소별 메모)에서 이미 관리 중이라 여기서는 미리보기만 하고 삭제 버튼은 안 보여주는 사진들 */
+  readOnlyPhotos?: (File | string)[]
+  /** 지정하면 사진(편집 가능한 것 + readOnlyPhotos 둘 다) 탭으로 대표 사진을 고를 수 있다 */
+  coverPhoto?: File | string | null
+  onSelectCover?: (photo: File | string | null) => void
 }
 
 /** 사진 추가 타일 + 선택된 사진 썸네일 그리드 (STEP 03 여행 사진, STEP 02b 장소별 사진 첨부에서 공용) */
-export function PhotoGrid({ photos, onAdd, onRemove, addLabel, compact = false }: PhotoGridProps) {
+export function PhotoGrid({
+  photos,
+  onAdd,
+  onRemove,
+  addLabel,
+  compact = false,
+  readOnlyPhotos = [],
+  coverPhoto,
+  onSelectCover,
+}: PhotoGridProps) {
   const inputId = useId()
   const previewUrls = usePhotoPreviewUrls(photos)
+  const readOnlyPreviewUrls = usePhotoPreviewUrls(readOnlyPhotos)
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files ? Array.from(event.target.files) : []
@@ -114,19 +133,59 @@ export function PhotoGrid({ photos, onAdd, onRemove, addLabel, compact = false }
         <Plus size={20} aria-hidden />
       </label>
 
-      {photos.map((photo, index) => (
-        <div key={photoKey(photo, index)} className={photoTileStyle}>
-          <img className={photoImageStyle} src={previewUrls[index]} alt="" />
-          <button
-            type="button"
-            className={removeButtonStyle}
-            aria-label="사진 삭제"
-            onClick={() => onRemove(index)}
+      {photos.map((photo, index) => {
+        const isCover = onSelectCover !== undefined && photo === coverPhoto
+        return (
+          <div key={photoKey(photo, index)} className={cn(photoTileStyle, isCover && photoTileSelectedStyle)}>
+            {onSelectCover ? (
+              <button
+                type="button"
+                className={imageButtonStyle}
+                aria-pressed={isCover}
+                aria-label="대표 사진으로 선택"
+                onClick={() => onSelectCover(isCover ? null : photo)}
+              >
+                <img className={photoImageStyle} src={previewUrls[index]} alt="" />
+              </button>
+            ) : (
+              <img className={photoImageStyle} src={previewUrls[index]} alt="" />
+            )}
+            <button
+              type="button"
+              className={removeButtonStyle}
+              aria-label="사진 삭제"
+              onClick={() => onRemove(index)}
+            >
+              <X size={12} aria-hidden />
+            </button>
+          </div>
+        )
+      })}
+
+      {readOnlyPhotos.map((photo, index) => {
+        const isCover = onSelectCover !== undefined && photo === coverPhoto
+        return (
+          <div
+            key={`readonly-${photoKey(photo, index)}`}
+            className={cn(photoTileStyle, isCover && photoTileSelectedStyle)}
           >
-            <X size={12} aria-hidden />
-          </button>
-        </div>
-      ))}
+            {onSelectCover ? (
+              <button
+                type="button"
+                className={imageButtonStyle}
+                aria-pressed={isCover}
+                aria-label="대표 사진으로 선택"
+                onClick={() => onSelectCover(isCover ? null : photo)}
+              >
+                <img className={photoImageStyle} src={readOnlyPreviewUrls[index]} alt="" />
+              </button>
+            ) : (
+              <img className={photoImageStyle} src={readOnlyPreviewUrls[index]} alt="" />
+            )}
+            <span className={readOnlyBadgeStyle}>장소</span>
+          </div>
+        )
+      })}
     </div>
   )
 }

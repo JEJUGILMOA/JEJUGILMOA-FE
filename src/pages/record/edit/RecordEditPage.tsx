@@ -20,6 +20,7 @@ import {
   fieldGroupStyle,
   optionListStyle,
   pageStyle,
+  photoHintStyle,
   placeMemoListStyle,
   sectionCountStyle,
   sectionHeaderStyle,
@@ -75,7 +76,21 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
       ]),
     ),
   )
-  const [photos, setPhotos] = useState<(File | string)[]>(record.photoUrls)
+  // record.photoUrls는 서버가 대표 사진 + 장소별 사진을 이미 합쳐서 주는 값이라(`allImages`),
+  // 장소 사진과 겹치는 건 빼야 아래 placePhotos("장소" 배지)랑 중복으로 안 보인다.
+  const [photos, setPhotos] = useState<(File | string)[]>(() => {
+    const placePhotoUrls = new Set(record.visitedPlaces.flatMap((place) => place.photoUrls))
+    return record.photoUrls.filter((url) => !placePhotoUrls.has(url))
+  })
+  // 장소별 메모에 첨부한 사진도 "사진" 섹션에 함께 보이도록 미리보기 풀에 포함한다
+  // (생성 화면의 대표사진 고르기와 같은 방식) — 실제 삭제/추가는 각 장소 메모에서만 한다.
+  const placePhotos = Object.values(placeMemos).flatMap((memo) => memo.photos)
+  // "사진" 섹션에 보이는 모든 사진(새로 첨부한 것 + 기존 것) 중에서 대표 사진을 고를 수 있다
+  const coverPhotoCandidates = [...photos, ...placePhotos]
+  // 지금 대표 사진(record.thumbnailUrl)을 초기값으로 잡아서 편집 화면을 열자마자 어떤 사진이
+  // 대표인지 테두리로 바로 보이게 한다.
+  const [coverPhoto, setCoverPhoto] = useState<File | string | null>(() => record.thumbnailUrl ?? null)
+  const selectedCoverPhoto = coverPhoto && coverPhotoCandidates.includes(coverPhoto) ? coverPhoto : null
   const [visibility, setVisibility] = useState<RecordVisibility>(record.visibility)
   const [isDirty, setIsDirty] = useState(false)
   const [activePlaceId, setActivePlaceId] = useState<string | null>(null)
@@ -99,36 +114,28 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
   }
 
   const handleSave = () => {
-    const toUrl = (photo: File | string) =>
-      typeof photo === 'string' ? photo : URL.createObjectURL(photo)
-
     const visitedPlaces = record.visitedPlaces.map((place) => {
       const memo = placeMemos[place.placeId]
       return {
-        placeId: place.placeId,
-        placeName: place.placeName,
+        recordPlaceId: place.recordPlaceId,
         note: memo?.note ?? place.note,
-        photoUrls: (memo?.photos ?? place.photoUrls).map(toUrl),
+        photos: memo?.photos ?? place.photoUrls,
       }
     })
-    const photoUrls = photos.map(toUrl)
 
     updateMutation.mutate(
       {
         id: record.id,
-        patch: {
-          title,
-          summary,
-          visibility,
-          visitedPlaces,
-          photoUrls,
-          photoCount: photoUrls.length,
-        },
+        original: record,
+        patch: { title, summary, visibility, visitedPlaces, photos, coverPhoto: selectedCoverPhoto },
       },
       {
         onSuccess: () => {
           toast.success('기록을 수정했어요')
           goToDetail()
+        },
+        onError: () => {
+          toast.error('기록 수정에 실패했어요. 다시 시도해 주세요.')
         },
       },
     )
@@ -189,10 +196,11 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
         <div className={sectionStyle}>
           <div className={sectionHeaderStyle}>
             <span className={sectionLabelStyle}>사진</span>
-            <span className={sectionCountStyle}>{photos.length}장</span>
+            <span className={sectionCountStyle}>{photos.length + placePhotos.length}장</span>
           </div>
           <PhotoGrid
             photos={photos}
+            readOnlyPhotos={placePhotos}
             onAdd={(files) => {
               setPhotos((prev) => [...prev, ...files])
               setIsDirty(true)
@@ -201,7 +209,18 @@ function RecordEditForm({ record }: { record: SavedRecord }) {
               setPhotos((prev) => prev.filter((_, i) => i !== index))
               setIsDirty(true)
             }}
+            coverPhoto={selectedCoverPhoto}
+            onSelectCover={(photo) => {
+              setCoverPhoto(photo)
+              setIsDirty(true)
+            }}
           />
+          {placePhotos.length > 0 ? (
+            <p className={photoHintStyle}>"장소" 표시된 사진은 장소별 메모에서 관리돼요</p>
+          ) : null}
+          {coverPhotoCandidates.length > 0 ? (
+            <p className={photoHintStyle}>사진을 탭하면 대표 사진으로 지정돼요</p>
+          ) : null}
         </div>
 
         <div className={divider} />

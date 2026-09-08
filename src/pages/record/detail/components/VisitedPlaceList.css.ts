@@ -33,6 +33,15 @@ export const thumbnailStyle = style({
   color: colors.text[4],
 })
 
+export const thumbnailButtonStyle = style([
+  thumbnailStyle,
+  {
+    padding: 0,
+    border: 'none',
+    cursor: 'pointer',
+  },
+])
+
 export const thumbnailImageStyle = style({
   width: '100%',
   height: '100%',
@@ -49,4 +58,35 @@ export const noteStyle = style({
   marginTop: vars.space[1],
   fontSize: vars.fontSize.sm,
   color: colors.text[3],
+})
+
+export const addressStyle = style({
+  marginTop: vars.space[1],
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})
+
+export const metaRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[2],
+  marginTop: vars.space[1],
+})
+
+export const metaTextStyle = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})
+
+export const ratingStyle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '2px',
+  fontSize: vars.fontSize.xs,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.text[3],
+})
+
+export const ratingIconStyle = style({
+  color: '#FFAC00',
 })

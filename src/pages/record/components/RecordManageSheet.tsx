@@ -50,11 +50,14 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
 
   const handleSetVisibility = (visibility: RecordVisibility) => {
     updateMutation.mutate(
-      { id: record.id, patch: { visibility } },
+      { id: record.id, original: record, patch: { visibility } },
       {
         onSuccess: () => {
           toast.success('공개 범위를 변경했어요')
           closeModal()
+        },
+        onError: () => {
+          toast.error('공개 범위 변경에 실패했어요. 다시 시도해 주세요.')
         },
       },
     )
@@ -66,6 +69,9 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
         toast.success('기록을 삭제했어요')
         closeModal()
         onDeleted?.()
+      },
+      onError: () => {
+        toast.error('기록 삭제에 실패했어요. 다시 시도해 주세요.')
       },
     })
   }

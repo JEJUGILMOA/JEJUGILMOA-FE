@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { Bookmark, ChevronLeft, ChevronRight, Image } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { useDragCarousel } from './useDragCarousel'
 import {
   bookmarkActiveStyle,
   bookmarkButtonStyle,
   counterStyle,
-  imageStyle,
   navButtonNextStyle,
   navButtonPrevStyle,
   placeholderStyle,
+  slideImageStyle,
+  trackStyle,
   wrapStyle,
 } from './PhotoCarousel.css.ts'
 
@@ -18,15 +20,27 @@ export type PhotoCarouselProps = {
   onToggleBookmark: () => void
 }
 
-/** STEP 08.3~4: 대표 사진 캐러셀 + 북마크 */
+/** STEP 08.3~4: 대표 사진 캐러셀 + 북마크. 드래그(스와이프)로 사진을 넘길 수 있다 */
 export function PhotoCarousel({ photoUrls, isBookmarked, onToggleBookmark }: PhotoCarouselProps) {
   const [index, setIndex] = useState(0)
   const total = photoUrls.length
+  const { dragOffset, isDragging, trackHandlers } = useDragCarousel({ total, index, onIndexChange: setIndex })
 
   return (
     <div className={wrapStyle}>
       {total > 0 ? (
-        <img className={imageStyle} src={photoUrls[index]} alt="" />
+        <div
+          className={trackStyle}
+          style={{
+            transform: `translateX(calc(${-index * 100}% + ${dragOffset}px))`,
+            transition: isDragging ? 'none' : undefined,
+          }}
+          {...trackHandlers}
+        >
+          {photoUrls.map((url, i) => (
+            <img key={`${url}-${i}`} className={slideImageStyle} src={url} alt="" draggable={false} />
+          ))}
+        </div>
       ) : (
         <div className={placeholderStyle}>
           <Image size={28} aria-hidden />
