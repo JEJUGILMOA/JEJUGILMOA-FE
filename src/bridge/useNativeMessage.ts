@@ -5,6 +5,25 @@ import { nativeBridge } from './nativeBridge'
 import { appStore } from '@/stores/appStore'
 import { authStore } from '@/stores/authStore'
 
+/** 네이티브 sendToWeb이 window+document에 같은 메시지를 모두 쏴서 생기는 중복 처리 방지 */
+const RECENT_MESSAGE_TTL_MS = 800
+const recentMessageAt = new Map<string, number>()
+
+function shouldHandleIncomingMessage(data: unknown): boolean {
+  if (typeof data !== 'string') return false
+  const now = Date.now()
+  const prev = recentMessageAt.get(data)
+  if (prev != null && now - prev < RECENT_MESSAGE_TTL_MS) return false
+  recentMessageAt.set(data, now)
+
+  if (recentMessageAt.size > 50) {
+    for (const [key, at] of recentMessageAt) {
+      if (now - at >= RECENT_MESSAGE_TTL_MS) recentMessageAt.delete(key)
+    }
+  }
+  return true
+}
+
 function parseIncomingMessage(data: unknown) {
   if (typeof data !== 'string') return null
   try {
@@ -15,6 +34,8 @@ function parseIncomingMessage(data: unknown) {
 }
 
 function handleNativeMessage(data: unknown) {
+  if (!shouldHandleIncomingMessage(data)) return
+
   const result = parseIncomingMessage(data)
   if (!result?.success) return
 
@@ -92,8 +113,36 @@ function handleNativeMessage(data: unknown) {
         message.visible ? `${message.height ?? 0}px` : '0px',
       )
       break
+    case 'TAB_POP_TO_ROOT':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:tab-pop-to-root', { detail: { path: message.path } }),
+      )
+      break
+    case 'APPLE_CREDENTIAL':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:apple-credential', {
+          detail: {
+            identityToken: message.identityToken,
+            rawNonce: message.rawNonce,
+            authorizationCode: message.authorizationCode,
+            email: message.email,
+            fullName: message.fullName,
+          },
+        }),
+      )
+      break
+    case 'APPLE_LOGIN_CANCELLED':
+      window.dispatchEvent(new CustomEvent('gilmoa:apple-login-cancelled'))
+      break
+    case 'APPLE_LOGIN_ERROR':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:apple-login-error', { detail: { message: message.message } }),
+      )
+      break
   }
 }
+
+const TAB_ROOT_PATHS = new Set(['/', '/plan', '/record', '/my', '/map'])
 
 /**
  * 네이티브 → 웹 메시지 수신 등록/해제 및 Android 뒤로가기 기본 처리
@@ -132,11 +181,19 @@ export function useNativeMessage() {
       nativeBridge.postToNative({ type: 'CLOSE_WEBVIEW' })
     }
 
+    const onTabPopToRoot = (event: Event) => {
+      const path = (event as CustomEvent<{ path?: string }>).detail?.path
+      if (typeof path !== 'string' || !TAB_ROOT_PATHS.has(path)) return
+      navigate(path, { replace: true })
+    }
+
     window.addEventListener('gilmoa:android-back', onAndroidBack)
+    window.addEventListener('gilmoa:tab-pop-to-root', onTabPopToRoot)
     nativeBridge.requestAndroidBackHandler(true)
 
     return () => {
       window.removeEventListener('gilmoa:android-back', onAndroidBack)
+      window.removeEventListener('gilmoa:tab-pop-to-root', onTabPopToRoot)
       nativeBridge.requestAndroidBackHandler(false)
     }
   }, [navigate])

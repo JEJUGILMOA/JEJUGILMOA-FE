@@ -47,8 +47,26 @@ export const profileMetaBlockStyle = style({
 export const profileMetaStyle = style({
   display: 'flex',
   flexDirection: 'column',
+  gap: vars.space[1],
   minWidth: 0,
   flex: 1,
+})
+
+export const profileSkeletonAvatarStyle = style({
+  width: 74,
+  height: 74,
+  borderRadius: '50%',
+  flexShrink: 0,
+  boxSizing: 'border-box',
+  border: `2px solid ${colors.border[1]}`,
+})
+
+export const profileSkeletonNameStyle = style({
+  borderRadius: vars.radius.sm,
+})
+
+export const profileSkeletonEmailStyle = style({
+  borderRadius: vars.radius.sm,
 })
 
 export const nameStyle = style([
@@ -78,4 +96,8 @@ export const menuListStyle = style({
   borderRadius: vars.radius.lg,
   overflow: 'hidden',
   paddingInline: vars.space[1],
+})
+
+export const devAuthButtonStyle = style({
+  marginTop: vars.space[2],
 })

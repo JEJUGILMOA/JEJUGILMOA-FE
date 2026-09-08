@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { toast } from '@/components/ui/Toast/Toast'
 import { QUERY_KEYS } from '@/constants'
+import { useAuthStore } from '@/stores/authStore'
 import {
   createRecord,
   deleteRecord,
@@ -10,6 +11,7 @@ import {
   toggleRecordReaction,
   updateRecord,
 } from './api'
+import { fetchRecordCards } from './recordsApi'
 import type { ExploreRecord, ReactionType, RecordUpdatePatch, SavedRecord } from './types'
 
 export function useCompletedTripsQuery() {
@@ -23,6 +25,17 @@ export function useMyRecordsQuery() {
   return useQuery({
     queryKey: QUERY_KEYS.myRecords,
     queryFn: fetchMyRecords,
+  })
+}
+
+export function useMySharedRecordsQuery() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
+  return useQuery({
+    queryKey: QUERY_KEYS.mySharedRecords(),
+    queryFn: () => fetchRecordCards({ mine: true, page: 0, size: 50 }),
+    enabled: isAuthenticated,
+    select: (page) => page.content.filter((record) => record.visibility === 'PUBLIC'),
   })
 }
 

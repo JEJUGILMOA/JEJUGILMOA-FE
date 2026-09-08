@@ -18,16 +18,28 @@ export const heroStyle = style({
   justifyContent: 'flex-end',
   minHeight: '220px',
   padding: `${vars.space[4]} ${vars.space[5]} ${vars.space[5]}`,
+  overflow: 'hidden',
   backgroundImage: `linear-gradient(160deg, ${colors.secondary[400]}, ${colors.primary[500]})`,
+})
+
+export const heroImageStyle = style({
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  objectPosition: 'center',
+  display: 'block',
 })
 
 export const heroActionsStyle = style({
   position: 'absolute',
   insetInline: vars.space[4],
   top: vars.space[4],
+  zIndex: 1,
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
+  justifyContent: 'flex-end',
 })
 
 export const heroIconButtonStyle = style({
@@ -44,6 +56,8 @@ export const heroIconButtonStyle = style({
 })
 
 export const heroTitleStyle = style({
+  position: 'relative',
+  zIndex: 1,
   margin: 0,
   maxWidth: '100%',
   fontSize: vars.fontSize['2xl'],

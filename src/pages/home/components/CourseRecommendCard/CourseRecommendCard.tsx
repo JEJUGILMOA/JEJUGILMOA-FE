@@ -31,11 +31,11 @@ export type CoursePreviewStep = {
 
 export type CourseRecommendCardProps = {
   title: string
-  description: string
-  imageUrl: string
-  imageTags: CourseImageTag[]
-  locationLabel: string
-  duration: string
+  description?: string
+  imageUrl?: string
+  imageTags?: CourseImageTag[]
+  locationLabel?: string
+  duration?: string
   placeCount: number
   previewSteps: CoursePreviewStep[]
   onClick?: () => void
@@ -54,7 +54,7 @@ export function CourseRecommendCard({
   title,
   description,
   imageUrl,
-  imageTags,
+  imageTags = [],
   locationLabel,
   duration,
   placeCount,
@@ -83,32 +83,40 @@ export function CourseRecommendCard({
       tabIndex={isClickable ? 0 : undefined}
     >
       <div className={mediaStyle}>
-        <img src={imageUrl} alt="" className={mediaImageStyle} />
-        <div className={imageTagListStyle}>
-          {imageTags.map((tag) => (
-            <span key={tag.label} className={imageTagRecipe({ tone: tag.tone })}>
-              <ImageTagIcon tone={tag.tone} />
-              {tag.label}
-            </span>
-          ))}
-        </div>
+        {imageUrl ? <img src={imageUrl} alt="" className={mediaImageStyle} /> : null}
+        {imageTags.length > 0 ? (
+          <div className={imageTagListStyle}>
+            {imageTags.map((tag) => (
+              <span key={tag.label} className={imageTagRecipe({ tone: tag.tone })}>
+                <ImageTagIcon tone={tag.tone} />
+                {tag.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className={bodyStyle}>
         <div className={infoStyle}>
-          <p className={locationStyle}>
-            <MapPin size={14} strokeWidth={2.5} aria-hidden />
-            {locationLabel}
-          </p>
+          {locationLabel ? (
+            <p className={locationStyle}>
+              <MapPin size={14} strokeWidth={2.5} aria-hidden />
+              {locationLabel}
+            </p>
+          ) : null}
           <h3 className={titleStyle}>{title}</h3>
-          <p className={descStyle}>{description}</p>
+          {description ? <p className={descStyle}>{description}</p> : null}
 
           <div className={metaRowStyle}>
-            <span className={metaItemStyle}>
-              <Clock size={14} strokeWidth={2} aria-hidden />
-              {duration}
-            </span>
-            <span className={metaDotStyle} aria-hidden />
+            {duration ? (
+              <>
+                <span className={metaItemStyle}>
+                  <Clock size={14} strokeWidth={2} aria-hidden />
+                  {duration}
+                </span>
+                <span className={metaDotStyle} aria-hidden />
+              </>
+            ) : null}
             <span className={metaItemStyle}>
               <MapPin size={14} strokeWidth={2} aria-hidden />
               {placeCount}곳
@@ -116,21 +124,27 @@ export function CourseRecommendCard({
           </div>
         </div>
 
-        <div className={previewSectionStyle}>
-          <div className={previewRowStyle}>
-            {visiblePreviews.map((step, index) => (
-              <img
-                key={`${step.title}-${index}`}
-                src={step.thumbnailUrl}
-                alt=""
-                className={previewThumbStyle}
-              />
-            ))}
-            {extraCount > 0 ? (
-              <div className={previewMoreStyle}>+{extraCount}</div>
-            ) : null}
+        {visiblePreviews.length > 0 ? (
+          <div className={previewSectionStyle}>
+            <div className={previewRowStyle}>
+              {visiblePreviews.map((step, index) =>
+                step.thumbnailUrl ? (
+                  <img
+                    key={`${step.title}-${index}`}
+                    src={step.thumbnailUrl}
+                    alt=""
+                    className={previewThumbStyle}
+                  />
+                ) : (
+                  <div key={`${step.title}-${index}`} className={previewThumbStyle} aria-hidden />
+                ),
+              )}
+              {extraCount > 0 ? (
+                <div className={previewMoreStyle}>+{extraCount}</div>
+              ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </article>
   )

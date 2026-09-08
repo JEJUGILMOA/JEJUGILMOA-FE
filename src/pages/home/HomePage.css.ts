@@ -207,7 +207,7 @@ export const courseRowStyle = style({
 
 export const popularListStyle = style({
   display: 'flex',
-  gap: '15px',
+  gap: '8px',
   width: '100%',
   minWidth: 0,
   overflowX: 'auto',
@@ -221,4 +221,66 @@ export const popularListStyle = style({
       display: 'none',
     },
   },
+})
+
+export const skeletonTravelPickStyle = style({
+  flex: '0 0 auto',
+  width: '260px',
+  borderRadius: '14px',
+  overflow: 'hidden',
+  backgroundColor: colors.surface[1],
+  boxShadow: '0 2px 12px rgba(37, 37, 45, 0.08)',
+})
+
+export const skeletonTravelPickContentStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+  padding: `${vars.space[3]} ${vars.space[4]} ${vars.space[4]}`,
+})
+
+export const skeletonCourseStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  flex: '0 0 294px',
+  width: '294px',
+  borderRadius: '20px',
+  border: `1px solid ${colors.border[1]}`,
+  overflow: 'hidden',
+  backgroundColor: colors.surface[1],
+  boxShadow: vars.shadow.sm,
+})
+
+export const skeletonCourseBodyStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[3],
+  padding: vars.space[4],
+})
+
+export const skeletonCoursePreviewRowStyle = style({
+  display: 'flex',
+  gap: vars.space[2],
+})
+
+export const skeletonPopularStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  flexShrink: 0,
+  width: '148px',
+  overflow: 'hidden',
+  borderRadius: vars.radius.lg,
+  border: `1px solid ${colors.border[1]}`,
+  backgroundColor: colors.surface[1],
+})
+
+export const skeletonPopularContentStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[1],
+  padding: vars.space[3],
+})
+
+export const skeletonMediaRadiusStyle = style({
+  borderRadius: 0,
 })

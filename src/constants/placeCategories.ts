@@ -34,20 +34,26 @@ export type PlaceCategory = {
   id: PlaceCategoryId
   label: PlaceCategoryLabel
   icon: LucideIcon
+  /** GET /places `category` 쿼리 값 (Swagger 기준) */
+  apiName?: string
   bg: string
   fg: string
 }
 
 /** 홈·인기 관광지 등에서 공유하는 장소 카테고리 */
 export const PLACE_CATEGORIES: readonly PlaceCategory[] = [
-  { id: 'food', label: '식사', icon: UtensilsCrossed, bg: '#DCEEE7', fg: '#0F6E56' },
-  { id: 'cafe', label: '카페', icon: Coffee, bg: '#E3EFF6', fg: '#185FA5' },
-  { id: 'nature', label: '자연', icon: Trees, bg: '#E9F1E1', fg: '#3B6D11' },
-  { id: 'history', label: '역사', icon: Castle, bg: '#FAF1DE', fg: '#854F0B' },
+  { id: 'food', label: '식사', apiName: '음식', icon: UtensilsCrossed, bg: '#DCEEE7', fg: '#0F6E56' },
+  { id: 'cafe', label: '카페', apiName: '카페', icon: Coffee, bg: '#E3EFF6', fg: '#185FA5' },
+  { id: 'nature', label: '자연', apiName: '자연', icon: Trees, bg: '#E9F1E1', fg: '#3B6D11' },
+  { id: 'history', label: '역사', apiName: '역사', icon: Castle, bg: '#FAF1DE', fg: '#854F0B' },
   { id: 'culture', label: '문화', icon: Landmark, bg: '#E9E8F8', fg: '#534AB7' },
-  { id: 'shopping', label: '쇼핑', icon: ShoppingBag, bg: '#FAEBF1', fg: '#993556' },
-  { id: 'activity', label: '액티비티', icon: Bike, bg: '#FFF0E6', fg: '#C2410C' },
+  { id: 'shopping', label: '쇼핑', apiName: '쇼핑', icon: ShoppingBag, bg: '#FAEBF1', fg: '#993556' },
+  { id: 'activity', label: '액티비티', apiName: '체험', icon: Bike, bg: '#FFF0E6', fg: '#C2410C' },
   { id: 'stay', label: '숙소', icon: BedDouble, bg: '#E8EEF8', fg: '#3B4F7A' },
 ] as const
 
 export const PLACE_CATEGORY_LABELS = PLACE_CATEGORIES.map((category) => category.label)
+
+export function getPlaceCategoryApiName(label: PlaceCategoryLabel) {
+  return PLACE_CATEGORIES.find((category) => category.label === label)?.apiName
+}

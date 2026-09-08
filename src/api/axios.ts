@@ -1,5 +1,10 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { ApiError } from './error'
+import {
+  logMyPageApiError,
+  logMyPageApiRequest,
+  logMyPageApiResponse,
+} from './mypageApiLogger'
 import { isApiEnvelope } from './unwrap'
 import { authStore } from '@/stores/authStore'
 
@@ -16,10 +21,11 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = authStore.getState().accessToken
-  // 쿠키 세션이 본체. Bearer는 개발용/명시 토큰이 있을 때만.
-  if (token) {
+  // 쿠키 세션이 본체. 실제 accessToken이 있을 때만 Bearer 사용 (dev-token 등 mock 금지)
+  if (token && token !== 'dev-token') {
     config.headers.Authorization = `Bearer ${token}`
   }
+  logMyPageApiRequest(config)
   return config
 })
 
@@ -32,7 +38,7 @@ type ErrorBody = {
 
 type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean }
 
-const AUTH_CALL_PATTERN = /\/auth\/oauth\/|\/auth\/reissue|\/auth\/logout|\/dev\/auth\//
+const AUTH_CALL_PATTERN = /\/auth\/oauth\/|\/auth\/apple\/|\/auth\/reissue|\/auth\/logout|\/dev\/auth\//
 
 /** 동시에 401이 여러 개 나도 재발급 요청은 한 번만 나가도록 진행 중인 Promise를 공유 */
 let reissuePromise: Promise<void> | null = null
@@ -56,6 +62,8 @@ function toApiError(error: AxiosError<ErrorBody>) {
 
 apiClient.interceptors.response.use(
   (response) => {
+    logMyPageApiResponse(response)
+
     const payload = response.data
     if (isApiEnvelope(payload) && payload.isSuccess === false) {
       throw new ApiError(
@@ -68,6 +76,8 @@ apiClient.interceptors.response.use(
     return response
   },
   (error: AxiosError<ErrorBody>) => {
+    logMyPageApiError(error)
+
     if (error.response) {
       const { status, config } = error.response
       const url = `${config?.baseURL ?? ''}${config?.url ?? ''}`

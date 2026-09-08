@@ -6,11 +6,10 @@ export const cardStyle = style({
   flex: '0 0 auto',
   width: '260px',
   scrollSnapAlign: 'start',
-  borderRadius: vars.radius.xl,
+  borderRadius: '14px',
   overflow: 'hidden',
   backgroundColor: colors.surface[1],
-  border: `1px solid ${colors.border[1]}`,
-  boxShadow: vars.shadow.sm,
+  boxShadow: '0 2px 12px rgba(37, 37, 45, 0.08)',
   cursor: 'default',
   fontFamily: vars.fontFamily.sans,
   selectors: {
@@ -22,7 +21,7 @@ export const cardStyle = style({
 
 export const heroStyle = style({
   position: 'relative',
-  height: '140px',
+  aspectRatio: '4 / 3',
   overflow: 'hidden',
   backgroundColor: colors.surface[5],
 })
@@ -35,123 +34,91 @@ export const heroImageStyle = style({
   display: 'block',
 })
 
+export const heroPlaceholderStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '100%',
+  height: '100%',
+  backgroundImage: `linear-gradient(145deg, ${colors.surface[5]} 0%, ${colors.surface[4]} 100%)`,
+})
+
+export const heroPlaceholderIconStyle = style({
+  color: colors.text[6],
+})
+
 export const badgeStyle = style({
   position: 'absolute',
-  top: '12px',
-  left: '12px',
-  zIndex: 5,
-  padding: '6px 10px',
+  top: vars.space[3],
+  left: vars.space[3],
+  zIndex: 1,
+  padding: `${vars.space[1]} ${vars.space[3]}`,
   borderRadius: vars.radius.full,
-  backgroundColor: 'rgba(255, 255, 255, 0.92)',
+  backgroundColor: colors.surface[1],
   color: colors.text[1],
   fontSize: vars.fontSize.xs,
-  fontWeight: vars.fontWeight.bold,
+  fontWeight: vars.fontWeight.semibold,
   lineHeight: 1.2,
+  boxShadow: '0 1px 4px rgba(37, 37, 45, 0.1)',
 })
 
 export const bookmarkStyle = style({
   position: 'absolute',
-  top: '10px',
-  right: '10px',
-  zIndex: 5,
+  top: vars.space[3],
+  right: vars.space[3],
+  zIndex: 1,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  width: '32px',
-  height: '32px',
+  width: '36px',
+  height: '36px',
   padding: 0,
-  border: '1px solid rgba(255, 255, 255, 0.25)',
+  border: 'none',
   borderRadius: vars.radius.full,
-  backgroundColor: 'rgba(10, 16, 20, 0.32)',
-  color: colors.text[5],
+  backgroundColor: colors.surface[1],
+  color: colors.text[1],
   cursor: 'pointer',
-  backdropFilter: 'blur(3px)',
+  boxShadow: '0 1px 4px rgba(37, 37, 45, 0.12)',
 })
 
 export const contentStyle = style({
-  padding: vars.space[4],
-})
-
-export const eyebrowStyle = style({
-  margin: `0 0 ${vars.space[1]}`,
-  fontSize: vars.fontSize.xs,
-  fontWeight: vars.fontWeight.bold,
-  letterSpacing: '0.02em',
-})
-
-export const titleRowStyle = style({
   display: 'flex',
-  alignItems: 'baseline',
-  flexWrap: 'wrap',
-  gap: vars.space[2],
-  marginBottom: vars.space[1],
+  flexDirection: 'column',
+  gap: '2px',
+  padding: `${vars.space[3]} ${vars.space[4]} ${vars.space[4]}`,
 })
 
 export const titleStyle = style({
   margin: 0,
-  fontSize: vars.fontSize['2xl'],
+  fontSize: vars.fontSize.lg,
   fontWeight: vars.fontWeight.bold,
   lineHeight: vars.lineHeight.tight,
   letterSpacing: '-0.03em',
   color: colors.text[1],
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 })
 
 export const regionStyle = style({
+  margin: 0,
   fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.medium,
+  fontWeight: vars.fontWeight.regular,
+  lineHeight: vars.lineHeight.normal,
   color: colors.text[3],
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 })
 
-export const descStyle = style({
-  margin: `${vars.space[1]} 0 ${vars.space[2]}`,
+export const addressStyle = style({
+  margin: `${vars.space[1]} 0 0`,
   fontSize: vars.fontSize.sm,
-  lineHeight: vars.lineHeight.relaxed,
-  color: colors.text[2],
+  fontWeight: vars.fontWeight.regular,
+  lineHeight: 1.45,
+  color: colors.text[4],
   display: '-webkit-box',
   WebkitLineClamp: 2,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
-})
-
-export const tagsStyle = style({
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: vars.space[2],
-  marginBottom: 0,
-})
-
-export const tagStyle = style({
-  fontSize: vars.fontSize.xs,
-  fontWeight: vars.fontWeight.semibold,
-  padding: `${vars.space[1]} ${vars.space[2]}`,
-  borderRadius: vars.radius.full,
-  border: '1px solid',
-})
-export const heroGradientStyle = style({
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  height: '50%',
-  background: 'linear-gradient(to top, rgba(0,0,0,0.52) 0%, rgba(0,0,0,0) 100%)',
-  pointerEvents: 'none',
-  zIndex: 2,
-})
-
-export const heroRatingStyle = style({
-  position: 'absolute',
-  bottom: '10px',
-  left: '12px',
-  zIndex: 3,
-  display: 'flex',
-  alignItems: 'center',
-  gap: vars.space[1],
-  fontSize: vars.fontSize.sm,
-  color: 'rgba(255,255,255,0.92)',
-})
-
-export const heroRatingValueStyle = style({
-  fontSize: vars.fontSize.md,
-  fontWeight: vars.fontWeight.bold,
-  color: '#fff',
 })

@@ -127,6 +127,19 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     nextLabel: z.string().optional(),
     sheetTitle: z.string().optional(),
   }),
+  z.object({ type: z.literal('REQUEST_APPLE_LOGIN') }),
+  z.object({
+    type: z.literal('OPEN_OAUTH_LOGIN'),
+    url: z.string().url(),
+    title: z.string().optional(),
+    provider: z.enum(['kakao', 'google', 'naver']).optional(),
+  }),
+  z.object({
+    type: z.literal('LOGIN_SUCCESS'),
+    provider: z.enum(['kakao', 'google', 'naver', 'apple', 'temp']).optional(),
+    returnTo: z.string().optional(),
+  }),
+  z.object({ type: z.literal('LOGOUT') }),
 ])
 
 export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
@@ -191,5 +204,27 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('KEYBOARD_VISIBLE'),
     visible: z.boolean(),
     height: z.number().optional(),
+  }),
+  z.object({
+    type: z.literal('TAB_POP_TO_ROOT'),
+    path: z.enum(['/', '/plan', '/record', '/my', '/map']),
+  }),
+  z.object({
+    type: z.literal('APPLE_CREDENTIAL'),
+    identityToken: z.string().min(1),
+    rawNonce: z.string().min(1),
+    authorizationCode: z.string().optional(),
+    email: z.string().optional(),
+    fullName: z
+      .object({
+        givenName: z.string().nullable().optional(),
+        familyName: z.string().nullable().optional(),
+      })
+      .optional(),
+  }),
+  z.object({ type: z.literal('APPLE_LOGIN_CANCELLED') }),
+  z.object({
+    type: z.literal('APPLE_LOGIN_ERROR'),
+    message: z.string(),
   }),
 ])

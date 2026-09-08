@@ -24,6 +24,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      // 개발전용 인증 API는 /api prefix 없이 노출된다. (/dev/auth/login)
+      '/dev': {
+        target: 'https://gilmoa-dev.gyeonseo.com',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
   test: {

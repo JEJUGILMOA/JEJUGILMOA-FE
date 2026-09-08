@@ -58,6 +58,12 @@ export const toggleStyle = recipe({
     cursor: 'pointer',
     flexShrink: 0,
     transition: `background-color ${vars.duration.fast}`,
+    selectors: {
+      '&:disabled': {
+        cursor: 'not-allowed',
+        opacity: 0.45,
+      },
+    },
   },
   variants: {
     on: {
@@ -69,6 +75,37 @@ export const toggleStyle = recipe({
     on: false,
   },
 })
+
+/** 설정 로딩 중 — 토글과 동일 크기, 전환 애니메이션 없음 */
+export const togglePlaceholderStyle = style({
+  width: 36,
+  height: 20,
+  borderRadius: 10,
+  flexShrink: 0,
+  backgroundColor: colors.border[1],
+  opacity: 0.45,
+})
+
+export const settingsHintStyle = style([
+  bodySmall,
+  {
+    margin: `0 0 ${vars.space[2]}`,
+    color: colors.text[4],
+  },
+])
+
+export const settingsRetryButtonStyle = style([
+  bodySmall,
+  {
+    margin: 0,
+    padding: 0,
+    border: 'none',
+    background: 'transparent',
+    color: colors.primary[600],
+    cursor: 'pointer',
+    textDecoration: 'underline',
+  },
+])
 
 export const toggleThumbStyle = recipe({
   base: {

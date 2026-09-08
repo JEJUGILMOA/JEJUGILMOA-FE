@@ -14,6 +14,12 @@ export type OAuthLoginRequest = {
   state?: string
 }
 
+/** POST /api/auth/apple/login — iOS Apple 전용 */
+export type AppleLoginRequest = {
+  identityToken: string
+  rawNonce: string
+}
+
 export type OAuthLoginResult = {
   userId: number
   nickname: string

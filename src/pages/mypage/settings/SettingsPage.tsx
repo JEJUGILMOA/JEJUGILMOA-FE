@@ -4,7 +4,14 @@ import { useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { toast } from '@/components/ui/Toast/Toast'
+import { nativeBridge } from '@/bridge/nativeBridge'
 import { logoutAuth } from '@/features/auth/api'
+import {
+  useMySettingsQuery,
+  useUpdateMySettingsMutation,
+  useWithdrawMutation,
+} from '@/features/auth/hooks'
+import type { UserSettings } from '@/features/auth/schemas'
 import { useAuthStore } from '@/stores/authStore'
 import { QUERY_KEYS, ROUTES } from '@/constants'
 import { cn } from '@/utils/cn'
@@ -16,26 +23,107 @@ import {
   sectionLabelStyle,
   settingLabelStyle,
   settingRowStyle,
+  settingsHintStyle,
+  settingsRetryButtonStyle,
+  togglePlaceholderStyle,
   toggleStyle,
   toggleThumbStyle,
 } from './SettingsPage.css.ts'
 
 type NotiKey = 'all' | 'schedule' | 'marketing'
 
+function toUiState(settings: UserSettings) {
+  const notifyAll =
+    settings.notifyPlanStart &&
+    settings.notifyRecordWriting &&
+    settings.notifyBadgeAcquired &&
+    settings.notifyNextPlace &&
+    settings.notifyPlaceArrival
+
+  return {
+    all: notifyAll,
+    schedule: settings.notifyPlanStart,
+    marketing: settings.notifyMarketing,
+    location: settings.locationPermission,
+  }
+}
+
+function SettingToggle({
+  checked,
+  ready,
+  onClick,
+}: {
+  checked: boolean
+  ready: boolean
+  onClick: () => void
+}) {
+  if (!ready) {
+    return <span className={togglePlaceholderStyle} aria-hidden />
+  }
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      className={toggleStyle({ on: checked })}
+      onClick={onClick}
+    >
+      <span className={toggleThumbStyle({ on: checked })} />
+    </button>
+  )
+}
+
 export function SettingsPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const clearAuth = useAuthStore((s) => s.clearAuth)
-  const [noti, setNoti] = useState<Record<NotiKey, boolean>>({
-    all: true,
-    schedule: true,
-    marketing: false,
-  })
+  const settingsQuery = useMySettingsQuery()
+  const updateSettings = useUpdateMySettingsMutation()
+  const withdrawMutation = useWithdrawMutation()
+
   const [logoutOpen, setLogoutOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
 
-  const toggle = (key: NotiKey) => {
-    setNoti((prev) => ({ ...prev, [key]: !prev[key] }))
+  const settings = settingsQuery.data
+  const ui = settings ? toUiState(settings) : null
+  const togglesReady = Boolean(ui)
+
+  const patchSettings = async (patch: Partial<UserSettings>) => {
+    try {
+      await updateSettings.mutateAsync(patch)
+    } catch {
+      toast.error('설정을 저장하지 못했어요.')
+    }
+  }
+
+  const toggle = async (key: NotiKey) => {
+    if (!settings || !ui) return
+
+    if (key === 'all') {
+      const next = !ui.all
+      await patchSettings({
+        notifyPlanStart: next,
+        notifyRecordWriting: next,
+        notifyBadgeAcquired: next,
+        notifyNextPlace: next,
+        notifyPlaceArrival: next,
+        notifyMarketing: next,
+      })
+      return
+    }
+
+    if (key === 'schedule') {
+      await patchSettings({ notifyPlanStart: !ui.schedule })
+      return
+    }
+
+    await patchSettings({ notifyMarketing: !ui.marketing })
+  }
+
+  const handleLocationToggle = async () => {
+    if (!settings || !ui) return
+    await patchSettings({ locationPermission: !ui.location })
   }
 
   const handleLogout = async () => {
@@ -46,17 +134,31 @@ export function SettingsPage() {
     } finally {
       clearAuth()
       void queryClient.removeQueries({ queryKey: QUERY_KEYS.myProfile })
+      void queryClient.removeQueries({ queryKey: QUERY_KEYS.mySettings })
+      void queryClient.removeQueries({ queryKey: QUERY_KEYS.myBadges })
       setLogoutOpen(false)
-      toast.success('로그아웃되었어요.')
-      navigate(ROUTES.login)
     }
+
+    if (nativeBridge.isNativeWebView()) {
+      // WebView 라우팅 없이 네이티브가 /login 으로 전환 + 네이티브 토스트
+      nativeBridge.postToNative({ type: 'LOGOUT' })
+      return
+    }
+
+    toast.success('로그아웃되었어요.')
+    navigate(ROUTES.login, { replace: true })
   }
 
-  const handleWithdraw = () => {
-    clearAuth()
-    setWithdrawOpen(false)
-    toast.success('회원 탈퇴가 완료되었어요.')
-    navigate(ROUTES.my)
+  const handleWithdraw = async () => {
+    try {
+      await withdrawMutation.mutateAsync()
+      clearAuth()
+      setWithdrawOpen(false)
+      toast.success('회원 탈퇴가 완료되었어요.')
+      navigate(ROUTES.my)
+    } catch {
+      toast.error('회원 탈퇴에 실패했어요.')
+    }
   }
 
   return (
@@ -64,54 +166,54 @@ export function SettingsPage() {
       <PageHeader title="설정" showBack onBack={() => navigate(ROUTES.my)} />
 
       <p className={sectionLabelStyle}>알림</p>
+      {settingsQuery.isError || (!settingsQuery.isLoading && !settings) ? (
+        <p className={settingsHintStyle}>
+          알림·위치 설정을 불러오지 못했어요.{' '}
+          <button
+            type="button"
+            className={settingsRetryButtonStyle}
+            onClick={() => void settingsQuery.refetch()}
+          >
+            다시 시도
+          </button>
+        </p>
+      ) : null}
       <div className={settingRowStyle}>
         <span className={settingLabelStyle}>전체 알림</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={noti.all}
-          className={toggleStyle({ on: noti.all })}
-          onClick={() => toggle('all')}
-        >
-          <span className={toggleThumbStyle({ on: noti.all })} />
-        </button>
+        <SettingToggle
+          checked={ui?.all ?? false}
+          ready={togglesReady}
+          onClick={() => void toggle('all')}
+        />
       </div>
       <div className={settingRowStyle}>
         <span className={settingLabelStyle}>여행 일정 알림</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={noti.schedule}
-          className={toggleStyle({ on: noti.schedule })}
-          onClick={() => toggle('schedule')}
-        >
-          <span className={toggleThumbStyle({ on: noti.schedule })} />
-        </button>
+        <SettingToggle
+          checked={ui?.schedule ?? false}
+          ready={togglesReady}
+          onClick={() => void toggle('schedule')}
+        />
       </div>
       <div className={settingRowStyle}>
         <span className={settingLabelStyle}>마케팅 알림</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={noti.marketing}
-          className={toggleStyle({ on: noti.marketing })}
-          onClick={() => toggle('marketing')}
-        >
-          <span className={toggleThumbStyle({ on: noti.marketing })} />
-        </button>
+        <SettingToggle
+          checked={ui?.marketing ?? false}
+          ready={togglesReady}
+          onClick={() => void toggle('marketing')}
+        />
       </div>
 
       <div className={dividerStyle}>
         <p className={sectionLabelStyle}>위치</p>
       </div>
-      <button
-        type="button"
-        className={settingRowStyle}
-        onClick={() => toast.info('기기 설정에서 위치 권한을 변경할 수 있어요.')}
-      >
+      <div className={settingRowStyle}>
         <span className={settingLabelStyle}>위치 권한</span>
-        <span className={linkValueStyle}>앱 사용 중 허용 ›</span>
-      </button>
+        <SettingToggle
+          checked={ui?.location ?? false}
+          ready={togglesReady}
+          onClick={() => void handleLocationToggle()}
+        />
+      </div>
 
       <div className={dividerStyle}>
         <p className={sectionLabelStyle}>지원</p>
@@ -171,7 +273,7 @@ export function SettingsPage() {
         onClose={() => setWithdrawOpen(false)}
         actions={[
           { label: '취소', onClick: () => setWithdrawOpen(false), variant: 'ghost' },
-          { label: '탈퇴하기', onClick: handleWithdraw, variant: 'danger' },
+          { label: '탈퇴하기', onClick: () => void handleWithdraw(), variant: 'danger' },
         ]}
       />
     </div>

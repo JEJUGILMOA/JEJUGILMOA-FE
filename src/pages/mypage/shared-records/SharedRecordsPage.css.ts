@@ -50,3 +50,27 @@ export const listStyle = style({
   flexDirection: 'column',
   gap: vars.space[3],
 })
+
+export const skeletonCardStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+  overflow: 'hidden',
+  borderRadius: 16,
+  border: `1px solid ${colors.border[1]}`,
+  backgroundColor: colors.surface[1],
+  paddingBottom: vars.space[3],
+})
+
+export const skeletonCoverStyle = style({
+  width: '100%',
+  height: 78,
+  borderRadius: 0,
+})
+
+export const skeletonBodyStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+  paddingInline: vars.space[3],
+})

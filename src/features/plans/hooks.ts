@@ -10,6 +10,7 @@ import {
   savePlanEdit,
   searchPlanPlaces,
 } from './api'
+import { fetchPlanSummaries, type FetchPlanSummariesParams } from './summariesApi'
 import { NEW_PLAN_ID, planDraftStore, usePlanDraftStore } from './planDraftStore'
 import type { PlanCreateRequest, PlanPlaceSearchParams, RecommendationRequest } from './types'
 
@@ -83,6 +84,17 @@ export function useDeletePlanMutation() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
     },
+  })
+}
+
+export function usePlanSummariesQuery(
+  params?: FetchPlanSummariesParams,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.planSummaries(params?.status),
+    queryFn: () => fetchPlanSummaries(params),
+    enabled: options?.enabled ?? true,
   })
 }
 

@@ -27,7 +27,7 @@ export const heroActionsStyle = style({
   top: vars.space[4],
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
+  justifyContent: 'flex-end',
 })
 
 export const heroIconButtonStyle = style({
@@ -156,6 +156,14 @@ export const photoItemStyle = style({
   height: '96px',
   borderRadius: vars.radius.buttonLg,
   backgroundImage: `linear-gradient(135deg, ${colors.secondary[400]}, ${colors.primary[400]})`,
+  overflow: 'hidden',
+})
+
+export const photoImgStyle = style({
+  display: 'block',
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
 })
 
 export const reviewListStyle = style({

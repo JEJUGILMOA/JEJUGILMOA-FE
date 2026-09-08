@@ -73,6 +73,27 @@ export type PlanDraft = {
   title: string
 }
 
+/** 마이페이지 내 여행 카드용 UI 상태 */
+export type PlanTripCardStatus = 'ongoing' | 'planned' | 'completed'
+
+/** GET /plans PlanSummary → 내 여행 카드 view model */
+export type PlanTripCardModel = {
+  id: string
+  title: string
+  status: PlanTripCardStatus
+  /** 헤더 좌측 상태 뱃지: 진행중 / 계획중 / 완료 */
+  statusBadge: string
+  /** 진행중: "2일차 / 4일" */
+  dayProgressLabel?: string
+  /** 계획중: D-day 뱃지 */
+  dDayBadge?: string
+  /** 본문 좌측: 기간 · 박일 */
+  dateLine: string
+  /** 본문 우측: 경유지 n곳 */
+  waypointLabel: string
+  /** 진행중 프로그레스 0~1 (날짜 기준 추정) */
+  progress?: number
+}
 // ---------------------------------------------------------------------------
 // 계획 생성 v2 — 백엔드 API 그대로의 타입. 화면(STEP1~6)을 API에 연결하면서
 // 위의 로컬 draft 타입들을 이 타입들 기준으로 하나씩 대체해 나간다.

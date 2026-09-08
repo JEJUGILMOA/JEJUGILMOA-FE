@@ -1,10 +1,19 @@
 import { Outlet, useMatches } from 'react-router'
 import { BottomNavigation } from '@/components/layout/BottomNavigation/BottomNavigation'
+import { NativeHeaderProvider } from '@/bridge/NativeHeaderProvider'
 import { nativeBridge } from '@/bridge/nativeBridge'
 import { useNativeMessage } from '@/bridge/useNativeMessage'
 import { useAppBootstrap } from '@/hooks/useAppBootstrap'
 import { cn } from '@/utils/cn'
-import { layoutStyle, layoutHideNavStyle, contentStyle, contentFlushStyle, contentFlushWithNavStyle, contentFlushNoNavStyle, contentFullBleedStyle } from './AppLayout.css.ts'
+import {
+  layoutStyle,
+  layoutHideNavStyle,
+  contentStyle,
+  contentFlushStyle,
+  contentFlushWithNavStyle,
+  contentFlushNoNavStyle,
+  contentFullBleedStyle,
+} from './AppLayout.css.ts'
 
 export type RouteHandle = {
   title?: string
@@ -12,6 +21,10 @@ export type RouteHandle = {
   hideNav?: boolean
   /** true면 content 기본 패딩 제거 (풀블리드 히어로 등) */
   flush?: boolean
+  /** true면 네이티브(및 라우트 SSOT) 페이지 헤더 표시 */
+  showHeader?: boolean
+  /** showHeader일 때 뒤로가기 버튼 */
+  showBack?: boolean
 }
 
 export function AppLayout() {
@@ -30,11 +43,13 @@ export function AppLayout() {
     : cn(contentStyle, hideNav && contentFullBleedStyle)
 
   return (
-    <div data-gilmoa-shell className={cn(layoutStyle, hideNav && layoutHideNavStyle)}>
-      <main className={mainClassName}>
-        <Outlet />
-      </main>
-      {!hideNav ? <BottomNavigation /> : null}
-    </div>
+    <NativeHeaderProvider>
+      <div data-gilmoa-shell className={cn(layoutStyle, hideNav && layoutHideNavStyle)}>
+        <main className={mainClassName}>
+          <Outlet />
+        </main>
+        {!hideNav ? <BottomNavigation /> : null}
+      </div>
+    </NativeHeaderProvider>
   )
 }

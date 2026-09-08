@@ -8,6 +8,7 @@ import {
   readOAuthPendingSession,
 } from '@/features/auth/oauth'
 import { applyOAuthLoginResult } from '@/features/auth/session'
+import { nativeBridge } from '@/bridge/nativeBridge'
 import { ROUTES } from '@/constants'
 import { Button } from '@/components/ui/Button/Button'
 import {
@@ -16,7 +17,7 @@ import {
   statusTitleStyle,
 } from './LoginPage.css.ts'
 
-/** 같은 인가 코드로 교환 API를 두 번 치지 않기 위한 (Strict Mode 포함) */
+/** 같은 인가 코드로 교환 API를 두 번 치지 않기 위한 */
 const exchangedKeys = new Set<string>()
 
 export function OAuthCallbackPage() {
@@ -71,6 +72,14 @@ export function OAuthCallbackPage() {
         })
         applyOAuthLoginResult(result)
         clearOAuthPendingSession()
+        if (nativeBridge.isNativeWebView()) {
+          nativeBridge.postToNative({
+            type: 'LOGIN_SUCCESS',
+            provider: providerParam,
+            returnTo,
+          })
+          return
+        }
         // replace로 히스토리에서 콜백을 빼서 뒤로가기 시 code 재사용을 막는다.
         navigate(returnTo, { replace: true })
       } catch (error) {

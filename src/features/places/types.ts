@@ -1,1 +1,7 @@
-export type { Place } from './schemas'
+export type {
+  Place,
+  PlaceListItem,
+  PlacePage,
+  PopularPlace,
+  PopularPlacePage,
+} from './schemas'
