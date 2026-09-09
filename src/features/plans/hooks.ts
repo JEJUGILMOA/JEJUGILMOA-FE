@@ -108,7 +108,9 @@ export function useRecommendationsQuery(request: RecommendationRequest, enabled:
     queryKey: ['plans', 'recommendations', request],
     queryFn: () => fetchRecommendations(request),
     enabled,
-    staleTime: 0,
+    // "새로고침"이 excludedPlaceIds/excludeContentIds를 누적시켜 쿼리 키 자체를 바꾸므로,
+    // 같은 조건(Day/테마/모드)으로 탭만 왔다갔다 할 땐 재요청 없이 캐시를 그대로 쓴다.
+    staleTime: Infinity,
   })
 }
 
