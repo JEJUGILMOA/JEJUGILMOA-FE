@@ -43,9 +43,6 @@ import { PlanRouteMap } from './components/PlanRouteMap'
 
 const DATE_FORMAT = 'yyyy.MM.dd'
 
-/** 예산 입력값은 만원 단위(API와 동일)로 저장돼 있어, 화면에 보여줄 때만 원 단위로 바꾼다. */
-const WON_PER_MANWON = 10_000
-
 const BUDGET_CATEGORY_LABELS: { key: keyof PlanBudgetRequest; label: string }[] = [
   { key: 'budgetTransportation', label: '교통비' },
   { key: 'budgetAccommodation', label: '숙박' },
@@ -150,7 +147,7 @@ export function PlanPreviewPage() {
     plan.budgetFood !== null ||
     plan.budgetEtc !== null
   const budgetTotal = hasBudget
-    ? BUDGET_CATEGORY_LABELS.reduce((sum, { key }) => sum + (plan[key] ?? 0), 0) * WON_PER_MANWON
+    ? BUDGET_CATEGORY_LABELS.reduce((sum, { key }) => sum + (plan[key] ?? 0), 0)
     : 0
 
   return (
@@ -259,7 +256,7 @@ export function PlanPreviewPage() {
                   <div key={key} className={budgetRowStyle}>
                     <span className={budgetRowLabelStyle}>{label}</span>
                     <span className={budgetRowValueStyle}>
-                      {((plan[key] ?? 0) * WON_PER_MANWON).toLocaleString()}원
+                      {(plan[key] ?? 0).toLocaleString()}원
                     </span>
                   </div>
                 ))}
