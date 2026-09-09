@@ -3,6 +3,7 @@ import { ko } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Search, Star, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { nativeBridge } from '@/bridge/nativeBridge'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Chip } from '@/components/ui/Chip/Chip'
@@ -61,6 +62,7 @@ import { ScheduleList } from './components/ScheduleList'
 import { WaypointPlaceRow } from './components/WaypointPlaceRow'
 
 const DATE_FORMAT = 'yyyy.MM.dd'
+const SEARCH_DEBOUNCE_MS = 300
 /** "꼭 가고 싶은 장소"는 개수 제한이 없다 — 대신 Day 하나에 담을 수 있는 일정 전체를 10곳으로 제한한다 */
 const MAX_DAY_PLACES = 10
 
@@ -265,18 +267,21 @@ export function PlanItineraryPage() {
   }
 
   const trimmedRecommendQuery = recommendQuery.trim()
+  // 타이핑마다 바로 요청을 보내지 않고, 입력이 잠시 멈췄을 때만 실제 검색 API를 호출한다.
+  const debouncedRecommendQuery = useDebouncedValue(trimmedRecommendQuery, SEARCH_DEBOUNCE_MS)
+  const isRecommendQueryDebouncing = trimmedRecommendQuery !== debouncedRecommendQuery
   const isRecommendTabActive = Boolean(plan) && sheetTab === 'recommend' && !isSelectingDeparture
   const shouldFetchRecommendations =
     isRecommendTabActive &&
     !trimmedRecommendQuery &&
     (recommendMode === 'popular' || referencePlaceIds.length > 0)
-  const shouldSearchPlaces = isRecommendTabActive && Boolean(trimmedRecommendQuery)
+  const shouldSearchPlaces = isRecommendTabActive && Boolean(debouncedRecommendQuery)
   // 출발지 검색도 같은 장소 검색 API를 재사용한다 — 검색어가 있을 때만 실행
-  const shouldSearchDeparture = isSelectingDeparture && Boolean(trimmedRecommendQuery)
+  const shouldSearchDeparture = isSelectingDeparture && Boolean(debouncedRecommendQuery)
 
   const recommendationsQuery = useRecommendationsQuery(recommendationRequest, shouldFetchRecommendations)
   const placeSearchQuery = useSearchPlanPlacesQuery(
-    { keyword: trimmedRecommendQuery },
+    { keyword: debouncedRecommendQuery },
     shouldSearchPlaces || shouldSearchDeparture,
   )
 
@@ -418,7 +423,7 @@ export function PlanItineraryPage() {
 
   const displayPlaces = trimmedRecommendQuery ? searchDisplayPlaces : recommendDisplayPlaces
   const isLoadingDisplayPlaces = trimmedRecommendQuery
-    ? placeSearchQuery.isLoading
+    ? isRecommendQueryDebouncing || placeSearchQuery.isLoading
     : recommendationsQuery.isLoading
   const hasDisplayPlacesError = trimmedRecommendQuery ? placeSearchQuery.isError : recommendationsQuery.isError
   const recommendHasMore = !trimmedRecommendQuery && (recommendationsQuery.data?.hasMore ?? false)
@@ -939,7 +944,7 @@ export function PlanItineraryPage() {
                   previousDayDeparturePlace ? null : (
                     <p className={emptyTextStyle}>출발지를 검색해보세요.</p>
                   )
-                ) : placeSearchQuery.isLoading ? (
+                ) : isRecommendQueryDebouncing || placeSearchQuery.isLoading ? (
                   <p className={emptyTextStyle}>불러오는 중…</p>
                 ) : departureCandidates.length === 0 ? (
                   <p className={emptyTextStyle}>검색 결과가 없어요.</p>
