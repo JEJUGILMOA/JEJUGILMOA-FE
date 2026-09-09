@@ -73,6 +73,10 @@ export function requestNativeLocation() {
   postToNative({ type: 'REQUEST_LOCATION' })
 }
 
+export function requestMapRegion() {
+  postToNative({ type: 'REQUEST_MAP_REGION' })
+}
+
 export function notifyWebReady() {
   postToNative({ type: 'WEB_READY' })
 }
@@ -83,6 +87,7 @@ export const nativeBridge = {
   subscribeMockBridge,
   requestAndroidBackHandler,
   requestNativeLocation,
+  requestMapRegion,
   notifyWebReady,
   isNativeWebView,
   shouldHideWebBottomNav,

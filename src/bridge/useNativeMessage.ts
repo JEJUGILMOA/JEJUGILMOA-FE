@@ -80,6 +80,18 @@ function handleNativeMessage(data: unknown) {
     case 'MAP_TAPPED':
       window.dispatchEvent(new CustomEvent('gilmoa:map-tap'))
       break
+    case 'MAP_REGION_CHANGED':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:map-region', {
+          detail: {
+            minLat: message.minLat,
+            maxLat: message.maxLat,
+            minLng: message.minLng,
+            maxLng: message.maxLng,
+          },
+        }),
+      )
+      break
     case 'MODAL_ACTION':
       window.dispatchEvent(new CustomEvent('gilmoa:modal-action', { detail: { id: message.id } }))
       break

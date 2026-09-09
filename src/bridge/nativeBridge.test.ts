@@ -83,6 +83,37 @@ describe('bridge messageSchema', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it('parses REQUEST_MAP_REGION and MAP_REGION_CHANGED', () => {
+    expect(webToNativeMessageSchema.safeParse({ type: 'REQUEST_MAP_REGION' }).success).toBe(true)
+    expect(
+      nativeToWebMessageSchema.safeParse({
+        type: 'MAP_REGION_CHANGED',
+        minLat: 33.2,
+        maxLat: 33.5,
+        minLng: 126.2,
+        maxLng: 126.8,
+      }).success,
+    ).toBe(true)
+  })
+
+  it('parses SET_MAP with places and heatmap', () => {
+    const result = webToNativeMessageSchema.safeParse({
+      type: 'SET_MAP',
+      visible: true,
+      places: [
+        {
+          id: '1',
+          title: '성산일출봉',
+          latitude: 33.45,
+          longitude: 126.94,
+          categoryName: '자연',
+        },
+      ],
+      heatmap: [{ latitude: 33.45, longitude: 126.94, level: 'CROWDED', intensity: 1 }],
+    })
+    expect(result.success).toBe(true)
+  })
 })
 
 describe('nativeBridge', () => {

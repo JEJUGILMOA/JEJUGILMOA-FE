@@ -89,4 +89,19 @@ export const QUERY_KEYS = {
   planSummaries: (status?: string) => ['plans', 'summaries', status] as const,
   favorites: (page?: number, size?: number) => ['favorites', page, size] as const,
   favoritePlaceIds: ['favorites', 'ids'] as const,
+  mapPlaces: (params?: {
+    minLat?: number
+    maxLat?: number
+    minLng?: number
+    maxLng?: number
+    category?: string
+    limit?: number
+  }) => ['map', 'places', params] as const,
+  mapHeatmap: (params?: {
+    minLat?: number
+    maxLat?: number
+    minLng?: number
+    maxLng?: number
+    gridSize?: number
+  }) => ['map', 'heatmap', params] as const,
 } as const

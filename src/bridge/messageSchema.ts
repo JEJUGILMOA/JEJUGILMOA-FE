@@ -73,6 +73,28 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
         }),
       )
       .optional(),
+    places: z
+      .array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          latitude: z.number(),
+          longitude: z.number(),
+          categoryName: z.string().optional(),
+          imageUrl: z.string().optional(),
+        }),
+      )
+      .optional(),
+    heatmap: z
+      .array(
+        z.object({
+          latitude: z.number(),
+          longitude: z.number(),
+          level: z.enum(['CROWDED', 'MODERATE']),
+          intensity: z.number(),
+        }),
+      )
+      .optional(),
     overlayTop: z.number().optional(),
     sheetHeight: z.number().optional(),
     cameraFitKey: z.string().optional(),
@@ -82,6 +104,7 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('MAP_ZOOM'),
     delta: z.number(),
   }),
+  z.object({ type: z.literal('REQUEST_MAP_REGION') }),
   z.object({
     type: z.literal('SET_MODAL'),
     visible: z.boolean(),
@@ -177,6 +200,13 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
     id: z.string(),
   }),
   z.object({ type: z.literal('MAP_TAPPED') }),
+  z.object({
+    type: z.literal('MAP_REGION_CHANGED'),
+    minLat: z.number(),
+    maxLat: z.number(),
+    minLng: z.number(),
+    maxLng: z.number(),
+  }),
   z.object({
     type: z.literal('MODAL_ACTION'),
     id: z.string(),

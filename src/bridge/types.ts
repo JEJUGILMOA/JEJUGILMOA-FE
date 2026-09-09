@@ -38,6 +38,22 @@ export type WebToNativeMessage =
         mustVisit?: boolean
       }[]
       unassigned?: { id: string; title: string; latitude: number; longitude: number }[]
+      /** 탐색 지도 탭 — API 장소 마커 */
+      places?: {
+        id: string
+        title: string
+        latitude: number
+        longitude: number
+        categoryName?: string
+        imageUrl?: string
+      }[]
+      /** 탐색 지도 탭 — 혼잡도 히트맵 */
+      heatmap?: {
+        latitude: number
+        longitude: number
+        level: 'CROWDED' | 'MODERATE'
+        intensity: number
+      }[]
       overlayTop?: number
       sheetHeight?: number
       cameraFitKey?: string
@@ -45,6 +61,7 @@ export type WebToNativeMessage =
       webOnTop?: boolean
     }
   | { type: 'MAP_ZOOM'; delta: number }
+  | { type: 'REQUEST_MAP_REGION' }
   | {
       type: 'SET_MODAL'
       visible: boolean
@@ -107,6 +124,13 @@ export type NativeToWebMessage =
   | { type: 'HEADER_ACTION'; id: string }
   | { type: 'MAP_ASSIGN_PLACE'; id: string }
   | { type: 'MAP_TAPPED' }
+  | {
+      type: 'MAP_REGION_CHANGED'
+      minLat: number
+      maxLat: number
+      minLng: number
+      maxLng: number
+    }
   | { type: 'MODAL_ACTION'; id: string }
   | { type: 'MODAL_DISMISS' }
   | { type: 'TOAST_ACTION'; id: string }
