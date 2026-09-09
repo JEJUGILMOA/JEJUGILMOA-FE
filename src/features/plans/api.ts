@@ -137,14 +137,20 @@ export function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): Tra
         title: waypoint.placeName,
         isPreferred: waypoint.isPreferred,
       }))
-    const departure: DepartureInfo = {
-      placeId: day.departurePlaceId !== null ? String(day.departurePlaceId) : '',
-      title: day.departureLocationName ?? '',
-      // 서버 응답엔 주소가 없다 — 이번 세션에서 검색으로 새로 고른 출발지만 주소를 보여줄 수 있다.
-      address: '',
-      latitude: day.departureLatitude,
-      longitude: day.departureLongitude,
-    }
+    // 서버가 이 Day의 출발지를 아직 안 갖고 있으면 위/경도까지 전부 null로 온다 —
+    // 이때는 빈 DepartureInfo를 만들지 않고 그대로 null로 둬야 "출발지 미설정" 화면들이
+    // (다음 버튼 가드 포함) 제대로 동작한다.
+    const departure: DepartureInfo | null =
+      day.departureLatitude !== null && day.departureLongitude !== null
+        ? {
+            placeId: day.departurePlaceId !== null ? String(day.departurePlaceId) : '',
+            title: day.departureLocationName ?? '',
+            // 서버 응답엔 주소가 없다 — 이번 세션에서 검색으로 새로 고른 출발지만 주소를 보여줄 수 있다.
+            address: '',
+            latitude: day.departureLatitude,
+            longitude: day.departureLongitude,
+          }
+        : null
     itinerary[day.dayNumber] = { departure, waypoints }
   }
 

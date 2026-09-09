@@ -162,6 +162,9 @@ export function PlanItineraryPage() {
   const [pendingCourse, setPendingCourse] = useState<PendingCourse | null>(null)
   const [showAnchorPrompt, setShowAnchorPrompt] = useState(false)
   const [showDepartureRequired, setShowDepartureRequired] = useState(false)
+  // 완료 직전, 경유지가 하나도 없는 Day가 있으면 이 Day 번호를 담아서 확인 팝업을 띄운다
+  // (출발지랑 다르게 이건 하드블록이 아니라 "그래도 계속할지" 물어보는 정도)
+  const [emptyDayPrompt, setEmptyDayPrompt] = useState<number | null>(null)
   const headerSearchInputRef = useRef<HTMLInputElement>(null)
   const [isSelectingDeparture, setIsSelectingDeparture] = useState(false)
   // 검색·추천 API 응답에서 본 장소들의 이름·좌표를 기억해둔다 — MOCK_PLACES에 없는
@@ -662,6 +665,26 @@ export function PlanItineraryPage() {
       setShowDepartureRequired(true)
       return
     }
+    // 출발지는 다 있어도 경유지를 하나도 안 담은 Day가 있을 수 있다 — 이건 막지는 않고
+    // "그래도 완료할지" 한 번 물어본다.
+    const dayMissingWaypoints = Array.from({ length: dayCount }, (_, index) => index + 1).find(
+      (day) => (plan?.itinerary[day]?.waypoints.length ?? 0) === 0,
+    )
+    if (dayMissingWaypoints) {
+      setEmptyDayPrompt(dayMissingWaypoints)
+      return
+    }
+    finishEditing()
+  }
+
+  const handleGoBackToEmptyDay = () => {
+    const day = emptyDayPrompt
+    setEmptyDayPrompt(null)
+    if (day) changeDay(day)
+  }
+
+  const handleFinishDespiteEmptyDay = () => {
+    setEmptyDayPrompt(null)
     finishEditing()
   }
 
@@ -1041,7 +1064,7 @@ export function PlanItineraryPage() {
       <Modal
         open={showDepartureRequired}
         title="출발지를 먼저 설정해주세요"
-        description="코스 추천은 이 Day의 출발지를 정한 뒤에 볼 수 있어요."
+        description={`Day ${selectedDay}의 출발지를 정해야 계속 진행할 수 있어요.`}
         onClose={() => setShowDepartureRequired(false)}
         actions={[
           { label: '닫기', variant: 'ghost', onClick: () => setShowDepartureRequired(false) },
@@ -1053,6 +1076,17 @@ export function PlanItineraryPage() {
               handleStartDeparture()
             },
           },
+        ]}
+      />
+
+      <Modal
+        open={emptyDayPrompt !== null}
+        title={`Day ${emptyDayPrompt}에 경유지가 없어요`}
+        description="이대로 완료할까요? 돌아가서 채울 수도 있어요."
+        onClose={() => setEmptyDayPrompt(null)}
+        actions={[
+          { label: '완료할게요', variant: 'ghost', onClick: handleFinishDespiteEmptyDay },
+          { label: '돌아갈게요', variant: 'primary', onClick: handleGoBackToEmptyDay },
         ]}
       />
     </div>

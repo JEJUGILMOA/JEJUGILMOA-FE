@@ -168,8 +168,9 @@ export type PlanDayDetail = {
   dayNumber: number
   departurePlaceId: number | null
   departureLocationName: string | null
-  departureLatitude: number
-  departureLongitude: number
+  /** 아직 출발지를 안 정한 Day는 null (departureLongitude와 함께) */
+  departureLatitude: number | null
+  departureLongitude: number | null
   waypoints: PlanWaypointDetail[]
 }
 
