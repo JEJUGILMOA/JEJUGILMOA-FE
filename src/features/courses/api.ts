@@ -2,9 +2,13 @@ import { apiGet } from '@/api/http'
 import {
   recommendedCourseDetailSchema,
   recommendedCourseSchema,
+  savedCourseDetailSchema,
+  savedCourseSchema,
   type CourseTheme,
   type RecommendedCourse,
   type RecommendedCourseDetail,
+  type SavedCourse,
+  type SavedCourseDetail,
 } from './schemas'
 
 export type FetchRecommendedCoursesParams = {
@@ -31,4 +35,16 @@ export async function fetchRecommendedCourseDetail(
 ): Promise<RecommendedCourseDetail> {
   const data = await apiGet<unknown>(`/courses/recommended/${courseId}`)
   return recommendedCourseDetailSchema.parse(data)
+}
+
+/** GET /courses/saved — 담은 코스 목록 조회 (최신순) */
+export async function fetchSavedCourses(): Promise<SavedCourse[]> {
+  const data = await apiGet<unknown>('/courses/saved')
+  return savedCourseSchema.array().parse(data)
+}
+
+/** GET /courses/saved/{savedCourseId}/detail */
+export async function fetchSavedCourseDetail(savedCourseId: string): Promise<SavedCourseDetail> {
+  const data = await apiGet<unknown>(`/courses/saved/${savedCourseId}/detail`)
+  return savedCourseDetailSchema.parse(data)
 }

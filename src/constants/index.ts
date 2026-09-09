@@ -76,6 +76,8 @@ export const QUERY_KEYS = {
   homeCourses: ['home', 'courses'] as const,
   recommendedCourses: (themes?: readonly string[]) => ['courses', 'recommended', themes] as const,
   recommendedCourse: (courseId: string) => ['courses', 'recommended', courseId] as const,
+  savedCourses: ['courses', 'saved'] as const,
+  savedCourse: (savedCourseId: string) => ['courses', 'saved', savedCourseId] as const,
   plans: ['plans'] as const,
   plan: (id: string) => ['plans', id] as const,
   reviews: (placeId: string) => ['reviews', placeId] as const,

@@ -3,6 +3,8 @@ import { QUERY_KEYS } from '@/constants'
 import {
   fetchRecommendedCourseDetail,
   fetchRecommendedCourses,
+  fetchSavedCourseDetail,
+  fetchSavedCourses,
   type FetchRecommendedCoursesParams,
 } from './api'
 
@@ -18,5 +20,20 @@ export function useRecommendedCourseDetailQuery(courseId: string) {
     queryKey: QUERY_KEYS.recommendedCourse(courseId),
     queryFn: () => fetchRecommendedCourseDetail(courseId),
     enabled: Boolean(courseId),
+  })
+}
+
+export function useSavedCoursesQuery() {
+  return useQuery({
+    queryKey: QUERY_KEYS.savedCourses,
+    queryFn: fetchSavedCourses,
+  })
+}
+
+export function useSavedCourseDetailQuery(savedCourseId: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.savedCourse(savedCourseId),
+    queryFn: () => fetchSavedCourseDetail(savedCourseId),
+    enabled: Boolean(savedCourseId),
   })
 }
