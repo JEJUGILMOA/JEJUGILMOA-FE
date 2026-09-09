@@ -6,7 +6,7 @@ import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES, placePath } from '@/constants'
 import { mapSavedCourseDetail } from '@/features/courses/format'
-import { useSavedCourseDetailQuery } from '@/features/courses/hooks'
+import { useDeleteSavedCourseMutation, useSavedCourseDetailQuery } from '@/features/courses/hooks'
 import { CourseDetailView } from '@/pages/courses/components/CourseDetailView/CourseDetailView'
 import { pageStyle } from '@/pages/courses/components/CourseDetailView/CourseDetailView.css.ts'
 import type { PlanCourseNavigationState } from '@/pages/plan/courses/PlanCourseRecommendPage'
@@ -17,6 +17,7 @@ export function SavedCourseDetailPage() {
   const location = useLocation()
   const { savedCourseId = '' } = useParams()
   const courseQuery = useSavedCourseDetailQuery(savedCourseId)
+  const deleteMutation = useDeleteSavedCourseMutation()
   const goBack = () => navigate(-1)
   const navState = location.state as PlanCourseNavigationState | null
 
@@ -73,6 +74,13 @@ export function SavedCourseDetailPage() {
       onBack={goBack}
       onStepClick={(placeId) => navigate(placePath(placeId))}
       onStart={handleStart}
+      saveAction={{
+        saved: true,
+        isLoading: deleteMutation.isPending,
+        onClick: () => {
+          deleteMutation.mutate(savedCourseId, { onSuccess: goBack })
+        },
+      }}
     />
   )
 }
