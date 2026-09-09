@@ -19,6 +19,7 @@ export const chipRowStyle = style({
 })
 
 export const mapCanvasStyle = style({
+  position: 'relative',
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[2],
@@ -27,6 +28,39 @@ export const mapCanvasStyle = style({
   borderRadius: vars.radius.lg,
   border: `1px solid ${colors.border[1]}`,
   backgroundImage: `linear-gradient(160deg, ${colors.secondary[100]}, ${colors.primary[100]})`,
+})
+
+export const searchHereWrapStyle = style({
+  position: 'sticky',
+  top: vars.space[2],
+  zIndex: vars.zIndex.sticky,
+  display: 'flex',
+  justifyContent: 'center',
+  pointerEvents: 'none',
+})
+
+export const searchHereButtonStyle = style({
+  pointerEvents: 'auto',
+  margin: 0,
+  padding: `${vars.space[2]} ${vars.space[4]}`,
+  border: 'none',
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.surface[1],
+  color: colors.text[1],
+  fontFamily: vars.fontFamily.sans,
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.semibold,
+  letterSpacing: '-0.02em',
+  boxShadow: vars.shadow.md,
+  cursor: 'pointer',
+  selectors: {
+    '&:hover': {
+      backgroundColor: colors.surface[3],
+    },
+    '&:active': {
+      backgroundColor: colors.surface[4],
+    },
+  },
 })
 
 export const mapHintStyle = style({

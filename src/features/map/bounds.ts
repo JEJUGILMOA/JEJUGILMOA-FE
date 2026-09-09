@@ -32,3 +32,30 @@ export function roundBounds(bounds: MapBounds, digits = 4): MapBounds {
     maxLng: round(bounds.maxLng),
   }
 }
+
+/**
+ * 뷰포트 중심 기준 비율로 검색 영역을 축소한다.
+ * @param ratio 0~1 (예: 0.55 → 화면 가운데 약 55% 영역)
+ */
+export function shrinkBounds(bounds: MapBounds, ratio = 0.55): MapBounds {
+  const clamped = Math.min(1, Math.max(0.05, ratio))
+  const latSpan = bounds.maxLat - bounds.minLat
+  const lngSpan = bounds.maxLng - bounds.minLng
+  const latPad = (latSpan * (1 - clamped)) / 2
+  const lngPad = (lngSpan * (1 - clamped)) / 2
+  return {
+    minLat: bounds.minLat + latPad,
+    maxLat: bounds.maxLat - latPad,
+    minLng: bounds.minLng + lngPad,
+    maxLng: bounds.maxLng - lngPad,
+  }
+}
+
+export function boundsEqual(a: MapBounds, b: MapBounds): boolean {
+  return (
+    a.minLat === b.minLat &&
+    a.maxLat === b.maxLat &&
+    a.minLng === b.minLng &&
+    a.maxLng === b.maxLng
+  )
+}

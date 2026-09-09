@@ -13,10 +13,15 @@ import {
   placePath,
   type PlaceCategoryLabel,
 } from '@/constants'
-import { boundsAround, JEJU_DEFAULT_BOUNDS, roundBounds } from '@/features/map/bounds'
+import {
+  boundsAround,
+  boundsEqual,
+  JEJU_DEFAULT_BOUNDS,
+  roundBounds,
+  shrinkBounds,
+} from '@/features/map/bounds'
 import { useMapHeatmapQuery, useMapPlacesQuery } from '@/features/map/hooks'
 import type { MapBounds } from '@/features/map/schemas'
-import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useAppStore } from '@/stores/appStore'
 import {
   chipRowStyle,
@@ -31,6 +36,8 @@ import {
   mapCanvasStyle,
   mapHintStyle,
   pageStyle,
+  searchHereButtonStyle,
+  searchHereWrapStyle,
   sectionTitleStyle,
   statusStyle,
 } from './MapPage.css.ts'
@@ -38,12 +45,18 @@ import {
 const FILTERS = ['전체', ...PLACE_CATEGORIES.map((category) => category.label)] as const
 type PlaceFilter = (typeof FILTERS)[number]
 
-const MAP_REGION_DEBOUNCE_MS = 400
-const MAP_PLACES_LIMIT = 200
+/** 한 번에 가져올 장소 수 (화면이 과밀해지지 않도록) */
+const MAP_PLACES_LIMIT = 25
+/** 지도 화면 가운데 기준으로 검색할 영역 비율 */
+const SEARCH_BOUNDS_RATIO = 0.55
 const MAP_HEATMAP_GRID = 10
 
 function isPlaceFilter(value: string): value is PlaceFilter {
   return (FILTERS as readonly string[]).includes(value)
+}
+
+function toSearchArea(bounds: MapBounds): MapBounds {
+  return roundBounds(shrinkBounds(bounds, SEARCH_BOUNDS_RATIO))
 }
 
 export function MapPage() {
@@ -52,36 +65,56 @@ export function MapPage() {
   const isNative = nativeBridge.isNativeWebView()
 
   const [filter, setFilter] = useState<PlaceFilter>('전체')
-  const [nativeBounds, setNativeBounds] = useState<MapBounds | null>(null)
+  /** 지도가 움직일 때마다 갱신되는 전체 뷰포트 */
+  const [viewBounds, setViewBounds] = useState<MapBounds | null>(null)
+  /** 실제 API에 사용하는 검색 영역 (버튼/초기 로드 시에만 커밋) */
+  const [searchBounds, setSearchBounds] = useState<MapBounds | null>(null)
 
   const fallbackBounds = useMemo(() => {
     if (location) return boundsAround(location.latitude, location.longitude)
     return JEJU_DEFAULT_BOUNDS
   }, [location])
 
-  const activeBounds = nativeBounds ?? fallbackBounds
-  const debouncedBounds = useDebouncedValue(roundBounds(activeBounds), MAP_REGION_DEBOUNCE_MS)
+  const liveBounds = viewBounds ?? fallbackBounds
+  const liveSearchArea = useMemo(() => toSearchArea(liveBounds), [liveBounds])
+
+  // 최초 1회: 현재 영역으로 검색 시작
+  useEffect(() => {
+    if (searchBounds) return
+    setSearchBounds(liveSearchArea)
+  }, [searchBounds, liveSearchArea])
+
+  const showSearchHere =
+    searchBounds != null && !boundsEqual(searchBounds, liveSearchArea)
 
   const apiCategory =
     filter === '전체' ? undefined : getPlaceCategoryApiName(filter as PlaceCategoryLabel)
   const isUnsupportedCategory = filter !== '전체' && !apiCategory
 
   const placesQuery = useMapPlacesQuery(
-    isUnsupportedCategory
-      ? null
-      : {
-          ...debouncedBounds,
+    searchBounds && !isUnsupportedCategory
+      ? {
+          ...searchBounds,
           category: apiCategory,
           limit: MAP_PLACES_LIMIT,
-        },
+        }
+      : null,
   )
-  const heatmapQuery = useMapHeatmapQuery({
-    ...debouncedBounds,
-    gridSize: MAP_HEATMAP_GRID,
-  })
+  const heatmapQuery = useMapHeatmapQuery(
+    searchBounds
+      ? {
+          ...searchBounds,
+          gridSize: MAP_HEATMAP_GRID,
+        }
+      : null,
+  )
 
   const places = placesQuery.data ?? []
   const heatmap = heatmapQuery.data ?? []
+
+  const handleSearchHere = () => {
+    setSearchBounds(liveSearchArea)
+  }
 
   useEffect(() => {
     nativeBridge.requestNativeLocation()
@@ -91,7 +124,7 @@ export function MapPage() {
     const onRegion = (event: Event) => {
       const detail = (event as CustomEvent<MapBounds>).detail
       if (!detail) return
-      setNativeBounds(detail)
+      setViewBounds(detail)
     }
     window.addEventListener('gilmoa:map-region', onRegion)
     return () => window.removeEventListener('gilmoa:map-region', onRegion)
@@ -111,7 +144,7 @@ export function MapPage() {
   }, [isNative])
 
   useEffect(() => {
-    if (!isNative) return
+    if (!isNative || !searchBounds) return
 
     nativeBridge.postToNative({
       type: 'SET_MAP',
@@ -130,11 +163,11 @@ export function MapPage() {
         level: point.level,
         intensity: point.intensity,
       })),
-      cameraFitKey: nativeBounds
+      cameraFitKey: viewBounds
         ? undefined
-        : `explore:${debouncedBounds.minLat}:${debouncedBounds.minLng}`,
+        : `explore:${searchBounds.minLat}:${searchBounds.minLng}`,
     })
-  }, [isNative, places, heatmap, nativeBounds, debouncedBounds])
+  }, [isNative, places, heatmap, viewBounds, searchBounds])
 
   useEffect(() => {
     if (!isNative) return
@@ -148,6 +181,7 @@ export function MapPage() {
 
   const isLoading = placesQuery.isLoading || heatmapQuery.isLoading
   const isError = placesQuery.isError || heatmapQuery.isError
+  const displayBounds = searchBounds ?? liveSearchArea
 
   return (
     <div className={pageStyle}>
@@ -167,6 +201,14 @@ export function MapPage() {
         ))}
       </HorizontalScrollArea>
 
+      {showSearchHere ? (
+        <div className={searchHereWrapStyle}>
+          <button type="button" className={searchHereButtonStyle} onClick={handleSearchHere}>
+            현 위치에서 검색
+          </button>
+        </div>
+      ) : null}
+
       <div className={mapCanvasStyle} aria-label="지도">
         {isNative ? (
           <p className={mapHintStyle}>네이티브 지도에 장소·혼잡도를 표시합니다.</p>
@@ -180,8 +222,8 @@ export function MapPage() {
             ? `현재 위치 ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
             : '위치 정보 대기 중'}
           {' · '}
-          bounds {debouncedBounds.minLat.toFixed(2)}~{debouncedBounds.maxLat.toFixed(2)},{' '}
-          {debouncedBounds.minLng.toFixed(2)}~{debouncedBounds.maxLng.toFixed(2)}
+          검색 영역 {displayBounds.minLat.toFixed(2)}~{displayBounds.maxLat.toFixed(2)},{' '}
+          {displayBounds.minLng.toFixed(2)}~{displayBounds.maxLng.toFixed(2)}
         </p>
       </div>
 
@@ -206,7 +248,10 @@ export function MapPage() {
                 description="다른 카테고리를 선택해 보세요."
               />
             ) : places.length === 0 ? (
-              <Empty title="이 영역에 장소가 없어요" description="지도를 이동하거나 다른 카테고리를 선택해 보세요." />
+              <Empty
+                title="이 영역에 장소가 없어요"
+                description="지도를 이동한 뒤 「현 위치에서 검색」을 눌러 보세요."
+              />
             ) : (
               <ul className={listStyle}>
                 {places.map((place) => (
