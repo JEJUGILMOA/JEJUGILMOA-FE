@@ -11,7 +11,7 @@ import { Loading } from '@/components/ui/Loading/Loading'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
-import { MOCK_COURSES, MOCK_PLACES } from '@/data/mockExplore'
+import { MOCK_PLACES } from '@/data/mockExplore'
 import { usePlanDraft, useRecommendationsQuery, useSearchPlanPlacesQuery } from '@/features/plans/hooks'
 import { planDraftStore } from '@/features/plans/planDraftStore'
 import { TRAVEL_THEMES, TRAVEL_THEME_LABELS } from '@/features/plans/travelTheme'
@@ -57,7 +57,6 @@ import {
 import { DayPager } from './components/DayPager'
 import { ItineraryBottomSheet } from './components/ItineraryBottomSheet'
 import { ItineraryDayMap } from './components/ItineraryDayMap'
-import { RecommendedCourseChip } from './components/RecommendedCourseChip'
 import { ScheduleList } from './components/ScheduleList'
 import { WaypointPlaceRow } from './components/WaypointPlaceRow'
 
@@ -162,6 +161,7 @@ export function PlanItineraryPage() {
   const [activeTheme, setActiveTheme] = useState<TravelTheme | null>(null)
   const [pendingCourse, setPendingCourse] = useState<PendingCourse | null>(null)
   const [showAnchorPrompt, setShowAnchorPrompt] = useState(false)
+  const [showDepartureRequired, setShowDepartureRequired] = useState(false)
   const headerSearchInputRef = useRef<HTMLInputElement>(null)
   const [isSelectingDeparture, setIsSelectingDeparture] = useState(false)
   // 검색·추천 API 응답에서 본 장소들의 이름·좌표를 기억해둔다 — MOCK_PLACES에 없는
@@ -589,6 +589,16 @@ export function PlanItineraryPage() {
     setSheetTab('recommend')
   }
 
+  // 코스 담기 자체는 출발지랑 무관하게 동작하지만, 출발지를 먼저 정하고 코스를 고르는
+  // 흐름을 유도하려고 버튼은 항상 보여주되 클릭 시 안내 팝업으로 막는다.
+  const goToCourseRecommend = () => {
+    if (!departurePlace) {
+      setShowDepartureRequired(true)
+      return
+    }
+    navigate(ROUTES.planCourseRecommend, { state: { planId, day: selectedDay } })
+  }
+
   const handleCancelDeparture = () => {
     setIsSelectingDeparture(false)
     setRecommendQuery('')
@@ -631,10 +641,25 @@ export function PlanItineraryPage() {
 
   // 마지막 Day가 아니면 '다음'은 이 화면 안에서 다음 Day로만 넘기고(출발지·필수 장소는
   // 이 화면 안에서 언제든 인라인으로 정할 수 있다), 마지막 Day에서 눌러야 이 화면을
-  // 마치고 다음 단계(또는 미리보기)로 넘어간다.
+  // 마치고 다음 단계(또는 미리보기)로 넘어간다. Day마다 출발지가 하나씩 있어야 해서
+  // (경유지가 없는 빈 Day도 예외 없이) '다음'을 누를 때마다 막는다.
   const proceedNext = () => {
+    if (!departurePlace) {
+      setShowDepartureRequired(true)
+      return
+    }
     if (!isLastDay) {
       changeDay(Math.min(selectedDay + 1, dayCount))
+      return
+    }
+    // 마지막 Day까지 왔어도, Day 페이저로 건너뛰어서 출발지를 안 정하고 지나친 날이
+    // 있을 수 있어 끝내기 전에 전체 Day를 한 번 더 확인한다.
+    const dayMissingDeparture = Array.from({ length: dayCount }, (_, index) => index + 1).find(
+      (day) => !plan?.itinerary[day]?.departure,
+    )
+    if (dayMissingDeparture) {
+      changeDay(dayMissingDeparture)
+      setShowDepartureRequired(true)
       return
     }
     finishEditing()
@@ -800,14 +825,14 @@ export function PlanItineraryPage() {
             ) : null}
 
             {scheduleItems.length === 0 && !hasMustVisitWithoutStops ? (
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  navigate(ROUTES.planCourseRecommend, { state: { planId, day: selectedDay } })
-                }
-              >
-                코스 추천
-              </Button>
+              <>
+                <Button variant="outline" onClick={goToCourseRecommend}>
+                  코스 추천
+                </Button>
+                {!departurePlace ? (
+                  <p className={inlineHintTextStyle}>출발지를 먼저 설정해주세요.</p>
+                ) : null}
+              </>
             ) : null}
 
             {scheduleItems.length > 0 ? (
@@ -839,22 +864,15 @@ export function PlanItineraryPage() {
                 : `고르면 바로 Day ${selectedDay}에 담겨요`}
             </span>
 
-            {!trimmedRecommendQuery &&
-            !isSelectingDeparture &&
-            recommendMode === 'popular' &&
-            departurePlace ? (
-              <HorizontalScrollArea>
-                <div className={courseRowStyle}>
-                  {MOCK_COURSES.map((course) => (
-                    <RecommendedCourseChip
-                      key={course.id}
-                      title={course.title}
-                      meta={course.summary}
-                      onClick={() => setPendingCourse(course)}
-                    />
-                  ))}
-                </div>
-              </HorizontalScrollArea>
+            {!trimmedRecommendQuery && !isSelectingDeparture && recommendMode === 'popular' ? (
+              <>
+                <Button variant="outline" onClick={goToCourseRecommend}>
+                  코스 추천
+                </Button>
+                {!departurePlace ? (
+                  <p className={inlineHintTextStyle}>출발지를 먼저 설정해주세요.</p>
+                ) : null}
+              </>
             ) : null}
 
             {!trimmedRecommendQuery && !isSelectingDeparture ? (
@@ -1017,6 +1035,24 @@ export function PlanItineraryPage() {
         actions={[
           { label: '그냥 넘어갈게요', variant: 'ghost', onClick: handleSkipAnchorRecommendations },
           { label: '네, 보여주세요', variant: 'primary', onClick: handleShowAnchorRecommendations },
+        ]}
+      />
+
+      <Modal
+        open={showDepartureRequired}
+        title="출발지를 먼저 설정해주세요"
+        description="코스 추천은 이 Day의 출발지를 정한 뒤에 볼 수 있어요."
+        onClose={() => setShowDepartureRequired(false)}
+        actions={[
+          { label: '닫기', variant: 'ghost', onClick: () => setShowDepartureRequired(false) },
+          {
+            label: '출발지 설정하기',
+            variant: 'primary',
+            onClick: () => {
+              setShowDepartureRequired(false)
+              handleStartDeparture()
+            },
+          },
         ]}
       />
     </div>
