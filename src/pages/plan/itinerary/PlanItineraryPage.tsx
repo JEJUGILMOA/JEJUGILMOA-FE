@@ -25,7 +25,6 @@ import type {
 import {
   backButtonStyle,
   courseRowStyle,
-  courseSuggestTitleStyle,
   dayPagerFloatStyle,
   departureResultChevronStyle,
   departureResultRowStyle,
@@ -766,21 +765,9 @@ export function PlanItineraryPage() {
             ) : null}
 
             {scheduleItems.length === 0 && !hasMustVisitWithoutStops ? (
-              <>
-                <span className={courseSuggestTitleStyle}>이런 코스는 어때요?</span>
-                <HorizontalScrollArea>
-                  <div className={courseRowStyle}>
-                    {MOCK_COURSES.map((course) => (
-                      <RecommendedCourseChip
-                        key={course.id}
-                        title={course.title}
-                        meta={course.summary}
-                        onClick={() => setPendingCourse(course)}
-                      />
-                    ))}
-                  </div>
-                </HorizontalScrollArea>
-              </>
+              <Button variant="secondary" onClick={() => navigate(ROUTES.planCourseRecommend)}>
+                코스 추천
+              </Button>
             ) : null}
 
             {scheduleItems.length > 0 ? (
