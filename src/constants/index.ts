@@ -20,8 +20,10 @@ export const ROUTES = {
   placesPopular: '/places/popular',
   courses: '/courses',
   course: '/courses/:courseId',
+  courseSaved: '/courses/saved/:savedCourseId',
   plan: '/plan',
   planCreate: '/plan/new',
+  planCourseRecommend: '/plan/courses',
   planEdit: (id: string) => `/plan/${id}/edit`,
   planItinerary: (id: string) => `/plan/${id}/itinerary`,
   planBudget: (id: string) => `/plan/${id}/budget`,
@@ -55,6 +57,10 @@ export function placePath(placeId: string) {
 
 export function coursePath(courseId: string) {
   return `/courses/${courseId}`
+}
+
+export function savedCoursePath(savedCourseId: string) {
+  return `/courses/saved/${savedCourseId}`
 }
 
 export const QUERY_KEYS = {

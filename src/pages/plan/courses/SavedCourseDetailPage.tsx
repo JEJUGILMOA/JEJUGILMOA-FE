@@ -5,15 +5,16 @@ import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES, placePath } from '@/constants'
-import { mapRecommendedCourseDetail } from '@/features/courses/format'
-import { useRecommendedCourseDetailQuery } from '@/features/courses/hooks'
-import { CourseDetailView } from './components/CourseDetailView/CourseDetailView'
-import { pageStyle } from './components/CourseDetailView/CourseDetailView.css.ts'
+import { mapSavedCourseDetail } from '@/features/courses/format'
+import { useSavedCourseDetailQuery } from '@/features/courses/hooks'
+import { CourseDetailView } from '@/pages/courses/components/CourseDetailView/CourseDetailView'
+import { pageStyle } from '@/pages/courses/components/CourseDetailView/CourseDetailView.css.ts'
 
-export function CourseDetailPage() {
+/** 저장한 코스 카드 상세. 추천 코스 상세(CourseDetailPage)와 같은 레이아웃(CourseDetailView)을 쓴다 */
+export function SavedCourseDetailPage() {
   const navigate = useNavigate()
-  const { courseId = '' } = useParams()
-  const courseQuery = useRecommendedCourseDetailQuery(courseId)
+  const { savedCourseId = '' } = useParams()
+  const courseQuery = useSavedCourseDetailQuery(savedCourseId)
   const goBack = () => navigate(-1)
 
   if (courseQuery.isLoading) {
@@ -40,10 +41,10 @@ export function CourseDetailPage() {
         <PageHeader title="코스 상세" showBack onBack={goBack} />
         <Empty
           title="코스를 찾을 수 없어요"
-          description="다른 추천 코스를 확인해 보세요."
+          description="저장한 다른 코스를 확인해 보세요."
           action={
-            <Button variant="secondary" onClick={() => navigate(ROUTES.courses)}>
-              추천 코스 보기
+            <Button variant="secondary" onClick={() => navigate(ROUTES.planCourseRecommend)}>
+              저장한 코스 보기
             </Button>
           }
         />
@@ -53,7 +54,7 @@ export function CourseDetailPage() {
 
   return (
     <CourseDetailView
-      course={mapRecommendedCourseDetail(courseQuery.data)}
+      course={mapSavedCourseDetail(courseQuery.data)}
       onBack={goBack}
       onStepClick={(placeId) => navigate(placePath(placeId))}
       onStart={() => navigate(ROUTES.plan)}
