@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
@@ -9,13 +9,16 @@ import { mapSavedCourseDetail } from '@/features/courses/format'
 import { useSavedCourseDetailQuery } from '@/features/courses/hooks'
 import { CourseDetailView } from '@/pages/courses/components/CourseDetailView/CourseDetailView'
 import { pageStyle } from '@/pages/courses/components/CourseDetailView/CourseDetailView.css.ts'
+import type { PlanCourseNavigationState } from '@/pages/plan/courses/PlanCourseRecommendPage'
 
 /** 저장한 코스 카드 상세. 추천 코스 상세(CourseDetailPage)와 같은 레이아웃(CourseDetailView)을 쓴다 */
 export function SavedCourseDetailPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { savedCourseId = '' } = useParams()
   const courseQuery = useSavedCourseDetailQuery(savedCourseId)
   const goBack = () => navigate(-1)
+  const navState = location.state as PlanCourseNavigationState | null
 
   if (courseQuery.isLoading) {
     return (
@@ -52,12 +55,24 @@ export function SavedCourseDetailPage() {
     )
   }
 
+  const course = mapSavedCourseDetail(courseQuery.data)
+
+  const handleStart = () => {
+    if (navState?.planId) {
+      navigate(ROUTES.planItinerary(navState.planId), {
+        state: { day: navState.day, importCourse: { title: course.title, summary: course.description, steps: course.steps } },
+      })
+      return
+    }
+    navigate(ROUTES.plan)
+  }
+
   return (
     <CourseDetailView
-      course={mapSavedCourseDetail(courseQuery.data)}
+      course={course}
       onBack={goBack}
       onStepClick={(placeId) => navigate(placePath(placeId))}
-      onStart={() => navigate(ROUTES.plan)}
+      onStart={handleStart}
     />
   )
 }

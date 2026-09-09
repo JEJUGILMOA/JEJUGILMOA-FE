@@ -11,7 +11,7 @@ import { Loading } from '@/components/ui/Loading/Loading'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
-import { MOCK_COURSES, MOCK_PLACES, type MockCourse } from '@/data/mockExplore'
+import { MOCK_COURSES, MOCK_PLACES } from '@/data/mockExplore'
 import { usePlanDraft, useRecommendationsQuery, useSearchPlanPlacesQuery } from '@/features/plans/hooks'
 import { planDraftStore } from '@/features/plans/planDraftStore'
 import { TRAVEL_THEMES, TRAVEL_THEME_LABELS } from '@/features/plans/travelTheme'
@@ -133,6 +133,21 @@ type PlaceInfo = {
   longitude: number
 }
 
+/** "코스 담기" 확인 팝업에 필요한 최소 정보. MockCourse도, 코스 추천 화면에서 돌아온
+ * 실제 코스 데이터도 둘 다 이 모양을 만족한다. */
+type PendingCourse = {
+  title: string
+  summary?: string
+  steps: { placeId: string; title: string }[]
+}
+
+/** 코스 추천 화면(`PlanCourseRecommendPage`)에서 "이 코스로 계획 시작하기"를 누르면
+ * 이 화면으로 돌아오면서 location.state에 실어 보내는 데이터 */
+type ImportCourseState = {
+  day?: number
+  importCourse?: PendingCourse
+}
+
 export function PlanItineraryPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
@@ -145,7 +160,7 @@ export function PlanItineraryPage() {
   const [recommendQuery, setRecommendQuery] = useState('')
   const [recommendMode, setRecommendMode] = useState<RecommendMode>('popular')
   const [activeTheme, setActiveTheme] = useState<TravelTheme | null>(null)
-  const [pendingCourse, setPendingCourse] = useState<MockCourse | null>(null)
+  const [pendingCourse, setPendingCourse] = useState<PendingCourse | null>(null)
   const [showAnchorPrompt, setShowAnchorPrompt] = useState(false)
   const headerSearchInputRef = useRef<HTMLInputElement>(null)
   const [isSelectingDeparture, setIsSelectingDeparture] = useState(false)
@@ -160,6 +175,23 @@ export function PlanItineraryPage() {
   // 미리보기의 연필 아이콘으로 들어왔으면 저장 후 다음 STEP(예산입력)으로 이어가지 않고
   // 미리보기로 바로 돌아간다 — 이 화면만 고쳐달라고 들어온 거라 나머지 단계를 강제로 거칠 필요가 없다.
   const fromPreview = Boolean((location.state as { fromPreview?: boolean } | null)?.fromPreview)
+
+  // 코스 추천 화면("코스 추천" 버튼)에서 "이 코스로 계획 시작하기"를 누르고 돌아오면
+  // location.state에 실려있는 코스를 그 자리에서 바로 "코스 담을까요?" 확인 팝업으로 띄운다
+  // (기존 mock 코스 추천 칩을 눌렀을 때와 동일한 흐름 재사용). 한 번만 처리하고 history state는
+  // 지워서, 뒤로가기/새로고침으로 같은 코스가 또 뜨지 않게 한다.
+  const importedCourseRef = useRef(false)
+  useEffect(() => {
+    const state = location.state as ImportCourseState | null
+    if (!state?.importCourse || importedCourseRef.current) return
+    importedCourseRef.current = true
+    // 다른 화면(코스 상세)에서 navigate state로 전달받은 값을 이 화면 상태로 옮기는
+    // 일회성 동기화라 effect 밖에서 할 방법이 없다
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (state.day) setSelectedDay(state.day)
+    setPendingCourse(state.importCourse)
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.state, location.pathname, navigate])
 
   const goBack = () => navigate(-1)
 
@@ -466,13 +498,12 @@ export function PlanItineraryPage() {
 
   const confirmAddCourse = () => {
     if (!pendingCourse) return
+    // 코스 스텝은 (mock이든 실제 API에서 온 것이든) 이미 placeId+title을 그 자체로 들고
+    // 있어서, MOCK_PLACES에 있는지 다시 검증할 필요가 없다 — 그냥 그대로 믿고 담는다.
+    const titleByPlaceId = new Map(pendingCourse.steps.map((step) => [step.placeId, step.title]))
     const coursePlaceIds = pendingCourse.steps
       .map((step) => step.placeId)
-      .filter(
-        (placeId) =>
-          MOCK_PLACES.some((place) => place.id === placeId) &&
-          !currentDayPlaceIds.includes(placeId),
-      )
+      .filter((placeId) => !currentDayPlaceIds.includes(placeId))
 
     if (currentDayPlaceIds.length >= MAX_DAY_PLACES) {
       toast.error(`Day당 일정은 최대 ${MAX_DAY_PLACES}곳까지만 담을 수 있어요`)
@@ -491,7 +522,11 @@ export function PlanItineraryPage() {
         {
           waypoints: [
             ...currentDayWaypoints,
-            ...addedPlaceIds.map((placeId) => ({ placeId, title: placeTitle(placeId), isPreferred: true })),
+            ...addedPlaceIds.map((placeId) => ({
+              placeId,
+              title: titleByPlaceId.get(placeId) ?? placeTitle(placeId),
+              isPreferred: true,
+            })),
           ],
         },
         addedPlaceIds.length < coursePlaceIds.length
@@ -765,7 +800,12 @@ export function PlanItineraryPage() {
             ) : null}
 
             {scheduleItems.length === 0 && !hasMustVisitWithoutStops ? (
-              <Button variant="secondary" onClick={() => navigate(ROUTES.planCourseRecommend)}>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  navigate(ROUTES.planCourseRecommend, { state: { planId, day: selectedDay } })
+                }
+              >
                 코스 추천
               </Button>
             ) : null}

@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
@@ -7,14 +7,17 @@ import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES, placePath } from '@/constants'
 import { mapRecommendedCourseDetail } from '@/features/courses/format'
 import { useRecommendedCourseDetailQuery } from '@/features/courses/hooks'
+import type { PlanCourseNavigationState } from '@/pages/plan/courses/PlanCourseRecommendPage'
 import { CourseDetailView } from './components/CourseDetailView/CourseDetailView'
 import { pageStyle } from './components/CourseDetailView/CourseDetailView.css.ts'
 
 export function CourseDetailPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { courseId = '' } = useParams()
   const courseQuery = useRecommendedCourseDetailQuery(courseId)
   const goBack = () => navigate(-1)
+  const navState = location.state as PlanCourseNavigationState | null
 
   if (courseQuery.isLoading) {
     return (
@@ -51,12 +54,24 @@ export function CourseDetailPage() {
     )
   }
 
+  const course = mapRecommendedCourseDetail(courseQuery.data)
+
+  const handleStart = () => {
+    if (navState?.planId) {
+      navigate(ROUTES.planItinerary(navState.planId), {
+        state: { day: navState.day, importCourse: { title: course.title, summary: course.description, steps: course.steps } },
+      })
+      return
+    }
+    navigate(ROUTES.plan)
+  }
+
   return (
     <CourseDetailView
-      course={mapRecommendedCourseDetail(courseQuery.data)}
+      course={course}
       onBack={goBack}
       onStepClick={(placeId) => navigate(placePath(placeId))}
-      onStart={() => navigate(ROUTES.plan)}
+      onStart={handleStart}
     />
   )
 }

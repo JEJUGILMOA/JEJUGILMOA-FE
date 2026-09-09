@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
@@ -13,6 +13,13 @@ import { listStyle, pageStyle } from './PlanCourseRecommendPage.css.ts'
 
 type CourseTab = 'recommended' | 'saved'
 
+/** 일정 화면에서 넘어왔을 때만 실려있는 정보. 코스 상세에서 "이 코스로 계획 시작하기"를
+ * 누르면 이걸 그대로 들고 그 일정(Day)으로 돌아가야 해서 상세 화면까지 계속 전달한다. */
+export type PlanCourseNavigationState = {
+  planId?: string
+  day?: number
+}
+
 const TABS: SegmentedControlItem[] = [
   { value: 'recommended', label: '추천 코스' },
   { value: 'saved', label: '저장한 코스' },
@@ -22,8 +29,10 @@ const TABS: SegmentedControlItem[] = [
  * 추천 코스/저장한 코스를 한 화면에서 탭으로 오갈 수 있게 한다. */
 export function PlanCourseRecommendPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [tab, setTab] = useState<CourseTab>('recommended')
   const goBack = () => navigate(-1)
+  const navState = location.state as PlanCourseNavigationState | null
 
   const recommendedQuery = useRecommendedCoursesQuery()
   const savedQuery = useSavedCoursesQuery()
@@ -53,7 +62,7 @@ export function PlanCourseRecommendPage() {
                 <CourseListCard
                   key={course.courseId}
                   {...mapRecommendedCourseToListCard(course)}
-                  onViewClick={() => navigate(coursePath(course.courseId))}
+                  onViewClick={() => navigate(coursePath(course.courseId), { state: navState })}
                 />
               ))}
             </div>
@@ -66,7 +75,7 @@ export function PlanCourseRecommendPage() {
               <CourseListCard
                 key={course.savedCourseId}
                 {...mapSavedCourseToListCard(course)}
-                onViewClick={() => navigate(savedCoursePath(course.savedCourseId))}
+                onViewClick={() => navigate(savedCoursePath(course.savedCourseId), { state: navState })}
               />
             ))}
           </div>
