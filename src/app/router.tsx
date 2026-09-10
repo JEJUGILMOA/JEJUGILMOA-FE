@@ -14,6 +14,8 @@ import { PlanCreatePage } from '@/pages/plan/create/PlanCreatePage'
 import { PlanItineraryPage } from '@/pages/plan/itinerary/PlanItineraryPage'
 import { PlanBudgetPage } from '@/pages/plan/budget/PlanBudgetPage'
 import { PlanPreviewPage } from '@/pages/plan/preview/PlanPreviewPage'
+import { PlanCourseRecommendPage } from '@/pages/plan/courses/PlanCourseRecommendPage'
+import { SavedCourseDetailPage } from '@/pages/plan/courses/SavedCourseDetailPage'
 import { RecordPage } from '@/pages/record/RecordPage'
 import { RecordCreatePage } from '@/pages/record/create/RecordCreatePage'
 import { RecordDetailPage } from '@/pages/record/detail/RecordDetailPage'
@@ -136,6 +138,16 @@ export const router = createBrowserRouter([
         } satisfies RouteHandle,
       },
       {
+        path: ROUTES.courseSaved.slice(1),
+        Component: SavedCourseDetailPage,
+        handle: {
+          title: '코스 상세',
+          hideNav: true,
+          flush: true,
+          ...withPageHeader,
+        } satisfies RouteHandle,
+      },
+      {
         path: ROUTES.plan.slice(1),
         Component: PlanPage,
         handle: { title: '계획' } satisfies RouteHandle,
@@ -149,6 +161,16 @@ export const router = createBrowserRouter([
         path: 'plan/:planId/edit',
         Component: PlanCreatePage,
         handle: { title: '여행 정보 수정', ...withPageHeader } satisfies RouteHandle,
+      },
+      {
+        path: ROUTES.planCourseRecommend.slice(1),
+        Component: PlanCourseRecommendPage,
+        handle: {
+          title: '코스 추천',
+          hideNav: true,
+          flush: true,
+          ...withPageHeader,
+        } satisfies RouteHandle,
       },
       {
         path: 'plan/:planId/itinerary',

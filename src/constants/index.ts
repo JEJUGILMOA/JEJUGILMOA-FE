@@ -20,8 +20,10 @@ export const ROUTES = {
   placesPopular: '/places/popular',
   courses: '/courses',
   course: '/courses/:courseId',
+  courseSaved: '/courses/saved/:savedCourseId',
   plan: '/plan',
   planCreate: '/plan/new',
+  planCourseRecommend: '/plan/courses',
   planEdit: (id: string) => `/plan/${id}/edit`,
   planItinerary: (id: string) => `/plan/${id}/itinerary`,
   planBudget: (id: string) => `/plan/${id}/budget`,
@@ -57,6 +59,10 @@ export function coursePath(courseId: string) {
   return `/courses/${courseId}`
 }
 
+export function savedCoursePath(savedCourseId: string) {
+  return `/courses/saved/${savedCourseId}`
+}
+
 export const QUERY_KEYS = {
   places: ['places'] as const,
   placesList: (params?: {
@@ -76,6 +82,8 @@ export const QUERY_KEYS = {
   homeCourses: ['home', 'courses'] as const,
   recommendedCourses: (themes?: readonly string[]) => ['courses', 'recommended', themes] as const,
   recommendedCourse: (courseId: string) => ['courses', 'recommended', courseId] as const,
+  savedCourses: ['courses', 'saved'] as const,
+  savedCourse: (savedCourseId: string) => ['courses', 'saved', savedCourseId] as const,
   plans: ['plans'] as const,
   plan: (id: string) => ['plans', id] as const,
   reviews: (placeId: string) => ['reviews', placeId] as const,

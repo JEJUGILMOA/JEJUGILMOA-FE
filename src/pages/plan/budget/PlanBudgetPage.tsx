@@ -38,9 +38,6 @@ const EMPTY_AMOUNTS: Record<BudgetField, string> = {
   budgetEtc: '',
 }
 
-/** 입력값은 API와 동일하게 만원 단위로 다룬다. 아래 총 예산 카드에서만 원 단위로 바꿔 보여준다. */
-const WON_PER_MANWON = 10_000
-
 export function PlanBudgetPage() {
   const { planId = '' } = useParams<{ planId: string }>()
   const navigate = useNavigate()
@@ -74,8 +71,7 @@ export function PlanBudgetPage() {
     setAmounts((prev) => ({ ...prev, [field]: digitsOnly }))
   }
 
-  const totalManwon = BUDGET_CATEGORIES.reduce((sum, { key }) => sum + (Number(amounts[key]) || 0), 0)
-  const total = totalManwon * WON_PER_MANWON
+  const total = BUDGET_CATEGORIES.reduce((sum, { key }) => sum + (Number(amounts[key]) || 0), 0)
 
   const handleSkip = () => {
     navigate(ROUTES.planPreview(planId))
@@ -123,7 +119,7 @@ export function PlanBudgetPage() {
                 value={amounts[key]}
                 onChange={(value) => handleAmountChange(key, value)}
                 placeholder="0"
-                suffix="만원"
+                suffix="원"
               />
             ))}
           </div>
