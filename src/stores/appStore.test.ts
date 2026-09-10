@@ -52,5 +52,13 @@ describe('authStore', () => {
     expect(authStore.getState().isAuthenticated).toBe(true)
     expect(authStore.getState().accessToken).toBeNull()
     expect(authStore.getState().user?.id).toBe('2')
+    expect(authStore.getState().isAuthResolved).toBe(true)
+  })
+
+  it('marks auth resolved when clearing to guest', () => {
+    authStore.setState({ isAuthResolved: false, isAuthenticated: false, user: null })
+    authStore.getState().clearAuth()
+    expect(authStore.getState().isAuthResolved).toBe(true)
+    expect(authStore.getState().isAuthenticated).toBe(false)
   })
 })

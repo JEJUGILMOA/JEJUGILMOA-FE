@@ -97,7 +97,3 @@ export const menuListStyle = style({
   overflow: 'hidden',
   paddingInline: vars.space[1],
 })
-
-export const devAuthButtonStyle = style({
-  marginTop: vars.space[2],
-})
