@@ -1,5 +1,11 @@
 import type { CourseImageTag } from '@/data/mockExplore'
-import type { CourseTheme, RecommendedCourse, RecommendedCourseDetail } from './schemas'
+import type {
+  CourseTheme,
+  RecommendedCourse,
+  RecommendedCourseDetail,
+  SavedCourse,
+  SavedCourseDetail,
+} from './schemas'
 
 const THEME_LABELS: Record<CourseTheme, string> = {
   FOOD: '맛집',
@@ -68,6 +74,47 @@ export function mapRecommendedCourseToListCard(course: RecommendedCourse) {
     previewSteps: waypoints.map((item) => ({
       title: item.placeName,
       thumbnailUrl: item.imageUrl ?? '',
+    })),
+  }
+}
+
+export function mapSavedCourseToListCard(course: SavedCourse) {
+  return {
+    title: course.title,
+    imageUrl: course.imageUrl,
+    imageTags: [],
+    placeCount: course.placeCount ?? 0,
+    previewSteps: [],
+    locationLabel: course.region,
+    duration: formatEstimatedMinutes(course.estimatedMinutes),
+    transport: transportModeLabel(course.transportMode),
+  }
+}
+
+/** `SavedCourseDetail` → `CourseDetailPage`가 쓰는 것과 같은 모양(title/description/imageUrl/meta/badges/steps) */
+export function mapSavedCourseDetail(course: SavedCourseDetail) {
+  const stops = [...course.stops].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+  const duration = formatEstimatedMinutes(course.estimatedMinutes)
+  const transport = transportModeLabel(course.transportMode)
+  const placeCount = course.placeCount ?? stops.length
+
+  const metaParts = [course.region, duration, placeCount > 0 ? `${placeCount}곳` : undefined, transport].filter(
+    Boolean,
+  )
+
+  const badges = transport ? [{ label: transport, status: 'info' as const }] : []
+
+  return {
+    title: course.title,
+    description: course.description,
+    imageUrl: course.imageUrl,
+    meta: metaParts.join(' · '),
+    badges,
+    steps: stops.map((stop) => ({
+      placeId: stop.placeId,
+      title: stop.placeName,
+      imageUrl: stop.placeImageUrl,
+      travelLabel: formatTravelMinutes(stop.travelTimeToNext),
     })),
   }
 }

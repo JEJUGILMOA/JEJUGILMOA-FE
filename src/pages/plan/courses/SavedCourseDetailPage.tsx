@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
@@ -6,21 +5,19 @@ import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES, placePath } from '@/constants'
-import { mapRecommendedCourseDetail } from '@/features/courses/format'
-import { useRecommendedCourseDetailQuery, useSaveCourseMutation } from '@/features/courses/hooks'
+import { mapSavedCourseDetail } from '@/features/courses/format'
+import { useDeleteSavedCourseMutation, useSavedCourseDetailQuery } from '@/features/courses/hooks'
+import { CourseDetailView } from '@/pages/courses/components/CourseDetailView/CourseDetailView'
+import { pageStyle } from '@/pages/courses/components/CourseDetailView/CourseDetailView.css.ts'
 import type { PlanCourseNavigationState } from '@/pages/plan/courses/PlanCourseRecommendPage'
-import { CourseDetailView } from './components/CourseDetailView/CourseDetailView'
-import { pageStyle } from './components/CourseDetailView/CourseDetailView.css.ts'
 
-export function CourseDetailPage() {
+/** 저장한 코스 카드 상세. 추천 코스 상세(CourseDetailPage)와 같은 레이아웃(CourseDetailView)을 쓴다 */
+export function SavedCourseDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { courseId = '' } = useParams()
-  const courseQuery = useRecommendedCourseDetailQuery(courseId)
-  const saveMutation = useSaveCourseMutation()
-  // 담은 코스 목록 응답엔 sourceId가 없어서 "이미 저장됐는지"를 서버에서 확인할 방법이
-  // 없다 — 이번 화면에서 저장 버튼을 누른 세션 동안만 저장됨 표시를 해준다.
-  const [justSaved, setJustSaved] = useState(false)
+  const { savedCourseId = '' } = useParams()
+  const courseQuery = useSavedCourseDetailQuery(savedCourseId)
+  const deleteMutation = useDeleteSavedCourseMutation()
   const goBack = () => navigate(-1)
   const navState = location.state as PlanCourseNavigationState | null
 
@@ -48,10 +45,10 @@ export function CourseDetailPage() {
         <PageHeader title="코스 상세" showBack onBack={goBack} />
         <Empty
           title="코스를 찾을 수 없어요"
-          description="다른 추천 코스를 확인해 보세요."
+          description="저장한 다른 코스를 확인해 보세요."
           action={
-            <Button variant="secondary" onClick={() => navigate(ROUTES.courses)}>
-              추천 코스 보기
+            <Button variant="secondary" onClick={() => navigate(ROUTES.planCourseRecommend)}>
+              저장한 코스 보기
             </Button>
           }
         />
@@ -59,7 +56,7 @@ export function CourseDetailPage() {
     )
   }
 
-  const course = mapRecommendedCourseDetail(courseQuery.data)
+  const course = mapSavedCourseDetail(courseQuery.data)
 
   const handleStart = () => {
     if (navState?.planId) {
@@ -78,14 +75,10 @@ export function CourseDetailPage() {
       onStepClick={(placeId) => navigate(placePath(placeId))}
       onStart={handleStart}
       saveAction={{
-        saved: justSaved,
-        isLoading: saveMutation.isPending,
+        saved: true,
+        isLoading: deleteMutation.isPending,
         onClick: () => {
-          if (justSaved) return
-          saveMutation.mutate(
-            { sourceType: 'RECOMMENDED', sourceId: courseId },
-            { onSuccess: () => setJustSaved(true) },
-          )
+          deleteMutation.mutate(savedCourseId, { onSuccess: goBack })
         },
       }}
     />

@@ -54,8 +54,39 @@ export const recommendedCourseDetailSchema = z.object({
   stops: z.array(courseStopSchema).nullish().transform((value) => value ?? []),
 })
 
+export const courseSourceTypeSchema = z.enum(['RECOMMENDED', 'RECORD'])
+
+/** `GET /api/courses/saved` 목록 아이템. RECORD 출처는 estimatedMinutes/transportMode가 없다 */
+export const savedCourseSchema = z.object({
+  savedCourseId: z.coerce.string(),
+  sourceType: courseSourceTypeSchema,
+  title: z.string(),
+  imageUrl: optionalString,
+  region: optionalString,
+  placeCount: optionalNumber,
+  estimatedMinutes: optionalNumber,
+  transportMode: optionalString,
+})
+
+/** `GET /api/courses/saved/{savedCourseId}/detail` 응답. RECORD 출처는 description도 없다 */
+export const savedCourseDetailSchema = z.object({
+  savedCourseId: z.coerce.string(),
+  sourceType: courseSourceTypeSchema,
+  title: z.string(),
+  imageUrl: optionalString,
+  region: optionalString,
+  placeCount: optionalNumber,
+  estimatedMinutes: optionalNumber,
+  transportMode: optionalString,
+  description: optionalString,
+  stops: z.array(courseStopSchema).nullish().transform((value) => value ?? []),
+})
+
 export type CourseTheme = z.infer<typeof courseThemeSchema>
 export type CourseWaypoint = z.infer<typeof courseWaypointSchema>
 export type RecommendedCourse = z.infer<typeof recommendedCourseSchema>
 export type CourseStop = z.infer<typeof courseStopSchema>
 export type RecommendedCourseDetail = z.infer<typeof recommendedCourseDetailSchema>
+export type CourseSourceType = z.infer<typeof courseSourceTypeSchema>
+export type SavedCourse = z.infer<typeof savedCourseSchema>
+export type SavedCourseDetail = z.infer<typeof savedCourseDetailSchema>

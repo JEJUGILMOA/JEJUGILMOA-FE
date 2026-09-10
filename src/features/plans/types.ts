@@ -52,7 +52,7 @@ export type TravelPlan = {
   /** STEP 04 지도추가에서 배정한 Day별 일정 (1부터 시작) */
   itinerary: Record<number, DayItinerary>
   // STEP5 예산 입력에서 저장한 카테고리별 예산. v2 API(`PlanBudgetRequest`/`TravelPlanDetailResponse`)와
-  // 필드명·단위(만원)를 그대로 맞춰서, 저장할 때 별도 변환 없이 그대로 보낼 수 있게 한다.
+  // 필드명·단위(원)를 그대로 맞춰서, 저장할 때 별도 변환 없이 그대로 보낼 수 있게 한다.
   budgetTransportation: number | null
   budgetAccommodation: number | null
   budgetFood: number | null
@@ -122,7 +122,7 @@ export type DayCreateRequest = {
 }
 
 export type PlanBudgetRequest = {
-  /** 단위: 만원 */
+  /** 단위: 원 */
   budgetTransportation: number | null
   budgetAccommodation: number | null
   budgetFood: number | null
@@ -168,8 +168,9 @@ export type PlanDayDetail = {
   dayNumber: number
   departurePlaceId: number | null
   departureLocationName: string | null
-  departureLatitude: number
-  departureLongitude: number
+  /** 아직 출발지를 안 정한 Day는 null (departureLongitude와 함께) */
+  departureLatitude: number | null
+  departureLongitude: number | null
   waypoints: PlanWaypointDetail[]
 }
 
