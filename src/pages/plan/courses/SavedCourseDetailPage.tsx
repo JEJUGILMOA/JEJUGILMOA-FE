@@ -59,13 +59,13 @@ export function SavedCourseDetailPage() {
   const course = mapSavedCourseDetail(courseQuery.data)
 
   const handleStart = () => {
-    if (navState?.planId) {
-      navigate(ROUTES.planItinerary(navState.planId), {
-        state: { day: navState.day, importCourse: { title: course.title, summary: course.description, steps: course.steps } },
-      })
-      return
-    }
-    navigate(ROUTES.plan)
+    if (!navState?.planId) return
+    navigate(ROUTES.planItinerary(navState.planId), {
+      state: {
+        day: navState.day,
+        importCourse: { title: course.title, summary: course.description, steps: course.steps },
+      },
+    })
   }
 
   return (
@@ -73,7 +73,7 @@ export function SavedCourseDetailPage() {
       course={course}
       onBack={goBack}
       onStepClick={(placeId) => navigate(placePath(placeId))}
-      onStart={handleStart}
+      onStart={navState?.planId ? handleStart : undefined}
       saveAction={{
         saved: true,
         isLoading: deleteMutation.isPending,

@@ -1,8 +1,9 @@
-import { Heart, MapPin } from 'lucide-react'
+import { Bookmark } from 'lucide-react'
 import { Badge, type BadgeProps } from '@/components/ui/Badge/Badge'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
+import { cn } from '@/utils/cn'
 import {
   badgesRowStyle,
   bodyStyle,
@@ -16,6 +17,7 @@ import {
   heroTitleStyle,
   metaStyle,
   pageStyle,
+  pageWithoutCtaStyle,
   sectionTitleStyle,
   timelineCardStyle,
   timelineDotStyle,
@@ -46,7 +48,7 @@ export type CourseDetailViewData = {
 }
 
 export type CourseSaveAction = {
-  /** true면 이미 저장된 코스 — 하트가 채워지고 누르면 저장 취소 동작을 한다 */
+  /** true면 이미 즐겨찾기한 코스 — 아이콘이 채워지고 누르면 해제 */
   saved: boolean
   isLoading?: boolean
   onClick: () => void
@@ -56,8 +58,9 @@ export type CourseDetailViewProps = {
   course: CourseDetailViewData
   onBack: () => void
   onStepClick: (placeId: string) => void
-  onStart: () => void
-  /** 없으면 저장 버튼 자체를 안 보여준다 */
+  /** 일정 편집 등에서 넘어온 경우에만 전달 — 없으면 CTA 숨김 */
+  onStart?: () => void
+  /** 없으면 즐겨찾기 버튼 자체를 안 보여준다 */
   saveAction?: CourseSaveAction
 }
 
@@ -65,7 +68,7 @@ export type CourseDetailViewProps = {
  * 같은 데이터 모양(`mapRecommendedCourseDetail`/`mapSavedCourseDetail`)으로 공유한다 */
 export function CourseDetailView({ course, onBack, onStepClick, onStart, saveAction }: CourseDetailViewProps) {
   return (
-    <div className={pageStyle}>
+    <div className={cn(pageStyle, !onStart && pageWithoutCtaStyle)}>
       <PageHeader title={course.title} showBack onBack={onBack} />
 
       <section className={heroStyle} aria-label="코스 이미지">
@@ -75,17 +78,14 @@ export function CourseDetailView({ course, onBack, onStepClick, onStart, saveAct
             <button
               type="button"
               className={heroIconButtonStyle}
-              aria-label={saveAction.saved ? '저장 취소' : '코스 저장'}
+              aria-label={saveAction.saved ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               aria-pressed={saveAction.saved}
               disabled={saveAction.isLoading}
               onClick={saveAction.onClick}
             >
-              <Heart size={18} fill={saveAction.saved ? 'currentColor' : 'none'} />
+              <Bookmark size={18} fill={saveAction.saved ? 'currentColor' : 'none'} />
             </button>
           ) : null}
-          <button type="button" className={heroIconButtonStyle} aria-label="지도에서 보기">
-            <MapPin size={18} />
-          </button>
         </div>
         <h1 className={heroTitleStyle}>{course.title}</h1>
       </section>
@@ -150,11 +150,13 @@ export function CourseDetailView({ course, onBack, onStepClick, onStart, saveAct
         </section>
       </div>
 
-      <div className={footerStyle}>
-        <Button fullWidth size="lg" onClick={onStart}>
-          이 코스로 계획 시작하기
-        </Button>
-      </div>
+      {onStart ? (
+        <div className={footerStyle}>
+          <Button fullWidth size="lg" onClick={onStart}>
+            이 코스로 계획 시작하기
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }

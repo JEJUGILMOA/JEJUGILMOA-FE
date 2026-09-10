@@ -11,6 +11,11 @@ export const pageStyle = style({
   paddingBottom: '88px',
 })
 
+/** 하단 CTA가 없을 때 — 홈 등에서 상세만 볼 때 */
+export const pageWithoutCtaStyle = style({
+  paddingBottom: `calc(${vars.space[4]} + env(safe-area-inset-bottom))`,
+})
+
 export const heroStyle = style({
   position: 'relative',
   display: 'flex',
@@ -60,7 +65,7 @@ export const heroIconButtonStyle = style({
       cursor: 'default',
     },
     '&[aria-pressed="true"]': {
-      color: colors.error[100],
+      color: colors.primary[500],
     },
   },
 })

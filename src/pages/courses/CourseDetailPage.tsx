@@ -1,14 +1,20 @@
-import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
+import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES, placePath } from '@/constants'
 import { mapRecommendedCourseDetail } from '@/features/courses/format'
-import { useRecommendedCourseDetailQuery, useSaveCourseMutation } from '@/features/courses/hooks'
+import {
+  findSavedCourseMatch,
+  useRecommendedCourseDetailQuery,
+  useSavedCoursesQuery,
+  useToggleCourseFavoriteMutation,
+} from '@/features/courses/hooks'
 import type { PlanCourseNavigationState } from '@/pages/plan/courses/PlanCourseRecommendPage'
+import { useAuthStore } from '@/stores/authStore'
 import { CourseDetailView } from './components/CourseDetailView/CourseDetailView'
 import { pageStyle } from './components/CourseDetailView/CourseDetailView.css.ts'
 
@@ -16,11 +22,10 @@ export function CourseDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { courseId = '' } = useParams()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const courseQuery = useRecommendedCourseDetailQuery(courseId)
-  const saveMutation = useSaveCourseMutation()
-  // 담은 코스 목록 응답엔 sourceId가 없어서 "이미 저장됐는지"를 서버에서 확인할 방법이
-  // 없다 — 이번 화면에서 저장 버튼을 누른 세션 동안만 저장됨 표시를 해준다.
-  const [justSaved, setJustSaved] = useState(false)
+  const savedCoursesQuery = useSavedCoursesQuery({ enabled: isAuthenticated })
+  const toggleFavorite = useToggleCourseFavoriteMutation()
   const goBack = () => navigate(-1)
   const navState = location.state as PlanCourseNavigationState | null
 
@@ -60,15 +65,39 @@ export function CourseDetailPage() {
   }
 
   const course = mapRecommendedCourseDetail(courseQuery.data)
+  const matchedSaved = findSavedCourseMatch(savedCoursesQuery.data, {
+    sourceType: 'RECOMMENDED',
+    sourceId: courseId,
+    title: courseQuery.data.title,
+  })
+  const isFavorite = Boolean(matchedSaved)
 
   const handleStart = () => {
-    if (navState?.planId) {
-      navigate(ROUTES.planItinerary(navState.planId), {
-        state: { day: navState.day, importCourse: { title: course.title, summary: course.description, steps: course.steps } },
-      })
+    if (!navState?.planId) return
+    navigate(ROUTES.planItinerary(navState.planId), {
+      state: {
+        day: navState.day,
+        importCourse: {
+          title: course.title,
+          summary: course.description,
+          steps: course.steps,
+        },
+      },
+    })
+  }
+
+  const handleToggleFavorite = () => {
+    if (!isAuthenticated) {
+      toast.info('즐겨찾기는 로그인 후 이용할 수 있어요.')
+      navigate(`${ROUTES.login}?returnTo=${encodeURIComponent(location.pathname)}`)
       return
     }
-    navigate(ROUTES.plan)
+
+    toggleFavorite.mutate({
+      nextFavorite: !isFavorite,
+      saveParams: { sourceType: 'RECOMMENDED', sourceId: courseId },
+      savedCourseId: matchedSaved?.savedCourseId,
+    })
   }
 
   return (
@@ -76,17 +105,11 @@ export function CourseDetailPage() {
       course={course}
       onBack={goBack}
       onStepClick={(placeId) => navigate(placePath(placeId))}
-      onStart={handleStart}
+      onStart={navState?.planId ? handleStart : undefined}
       saveAction={{
-        saved: justSaved,
-        isLoading: saveMutation.isPending,
-        onClick: () => {
-          if (justSaved) return
-          saveMutation.mutate(
-            { sourceType: 'RECOMMENDED', sourceId: courseId },
-            { onSuccess: () => setJustSaved(true) },
-          )
-        },
+        saved: isFavorite,
+        isLoading: toggleFavorite.isPending || savedCoursesQuery.isLoading,
+        onClick: handleToggleFavorite,
       }}
     />
   )
