@@ -28,6 +28,7 @@ export const heroActionsStyle = style({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-end',
+  gap: vars.space[2],
 })
 
 export const heroIconButtonStyle = style({
@@ -41,6 +42,15 @@ export const heroIconButtonStyle = style({
   backgroundColor: 'rgba(255, 255, 255, 0.85)',
   color: colors.text[1],
   cursor: 'pointer',
+  selectors: {
+    '&:disabled': {
+      opacity: 0.6,
+      cursor: 'default',
+    },
+    '&[aria-pressed="true"]': {
+      color: colors.primary[500],
+    },
+  },
 })
 
 export const heroTitleStyle = style({
