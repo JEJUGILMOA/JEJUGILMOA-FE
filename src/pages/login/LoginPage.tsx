@@ -3,11 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { toast } from '@/components/ui/Toast/Toast'
 import { getErrorMessage } from '@/api/error'
 import type { OAuthProvider } from '@/api/types'
-import { loginWithApple } from '@/features/auth/api'
+import { loginWithApple, loginWithDevAuth } from '@/features/auth/api'
 import { startOAuthLogin } from '@/features/auth/oauth'
-import { applyOAuthLoginResult } from '@/features/auth/session'
+import { applyDevLoginResult, applyOAuthLoginResult, toBridgeAuthUser } from '@/features/auth/session'
 import { nativeBridge } from '@/bridge/nativeBridge'
-import { authStore } from '@/stores/authStore'
 import { ROUTES } from '@/constants'
 import appIcon from '@/assets/images/appicon.png'
 import { AppleIcon, GoogleIcon, KakaoIcon, NaverIcon } from './components/SocialIcons'
@@ -23,7 +22,7 @@ import {
   titleStyle,
 } from './LoginPage.css.ts'
 
-type LoginProvider = OAuthProvider | 'apple' | 'temp'
+type LoginProvider = OAuthProvider | 'apple' | 'dev'
 
 /** 같은 Apple identityToken으로 /auth/apple/login 을 두 번 치지 않기 위한 */
 const exchangedAppleTokens = new Set<string>()
@@ -67,6 +66,8 @@ export function LoginPage() {
 
   const returnTo = searchParams.get('returnTo') || ROUTES.home
   const inNative = nativeBridge.isNativeWebView()
+  /** production 빌드에서는 숨김 — 로컬 `pnpm dev`에서만 노출 */
+  const showDevLogin = import.meta.env.DEV
 
   useEffect(() => {
     const onCredential = (event: Event) => {
@@ -91,6 +92,7 @@ export function LoginPage() {
               type: 'LOGIN_SUCCESS',
               provider: 'apple',
               returnTo,
+              user: toBridgeAuthUser(result),
             })
           } else {
             navigate(returnTo, { replace: true })
@@ -145,22 +147,31 @@ export function LoginPage() {
     nativeBridge.postToNative({ type: 'REQUEST_APPLE_LOGIN' })
   }
 
-  /** 실 OAuth 없이 네이티브 탭(WebView)으로 진입 — 개발/미리보기용 */
-  const handleTempLogin = () => {
-    setLoadingProvider('temp')
-    authStore.getState().setAuth({
-      user: { id: 'temp', nickname: '임시 사용자' },
-      accessToken: 'temp-token',
-    })
-    if (inNative) {
-      nativeBridge.postToNative({
-        type: 'LOGIN_SUCCESS',
-        provider: 'temp',
-        returnTo,
-      })
-      return
+  /** 개발용 이메일 로그인 — body accessToken을 네이티브가 각 탭 WebView에 주입 */
+  const handleDevLogin = async () => {
+    setLoadingProvider('dev')
+    try {
+      const result = await loginWithDevAuth('user@example.com')
+      applyDevLoginResult(result)
+      if (inNative) {
+        nativeBridge.postToNative({
+          type: 'LOGIN_SUCCESS',
+          provider: 'temp',
+          returnTo,
+          accessToken: result.accessToken,
+          user: {
+            id: result.userId,
+            nickname: result.nickname,
+          },
+        })
+        return
+      }
+      toast.success(`${result.nickname}님, 개발 로그인되었어요.`)
+      navigate(returnTo, { replace: true })
+    } catch (error) {
+      setLoadingProvider(null)
+      toast.error(getErrorMessage(error, '개발 로그인에 실패했어요.'))
     }
-    navigate(returnTo, { replace: true })
   }
 
   return (
@@ -198,16 +209,18 @@ export function LoginPage() {
             onClick={handleAppleLogin}
           />
         ) : null}
-        <SocialLoginButton
-          label="임시 로그인 (앱 미리보기)"
-          backgroundColor="#F3F4F6"
-          textColor="#374151"
-          borderColor="#E5E7EB"
-          icon={<span aria-hidden>→</span>}
-          loading={loadingProvider === 'temp'}
-          disabled={loadingProvider !== null}
-          onClick={handleTempLogin}
-        />
+        {showDevLogin ? (
+          <SocialLoginButton
+            label="개발 로그인 (user@example.com)"
+            backgroundColor="#F3F4F6"
+            textColor="#374151"
+            borderColor="#E5E7EB"
+            icon={<span aria-hidden>→</span>}
+            loading={loadingProvider === 'dev'}
+            disabled={loadingProvider !== null}
+            onClick={() => void handleDevLogin()}
+          />
+        ) : null}
       </div>
 
       <p className={hintStyle}>
