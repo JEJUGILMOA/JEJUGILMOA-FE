@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MoreVertical } from 'lucide-react'
 import { useNavigate } from 'react-router'
+import { getErrorMessage } from '@/api/error'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { Popover } from '@/components/ui/Popover/Popover'
 import { toast } from '@/components/ui/Toast/Toast'
@@ -56,8 +57,8 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
           toast.success('공개 범위를 변경했어요')
           closeModal()
         },
-        onError: () => {
-          toast.error('공개 범위 변경에 실패했어요. 다시 시도해 주세요.')
+        onError: (error) => {
+          toast.error(getErrorMessage(error, '공개 범위 변경에 실패했어요. 다시 시도해 주세요.'))
         },
       },
     )
@@ -70,8 +71,8 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
         closeModal()
         onDeleted?.()
       },
-      onError: () => {
-        toast.error('기록 삭제에 실패했어요. 다시 시도해 주세요.')
+      onError: (error) => {
+        toast.error(getErrorMessage(error, '기록 삭제에 실패했어요. 다시 시도해 주세요.'))
       },
     })
   }

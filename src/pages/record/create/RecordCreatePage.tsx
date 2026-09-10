@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
+import { getErrorMessage } from '@/api/error'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
@@ -77,8 +78,8 @@ export function RecordCreatePage() {
         toast.success('기록을 남겼어요')
         navigate(ROUTES.record)
       },
-      onError: () => {
-        toast.error('기록 저장에 실패했어요. 다시 시도해 주세요.')
+      onError: (error) => {
+        toast.error(getErrorMessage(error, '기록 저장에 실패했어요. 다시 시도해 주세요.'))
       },
     })
   }
