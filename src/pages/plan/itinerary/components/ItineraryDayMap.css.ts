@@ -25,14 +25,6 @@ export const canvasStyle = style({
   },
 })
 
-export const routeSvgStyle = style({
-  position: 'absolute',
-  inset: 0,
-  width: '100%',
-  height: '100%',
-  pointerEvents: 'none',
-})
-
 export const stopPinRecipe = recipe({
   base: {
     position: 'absolute',
@@ -42,13 +34,14 @@ export const stopPinRecipe = recipe({
     width: '24px',
     height: '24px',
     padding: 0,
-    border: 'none',
+    border: `1.5px solid ${colors.text[1]}`,
     borderRadius: '50%',
-    backgroundColor: colors.primary[500],
-    color: colors.text[5],
+    backgroundColor: colors.surface[1],
+    color: colors.text[1],
     fontSize: vars.fontSize.xs,
     fontWeight: vars.fontWeight.bold,
     cursor: 'default',
+    boxSizing: 'border-box',
   },
 })
 
@@ -69,7 +62,7 @@ export const mustVisitBadgeStyle = style({
   boxShadow: `0 0 0 2px ${colors.surface[1]}`,
 })
 
-// Day 출발지 전용 깃발 핀 — 방문 순서 핀(초록 번호)과는 다르게, 동선의 시작점임을 표시한다.
+// Day 출발지 전용 깃발 핀 — 경유지(흰 바탕·검정 보더)와 같은 톤으로 통일
 export const departurePinStyle = style({
   position: 'absolute',
   display: 'flex',
@@ -78,13 +71,14 @@ export const departurePinStyle = style({
   width: '22px',
   height: '22px',
   borderRadius: '50%',
-  backgroundColor: colors.text[2],
-  color: colors.text[5],
-  boxShadow: `0 0 0 2px ${colors.surface[1]}`,
+  border: `1.5px solid ${colors.text[1]}`,
+  backgroundColor: colors.surface[1],
+  color: colors.text[1],
+  boxSizing: 'border-box',
 })
 
-// 유명한 장소(빨강)와 가까운 장소(파랑) 추천을 지도에서도 색으로 구분한다.
-// 초록은 이미 확정된 일정 스톱(stopPinRecipe) 색이라, 추천 핀은 둘 다 초록과 겹치지 않는 색으로 뺐다.
+// 유명한 장소(빨강)와 가까운 장소 추천을 지도에서도 색으로 구분한다.
+// 확정 일정 핀은 흰 바탕·검정 보더라, 추천 핀은 그 톤과 겹치지 않게 둔다.
 export const unassignedPinRecipe = recipe({
   base: {
     position: 'absolute',

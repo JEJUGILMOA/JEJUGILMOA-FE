@@ -7,6 +7,9 @@ export type Waypoint = {
    * 검색/추천 캐시를 조회하지 않아도 이름을 보여줄 수 있게 하기 위함 */
   title: string
   isPreferred: boolean
+  /** 담을 당시 좌표 — 미리보기 경로 지도 마커용. 없으면 상세 API로 보완 */
+  latitude?: number
+  longitude?: number
 }
 
 /** 담을 당시의 이름·주소·좌표를 그 자리에서 함께 저장한다 — Waypoint와 같은 이유로,
@@ -256,7 +259,7 @@ export type PlanPlaceSearchParams = {
   category?: string
   /** 0-based, 기본값 0 */
   page?: number
-  /** 기본값 20 */
+/** 기본값 40 — 장소 추가 검색 목록을 조금 더 넉넉히 */
   size?: number
 }
 
