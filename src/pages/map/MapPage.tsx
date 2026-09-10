@@ -22,6 +22,7 @@ import {
 } from '@/features/map/bounds'
 import { useMapHeatmapQuery, useMapPlacesQuery } from '@/features/map/hooks'
 import type { MapBounds } from '@/features/map/schemas'
+import { useMapNativeDataLayer } from '@/features/map/useMapNativeDataLayer'
 import { useAppStore } from '@/stores/appStore'
 import {
   chipRowStyle,
@@ -92,7 +93,7 @@ export function MapPage() {
   const isUnsupportedCategory = filter !== '전체' && !apiCategory
 
   const placesQuery = useMapPlacesQuery(
-    searchBounds && !isUnsupportedCategory
+    !isNative && searchBounds && !isUnsupportedCategory
       ? {
           ...searchBounds,
           category: apiCategory,
@@ -101,7 +102,7 @@ export function MapPage() {
       : null,
   )
   const heatmapQuery = useMapHeatmapQuery(
-    searchBounds
+    !isNative && searchBounds
       ? {
           ...searchBounds,
           gridSize: MAP_HEATMAP_GRID,
@@ -112,15 +113,20 @@ export function MapPage() {
   const places = placesQuery.data ?? []
   const heatmap = heatmapQuery.data ?? []
 
+  /** 네이티브 지도 탭(숨은 WebView) — API는 웹 REQUEST_*, 화면은 네이티브 */
+  useMapNativeDataLayer(isNative)
+
   const handleSearchHere = () => {
     setSearchBounds(liveSearchArea)
   }
 
   useEffect(() => {
+    if (isNative) return
     nativeBridge.requestNativeLocation()
-  }, [])
+  }, [isNative])
 
   useEffect(() => {
+    if (isNative) return
     const onRegion = (event: Event) => {
       const detail = (event as CustomEvent<MapBounds>).detail
       if (!detail) return
@@ -128,14 +134,13 @@ export function MapPage() {
     }
     window.addEventListener('gilmoa:map-region', onRegion)
     return () => window.removeEventListener('gilmoa:map-region', onRegion)
-  }, [])
+  }, [isNative])
 
   useEffect(() => {
     if (!isNative) return
 
     document.documentElement.classList.add('gilmoa-native-map')
     nativeBridge.postToNative({ type: 'SET_MAP', visible: true })
-    nativeBridge.requestMapRegion()
 
     return () => {
       document.documentElement.classList.remove('gilmoa-native-map')
@@ -144,7 +149,7 @@ export function MapPage() {
   }, [isNative])
 
   useEffect(() => {
-    if (!isNative || !searchBounds) return
+    if (isNative || !searchBounds) return
 
     nativeBridge.postToNative({
       type: 'SET_MAP',
@@ -183,6 +188,11 @@ export function MapPage() {
   const isError = placesQuery.isError || heatmapQuery.isError
   const displayBounds = searchBounds ?? liveSearchArea
 
+  /** 네이티브 지도 탭 WebView는 API 전용 — UI는 네이티브 MapScreen */
+  if (isNative) {
+    return <div className={pageStyle} aria-hidden data-gilmoa-map-data-host />
+  }
+
   return (
     <div className={pageStyle}>
       <HorizontalScrollArea className={chipRowStyle} role="tablist" aria-label="카테고리 필터">
@@ -210,13 +220,9 @@ export function MapPage() {
       ) : null}
 
       <div className={mapCanvasStyle} aria-label="지도">
-        {isNative ? (
-          <p className={mapHintStyle}>네이티브 지도에 장소·혼잡도를 표시합니다.</p>
-        ) : (
-          <p className={mapHintStyle}>
-            웹에서는 목록으로 미리봅니다. 앱에서는 지도 SDK에 마커/히트맵이 표시됩니다.
-          </p>
-        )}
+        <p className={mapHintStyle}>
+          웹에서는 목록으로 미리봅니다. 앱에서는 지도 SDK에 마커/히트맵이 표시됩니다.
+        </p>
         <p className={statusStyle}>
           {location
             ? `현재 위치 ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`

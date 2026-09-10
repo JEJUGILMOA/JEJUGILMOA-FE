@@ -62,6 +62,14 @@ function handleNativeMessage(data: unknown) {
           },
       })
       break
+    case 'AUTH_SESSION':
+      authStore.getState().setAuth({
+        user: message.user,
+      })
+      break
+    case 'AUTH_GUEST':
+      authStore.getState().clearAuth()
+      break
     case 'ANDROID_BACK':
     case 'HEADER_BACK': {
       const headerBack = new CustomEvent('gilmoa:header-back', { cancelable: true })
@@ -89,6 +97,51 @@ function handleNativeMessage(data: unknown) {
             minLng: message.minLng,
             maxLng: message.maxLng,
           },
+        }),
+      )
+      break
+    case 'REQUEST_PLAN_SUMMARIES':
+      window.dispatchEvent(new CustomEvent('gilmoa:request-plan-summaries'))
+      break
+    case 'REQUEST_PLAN_DETAIL':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:request-plan-detail', {
+          detail: { planId: message.planId },
+        }),
+      )
+      break
+    case 'REQUEST_CURRENT_TRIP':
+      window.dispatchEvent(new CustomEvent('gilmoa:request-current-trip'))
+      break
+    case 'REQUEST_MAP_SEARCH':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:request-map-search', {
+          detail: {
+            minLat: message.minLat,
+            maxLat: message.maxLat,
+            minLng: message.minLng,
+            maxLng: message.maxLng,
+            category: message.category,
+          },
+        }),
+      )
+      break
+    case 'REQUEST_TRIP_VISIT':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:request-trip-visit', {
+          detail: {
+            tripId: message.tripId,
+            waypointId: message.waypointId,
+            latitude: message.latitude,
+            longitude: message.longitude,
+          },
+        }),
+      )
+      break
+    case 'REQUEST_TRIP_COMPLETE':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:request-trip-complete', {
+          detail: { tripId: message.tripId },
         }),
       )
       break
@@ -177,7 +230,18 @@ export function useNativeMessage() {
 
     const unsubscribeMock = nativeBridge.subscribeMockBridge(handleNativeMessage)
 
+    // 리스너 등록 후에야 WEB_READY — 네이티브가 AUTH_TOKEN을 이때 주입할 수 있게
+    nativeBridge.notifyWebReady()
+
+    // 구버전 앱이 AUTH_GUEST를 안 보내도 스켈레톤에 멈추지 않게
+    const resolveFallback = window.setTimeout(() => {
+      if (!authStore.getState().isAuthResolved) {
+        authStore.getState().markAuthResolved()
+      }
+    }, 1500)
+
     return () => {
+      window.clearTimeout(resolveFallback)
       window.removeEventListener('message', onWindowMessage)
       document.removeEventListener('message', onDocumentMessage as EventListener)
       unsubscribeMock()

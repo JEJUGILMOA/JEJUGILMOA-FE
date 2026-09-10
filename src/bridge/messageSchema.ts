@@ -6,6 +6,16 @@ export const geoCoordsSchema = z.object({
   accuracy: z.number().optional(),
 })
 
+/** API가 null을 줄 수 있어 bridge user.profileImageUrl은 nullish → undefined */
+const bridgeAuthUserSchema = z.object({
+  id: z.string(),
+  nickname: z.string(),
+  profileImageUrl: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? undefined),
+})
+
 export const webToNativeMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('WEB_READY') }),
   z.object({ type: z.literal('REQUEST_LOCATION') }),
@@ -70,6 +80,7 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
           title: z.string(),
           latitude: z.number(),
           longitude: z.number(),
+          categoryName: z.string().optional(),
         }),
       )
       .optional(),
@@ -105,6 +116,141 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     delta: z.number(),
   }),
   z.object({ type: z.literal('REQUEST_MAP_REGION') }),
+  z.object({
+    type: z.literal('SET_PLAN_SUMMARIES'),
+    plans: z
+      .array(
+        z.object({
+          planId: z.number(),
+          title: z.string(),
+          startDate: z.string(),
+          endDate: z.string(),
+          status: z.enum(['DRAFT', 'IN_PROGRESS', 'COMPLETED']),
+          waypointCount: z.number(),
+          nights: z.number(),
+          days: z.number(),
+          dDay: z.number(),
+        }),
+      )
+      .optional(),
+    error: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('MAP_PLAN_DETAIL'),
+    planId: z.number(),
+    title: z.string(),
+    nights: z.number(),
+    days: z.number(),
+    durationLabel: z.string(),
+    waypoints: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        latitude: z.number(),
+        longitude: z.number(),
+        categoryName: z.string().optional(),
+        imageUrl: z.string().optional(),
+        address: z.string().optional(),
+        order: z.number(),
+        dayNumber: z.number().optional(),
+      }),
+    ),
+    routePath: z
+      .array(z.object({ latitude: z.number(), longitude: z.number() }))
+      .optional(),
+    dayRoutes: z
+      .array(
+        z.object({
+          dayNumber: z.number(),
+          path: z.array(z.object({ latitude: z.number(), longitude: z.number() })),
+        }),
+      )
+      .optional(),
+    legs: z
+      .array(
+        z.object({
+          fromId: z.string(),
+          toId: z.string(),
+          durationMinutes: z.number(),
+          distanceKm: z.number(),
+          dayNumber: z.number().optional(),
+        }),
+      )
+      .optional(),
+    error: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('MAP_CURRENT_TRIP'),
+    trip: z
+      .object({
+        tripId: z.number(),
+        title: z.string(),
+        status: z.string(),
+        actualStartedAt: z.string().optional(),
+        waypoints: z.array(
+          z.object({
+            waypointId: z.number(),
+            visitDate: z.string(),
+            sequenceOrder: z.number(),
+            placeId: z.number(),
+            placeName: z.string(),
+            categoryName: z.string().optional(),
+            imageUrl: z.string().optional(),
+            address: z.string().optional(),
+            visited: z.boolean(),
+            visitedAt: z.string().optional(),
+            skipped: z.boolean().optional(),
+            latitude: z.number().optional(),
+            longitude: z.number().optional(),
+          }),
+        ),
+      })
+      .nullable(),
+    error: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('MAP_TRIP_VISIT_RESULT'),
+    tripId: z.number(),
+    waypoints: z.array(
+      z.object({
+        waypointId: z.number(),
+        visitDate: z.string(),
+        sequenceOrder: z.number(),
+        placeId: z.number(),
+        placeName: z.string(),
+        categoryName: z.string().optional(),
+        imageUrl: z.string().optional(),
+        address: z.string().optional(),
+        visited: z.boolean(),
+        visitedAt: z.string().optional(),
+        skipped: z.boolean().optional(),
+        latitude: z.number().optional(),
+        longitude: z.number().optional(),
+      }),
+    ),
+    error: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('MAP_TRIP_COMPLETE_RESULT'),
+    tripId: z.number(),
+    title: z.string().optional(),
+    earnedBadges: z
+      .array(
+        z.object({
+          badgeId: z.number(),
+          name: z.string(),
+          description: z.string().optional(),
+          imageUrl: z.string().optional(),
+        }),
+      )
+      .optional(),
+    error: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('MAP_ERROR'),
+    code: z.string().optional(),
+    message: z.string(),
+  }),
   z.object({
     type: z.literal('SET_MODAL'),
     visible: z.boolean(),
@@ -161,6 +307,8 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('LOGIN_SUCCESS'),
     provider: z.enum(['kakao', 'google', 'naver', 'apple', 'temp']).optional(),
     returnTo: z.string().optional(),
+    accessToken: z.string().min(1).optional(),
+    user: bridgeAuthUserSchema.optional(),
   }),
   z.object({ type: z.literal('LOGOUT') }),
 ])
@@ -181,14 +329,13 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('AUTH_TOKEN'),
     accessToken: z.string().min(1),
-    user: z
-      .object({
-        id: z.string(),
-        nickname: z.string(),
-        profileImageUrl: z.string().optional(),
-      })
-      .optional(),
+    user: bridgeAuthUserSchema.optional(),
   }),
+  z.object({
+    type: z.literal('AUTH_SESSION'),
+    user: bridgeAuthUserSchema,
+  }),
+  z.object({ type: z.literal('AUTH_GUEST') }),
   z.object({ type: z.literal('ANDROID_BACK') }),
   z.object({ type: z.literal('HEADER_BACK') }),
   z.object({
@@ -206,6 +353,31 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
     maxLat: z.number(),
     minLng: z.number(),
     maxLng: z.number(),
+  }),
+  z.object({ type: z.literal('REQUEST_PLAN_SUMMARIES') }),
+  z.object({
+    type: z.literal('REQUEST_PLAN_DETAIL'),
+    planId: z.number(),
+  }),
+  z.object({ type: z.literal('REQUEST_CURRENT_TRIP') }),
+  z.object({
+    type: z.literal('REQUEST_MAP_SEARCH'),
+    minLat: z.number(),
+    maxLat: z.number(),
+    minLng: z.number(),
+    maxLng: z.number(),
+    category: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('REQUEST_TRIP_VISIT'),
+    tripId: z.number(),
+    waypointId: z.number(),
+    latitude: z.number(),
+    longitude: z.number(),
+  }),
+  z.object({
+    type: z.literal('REQUEST_TRIP_COMPLETE'),
+    tripId: z.number(),
   }),
   z.object({
     type: z.literal('MODAL_ACTION'),

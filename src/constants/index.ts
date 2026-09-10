@@ -112,4 +112,5 @@ export const QUERY_KEYS = {
     maxLng?: number
     gridSize?: number
   }) => ['map', 'heatmap', params] as const,
+  currentTrip: ['trips', 'current'] as const,
 } as const
