@@ -44,13 +44,15 @@ export const mediaImageStyle = style({
 
 export const imageTagListStyle = style({
   position: 'absolute',
-  top: '12px',
   left: '12px',
+  right: '12px',
+  bottom: '12px',
   display: 'flex',
-  flexWrap: 'wrap',
+  flexWrap: 'nowrap',
+  alignItems: 'center',
   gap: '6px',
   zIndex: 2,
-  maxWidth: '70%',
+  overflow: 'hidden',
 })
 
 export const imageTagRecipe = recipe({
@@ -58,12 +60,16 @@ export const imageTagRecipe = recipe({
     display: 'inline-flex',
     alignItems: 'center',
     gap: '4px',
+    flexShrink: 0,
+    maxWidth: '42%',
     padding: '5px 10px',
     borderRadius: vars.radius.full,
     fontSize: '12px',
     fontWeight: vars.fontWeight.semibold,
     lineHeight: 1.2,
     whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
     boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
   },
   variants: {
@@ -85,6 +91,21 @@ export const imageTagRecipe = recipe({
   defaultVariants: {
     tone: 'blue',
   },
+})
+
+export const imageTagMoreStyle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  flexShrink: 0,
+  padding: '5px 10px',
+  borderRadius: vars.radius.full,
+  backgroundColor: 'rgba(37, 37, 45, 0.72)',
+  color: colors.text[5],
+  fontSize: '12px',
+  fontWeight: vars.fontWeight.semibold,
+  lineHeight: 1.2,
+  whiteSpace: 'nowrap',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
 })
 
 export const bodyStyle = style({
@@ -112,11 +133,15 @@ export const locationStyle = style({
 
 export const titleStyle = style({
   margin: 0,
+  minWidth: 0,
   fontSize: '20px',
   fontWeight: vars.fontWeight.bold,
   lineHeight: 1.3,
   letterSpacing: '-0.02em',
   color: colors.text[1],
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 })
 
 export const descStyle = style({

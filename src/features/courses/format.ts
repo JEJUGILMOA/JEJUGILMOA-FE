@@ -19,9 +19,12 @@ const THEME_LABELS: Record<CourseTheme, string> = {
 
 const TRANSPORT_LABELS: Record<string, string> = {
   WALK: '도보',
-  DRIVE: '차량',
-  MIXED: '도보·차량',
+  DRIVE: '자동차',
+  CAR: '자동차',
+  MIXED: '도보·자동차',
 }
+
+const TAG_TONES: CourseImageTag['tone'][] = ['blue', 'pink', 'green']
 
 export function courseThemeLabel(theme?: string): string | undefined {
   if (!theme) return undefined
@@ -51,12 +54,19 @@ export function formatEstimatedMinutes(minutes?: number): string | undefined {
 
 export function transportModeLabel(mode?: string): string | undefined {
   if (!mode) return undefined
-  return TRANSPORT_LABELS[mode] ?? mode
+  return TRANSPORT_LABELS[mode.toUpperCase()] ?? mode
 }
 
 export function formatTravelMinutes(minutes?: number): string | undefined {
   if (minutes == null) return undefined
   return `다음 장소까지 약 ${minutes}분`
+}
+
+export function mapTagsToImageTags(tags: string[]): CourseImageTag[] {
+  return tags.map((label, index) => ({
+    label,
+    tone: TAG_TONES[index % TAG_TONES.length],
+  }))
 }
 
 export function mapRecommendedCourseToListCard(course: RecommendedCourse) {
@@ -91,66 +101,58 @@ export function mapSavedCourseToListCard(course: SavedCourse) {
   }
 }
 
-/** `SavedCourseDetail` → `CourseDetailPage`가 쓰는 것과 같은 모양(title/description/imageUrl/meta/badges/steps) */
+function mapStops(
+  stops: {
+    placeId: string
+    placeName: string
+    placeImageUrl?: string
+    placeDescription?: string
+    description?: string
+    travelTimeToNext?: number
+  }[],
+) {
+  return stops.map((stop) => ({
+    placeId: stop.placeId,
+    title: stop.placeName,
+    imageUrl: stop.placeImageUrl,
+    description: stop.placeDescription ?? stop.description,
+    travelLabel: formatTravelMinutes(stop.travelTimeToNext),
+  }))
+}
+
+/** `SavedCourseDetail` → `CourseDetailPage`가 쓰는 것과 같은 모양 */
 export function mapSavedCourseDetail(course: SavedCourseDetail) {
   const stops = [...course.stops].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-  const duration = formatEstimatedMinutes(course.estimatedMinutes)
-  const transport = transportModeLabel(course.transportMode)
-  const placeCount = course.placeCount ?? stops.length
-
-  const metaParts = [course.region, duration, placeCount > 0 ? `${placeCount}곳` : undefined, transport].filter(
-    Boolean,
-  )
-
-  const badges = transport ? [{ label: transport, status: 'info' as const }] : []
+  const tags = course.tags
 
   return {
     title: course.title,
     description: course.description,
-    imageUrl: course.imageUrl,
-    meta: metaParts.join(' · '),
-    badges,
-    steps: stops.map((stop) => ({
-      placeId: stop.placeId,
-      title: stop.placeName,
-      imageUrl: stop.placeImageUrl,
-      travelLabel: formatTravelMinutes(stop.travelTimeToNext),
-    })),
+    imageUrl: course.imageUrl ?? stops.find((stop) => stop.placeImageUrl)?.placeImageUrl,
+    region: course.region,
+    duration: formatEstimatedMinutes(course.estimatedMinutes),
+    transport: transportModeLabel(course.transportMode),
+    placeCount: course.placeCount ?? stops.length,
+    tags,
+    imageTags: mapTagsToImageTags(tags),
+    steps: mapStops(stops),
   }
 }
 
 export function mapRecommendedCourseDetail(course: RecommendedCourseDetail) {
   const stops = [...course.stops].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-  const duration = formatEstimatedMinutes(course.estimatedMinutes)
-  const transport = transportModeLabel(course.transportMode)
-  const placeCount = course.placeCount ?? stops.length
-
-  const metaParts = [
-    course.region,
-    duration,
-    placeCount > 0 ? `${placeCount}곳` : undefined,
-    transport,
-  ].filter(Boolean)
-
-  const badges = [
-    course.isFree ? { label: '무료', status: 'success' as const } : null,
-    course.rating != null
-      ? { label: `★ ${course.rating.toFixed(1)}`, status: 'neutral' as const }
-      : null,
-    transport ? { label: transport, status: 'info' as const } : null,
-  ].filter((badge): badge is NonNullable<typeof badge> => badge != null)
+  const tags = course.tags
 
   return {
     title: course.title,
     description: course.description,
-    imageUrl: course.imageUrl,
-    meta: metaParts.join(' · '),
-    badges,
-    steps: stops.map((stop) => ({
-      placeId: stop.placeId,
-      title: stop.placeName,
-      imageUrl: stop.placeImageUrl,
-      travelLabel: formatTravelMinutes(stop.travelTimeToNext),
-    })),
+    imageUrl: course.imageUrl ?? stops.find((stop) => stop.placeImageUrl)?.placeImageUrl,
+    region: course.region,
+    duration: formatEstimatedMinutes(course.estimatedMinutes),
+    transport: transportModeLabel(course.transportMode),
+    placeCount: course.placeCount ?? stops.length,
+    tags,
+    imageTags: mapTagsToImageTags(tags),
+    steps: mapStops(stops),
   }
 }

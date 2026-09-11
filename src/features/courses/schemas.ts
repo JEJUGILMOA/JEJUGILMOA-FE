@@ -37,6 +37,8 @@ export const courseStopSchema = z.object({
   placeId: z.coerce.string(),
   placeName: z.string(),
   placeImageUrl: optionalString,
+  placeDescription: optionalString,
+  description: optionalString,
   travelTimeToNext: optionalNumber,
 })
 
@@ -51,6 +53,8 @@ export const recommendedCourseDetailSchema = z.object({
   placeCount: optionalNumber,
   estimatedMinutes: optionalNumber,
   description: optionalString,
+  theme: z.string().nullish().transform((value) => value ?? undefined),
+  tags: z.array(z.string()).nullish().transform((value) => value ?? []),
   stops: z.array(courseStopSchema).nullish().transform((value) => value ?? []),
 })
 
@@ -82,6 +86,7 @@ export const savedCourseDetailSchema = z.object({
   estimatedMinutes: optionalNumber,
   transportMode: optionalString,
   description: optionalString,
+  tags: z.array(z.string()).nullish().transform((value) => value ?? []),
   stops: z.array(courseStopSchema).nullish().transform((value) => value ?? []),
 })
 

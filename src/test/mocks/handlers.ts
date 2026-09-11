@@ -121,7 +121,7 @@ const mockCourses = [
 
 const mockCourseDetail = {
   courseId: 10,
-  imageUrl: 'https://example.com/aewol-course.jpg',
+  imageUrl: undefined,
   title: '애월 감성 코스',
   region: '제주시 애월읍',
   isFree: true,
@@ -129,13 +129,17 @@ const mockCourseDetail = {
   transportMode: 'DRIVE',
   placeCount: 2,
   estimatedMinutes: 180,
-  description: '카페와 해안을 잇는 여유 코스',
+  description:
+    '카페와 해안을 잇는 여유 코스. 애월의 감성 카페를 거쳐 곽지해수욕장까지 이어지는 드라이브 코스입니다.',
+  theme: 'CAFE',
+  tags: ['카페', '해안', '힐링', '드라이브', '일몰'],
   stops: [
     {
       sequenceOrder: 1,
       placeId: 11,
       placeName: '애월 카페거리',
       placeImageUrl: 'https://example.com/aewol.jpg',
+      placeDescription: '감성 카페가 늘어선 애월의 핫플',
       travelTimeToNext: 15,
     },
     {
@@ -143,6 +147,7 @@ const mockCourseDetail = {
       placeId: 12,
       placeName: '곽지해수욕장',
       placeImageUrl: 'https://example.com/gwakji.jpg',
+      placeDescription: '에메랄드빛 바다가 펼쳐지는 해변',
       travelTimeToNext: null,
     },
   ],
