@@ -1,6 +1,6 @@
-import { Image } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { Badge } from '@/components/ui/Badge/Badge'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { ROUTES } from '@/constants'
 import type { SavedRecord } from '@/features/records/types'
 import { RecordManageSheet } from './RecordManageSheet'
@@ -12,7 +12,6 @@ import {
   reactionStyle,
   summaryStyle,
   thumbnailImageStyle,
-  thumbnailPlaceholderStyle,
   thumbnailWrapStyle,
   titleStyle,
 } from './RecordCard.css.ts'
@@ -39,13 +38,11 @@ export function RecordCard({ record }: RecordCardProps) {
       }}
     >
       <div className={thumbnailWrapStyle}>
-        {record.thumbnailUrl ? (
-          <img className={thumbnailImageStyle} src={record.thumbnailUrl} alt="" />
-        ) : (
-          <span className={thumbnailPlaceholderStyle}>
-            <Image size={24} aria-hidden />
-          </span>
-        )}
+        <SafeImage
+          src={record.thumbnailUrl}
+          className={thumbnailImageStyle}
+          placeholderSize="lg"
+        />
         <span className={badgeWrapStyle}>
           <Badge status={record.visibility === 'public' ? 'success' : 'neutral'}>
             {record.visibility === 'public' ? '전체공개' : '비공개'}

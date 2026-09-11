@@ -112,9 +112,7 @@ export const router = createBrowserRouter([
         Component: PopularPlacesPage,
         handle: {
           title: '인기 관광지',
-          hideNav: true,
-          flush: true,
-          ...withPageHeader,
+          ...mySubPageHandle,
         } satisfies RouteHandle,
       },
       {

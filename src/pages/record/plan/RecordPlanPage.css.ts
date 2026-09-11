@@ -10,17 +10,11 @@ export const pageStyle = style({
 })
 
 export const coverPlaceholderStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: vars.space[2],
   aspectRatio: '4 / 3',
   marginTop: `calc(-1 * ${vars.space[4]})`,
   marginInline: `calc(-1 * ${vars.space[4]})`,
-  backgroundColor: colors.surface[4],
-  color: colors.text[4],
-  fontSize: vars.fontSize.sm,
+  overflow: 'hidden',
+  backgroundColor: colors.surface[5],
 })
 
 export const infoStyle = style({

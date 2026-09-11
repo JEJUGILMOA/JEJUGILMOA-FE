@@ -11,6 +11,7 @@ import { PlanListItem } from './components/PlanListItem'
 import {
   listStyle,
   pageStyle,
+  sectionHeaderStyle,
   sectionHintStyle,
   sectionStyle,
   sectionTitleStyle,
@@ -62,8 +63,10 @@ export function PlanPage() {
           {SECTION_ORDER.filter(({ status }) => groups[status].length > 0).map(
             ({ status, title, hint }) => (
               <div key={status} className={sectionStyle}>
-                <span className={sectionTitleStyle}>{title}</span>
-                {hint ? <p className={sectionHintStyle}>{hint}</p> : null}
+                <div className={sectionHeaderStyle}>
+                  <span className={sectionTitleStyle}>{title}</span>
+                  {hint ? <p className={sectionHintStyle}>{hint}</p> : null}
+                </div>
                 {groups[status].map((plan) => (
                   <PlanListItem key={plan.id} plan={plan} status={status} />
                 ))}

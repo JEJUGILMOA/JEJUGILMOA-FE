@@ -1,10 +1,10 @@
 import { Star } from 'lucide-react'
 import { type KeyboardEvent } from 'react'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { cn } from '@/utils/cn'
 import {
   cardStyle,
   contentStyle,
-  imageImgStyle,
   imageStyle,
   ratingIconStyle,
   ratingStyle,
@@ -63,7 +63,7 @@ export function PopularPlaceCard({
       tabIndex={isClickable ? 0 : undefined}
     >
       <div className={imageStyle} aria-hidden>
-        {imageUrl ? <img src={imageUrl} alt="" className={imageImgStyle} /> : null}
+        <SafeImage src={imageUrl} placeholderSize="sm" showPlaceholderLabel={false} />
       </div>
       <div className={contentStyle}>
         <h3 className={titleStyle}>{title}</h3>

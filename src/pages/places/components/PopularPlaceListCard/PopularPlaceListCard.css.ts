@@ -104,15 +104,6 @@ export const imageStyle = style({
   width: '100%',
   aspectRatio: '1 / 1',
   borderRadius: '10px',
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
+  overflow: 'hidden',
   backgroundColor: colors.surface[5],
-})
-
-export const imagePlaceholderStyle = style({
-  width: '100%',
-  aspectRatio: '1 / 1',
-  borderRadius: '10px',
-  backgroundImage: `linear-gradient(135deg, ${colors.secondary[300]}, ${colors.primary[300]})`,
 })

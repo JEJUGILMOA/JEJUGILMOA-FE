@@ -26,7 +26,7 @@ export const heroStyle = style({
   margin: vars.space[2],
   borderRadius: vars.radius.sm,
   overflow: 'hidden',
-  backgroundImage: `linear-gradient(160deg, ${colors.secondary[400]}, ${colors.primary[500]})`,
+  backgroundColor: colors.surface[5],
 })
 
 export const heroImageStyle = style({
@@ -34,9 +34,6 @@ export const heroImageStyle = style({
   inset: 0,
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
 })
 
 export const heroOverlayStyle = style({
@@ -379,9 +376,8 @@ export const timelineThumbStyle = style({
   height: '64px',
   flexShrink: 0,
   borderRadius: vars.radius.md,
-  backgroundImage: `linear-gradient(135deg, ${colors.secondary[400]}, ${colors.primary[400]})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
+  overflow: 'hidden',
+  backgroundColor: colors.surface[5],
 })
 
 export const timelineTextStyle = style({

@@ -1,6 +1,7 @@
 import { Star } from 'lucide-react'
 import { type KeyboardEvent } from 'react'
 import { Badge, type BadgeProps } from '@/components/ui/Badge/Badge'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { cn } from '@/utils/cn'
 import {
   badgesRow,
@@ -100,7 +101,6 @@ export function PlaceCard({
   className,
 }: PlaceCardProps) {
   const isClickable = Boolean(onClick)
-  const imageStyle = imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined
   const sizeStyle = {
     width: toCssSize(width),
     height: toCssSize(height),
@@ -115,11 +115,13 @@ export function PlaceCard({
   }
 
   const image = (
-    <div
-      className={imageRecipe({ variant, hasImage: Boolean(imageUrl) })}
-      style={imageStyle}
-      aria-hidden
-    />
+    <div className={imageRecipe({ variant })} aria-hidden>
+      <SafeImage
+        src={imageUrl}
+        placeholderSize={variant === 'compact' ? 'sm' : variant === 'horizontal' ? 'sm' : 'md'}
+        showPlaceholderLabel={variant === 'vertical'}
+      />
+    </div>
   )
 
   const titleEl = title ? <h3 className={titleRecipe({ variant })}>{title}</h3> : null

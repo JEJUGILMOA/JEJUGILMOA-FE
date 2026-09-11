@@ -5,6 +5,7 @@ import { isApiError } from '@/api/error'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
@@ -22,6 +23,8 @@ import {
   footerStyle,
   heroActionsStyle,
   heroIconButtonStyle,
+  heroImageStyle,
+  heroOverlayStyle,
   heroStyle,
   heroTitleStyle,
   infoIconStyle,
@@ -92,14 +95,6 @@ export function PlacePage() {
     )
   }
 
-  const heroBackgroundStyle = place?.imageUrl
-    ? {
-        backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.55) 100%), url(${place.imageUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }
-    : undefined
-
   if (!placeId) {
     return (
       <div className={pageStyle}>
@@ -160,7 +155,9 @@ export function PlacePage() {
     <div className={pageStyle}>
       <PageHeader title={headerTitle} showBack onBack={goBack} />
 
-      <section className={heroStyle} style={heroBackgroundStyle} aria-label="장소 이미지">
+      <section className={heroStyle} aria-label="장소 이미지">
+        <SafeImage src={place.imageUrl} className={heroImageStyle} placeholderSize="lg" />
+        <div className={heroOverlayStyle} aria-hidden />
         <div className={heroActionsStyle}>
           <button
             type="button"
@@ -231,7 +228,7 @@ export function PlacePage() {
             <div className={photoListStyle}>
               {photos.map((url) => (
                 <div key={url} className={photoItemStyle}>
-                  <img src={url} alt="" className={photoImgStyle} />
+                  <SafeImage src={url} className={photoImgStyle} placeholderSize="sm" showPlaceholderLabel={false} />
                 </div>
               ))}
             </div>

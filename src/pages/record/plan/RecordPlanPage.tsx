@@ -1,8 +1,8 @@
 import { useNavigate, useParams } from 'react-router'
-import { Image } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge/Badge'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ImagePlaceholder } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES } from '@/constants'
@@ -108,8 +108,7 @@ export function RecordPlanPage() {
 
       <div className={pageStyle}>
         <div className={coverPlaceholderStyle}>
-          <Image size={28} aria-hidden />
-          <span>여행 계획 대표 이미지</span>
+          <ImagePlaceholder size="lg" />
         </div>
 
         <div className={infoStyle}>

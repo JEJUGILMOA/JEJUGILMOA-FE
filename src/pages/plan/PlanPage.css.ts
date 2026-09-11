@@ -21,6 +21,12 @@ export const sectionStyle = style({
   gap: vars.space[3],
 })
 
+export const sectionHeaderStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+})
+
 export const sectionTitleStyle = style({
   fontSize: vars.fontSize.md,
   fontWeight: vars.fontWeight.bold,
@@ -28,6 +34,8 @@ export const sectionTitleStyle = style({
 })
 
 export const sectionHintStyle = style({
+  margin: 0,
   fontSize: vars.fontSize.sm,
   color: colors.text[3],
+  lineHeight: 1.3,
 })

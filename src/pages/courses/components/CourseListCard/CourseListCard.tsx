@@ -7,6 +7,7 @@ import {
   Navigation,
   Waves,
 } from 'lucide-react'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import type { CourseImageTag } from '@/data/mockExplore'
 import { cn } from '@/utils/cn'
 import {
@@ -99,7 +100,7 @@ export function CourseListCard({
     <article className={cn(cardStyle, className)}>
       <div className={mainRowStyle}>
         <div className={mediaStyle}>
-          {imageUrl ? <img src={imageUrl} alt="" className={mediaImageStyle} /> : null}
+          <SafeImage src={imageUrl} className={mediaImageStyle} placeholderSize="md" />
           {imageTags.length > 0 ? (
             <div className={imageTagListStyle}>
               {imageTags.map((tag) => (
@@ -157,11 +158,12 @@ export function CourseListCard({
                 <div className={previewRowStyle}>
                   {visiblePreviews.map((step, index) => (
                     <div key={`${step.title}-${index}`} className={previewItemStyle}>
-                      {step.thumbnailUrl ? (
-                        <img src={step.thumbnailUrl} alt="" className={previewThumbStyle} />
-                      ) : (
-                        <div className={previewThumbStyle} aria-hidden />
-                      )}
+                      <SafeImage
+                        src={step.thumbnailUrl}
+                        className={previewThumbStyle}
+                        placeholderSize="sm"
+                        showPlaceholderLabel={false}
+                      />
                       <div className={previewLabelStyle}>
                         <span className={stepNumStyle}>{index + 1}</span>
                         <span className={stepNameStyle}>{step.title}</span>

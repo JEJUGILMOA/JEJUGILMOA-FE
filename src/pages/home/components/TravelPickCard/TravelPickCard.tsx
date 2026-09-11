@@ -1,5 +1,6 @@
-import { Bookmark, Image } from 'lucide-react'
-import { type KeyboardEvent, useEffect, useState } from 'react'
+import { Bookmark } from 'lucide-react'
+import { type KeyboardEvent } from 'react'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { cn } from '@/utils/cn'
 import {
   addressStyle,
@@ -8,8 +9,6 @@ import {
   cardStyle,
   contentStyle,
   heroImageStyle,
-  heroPlaceholderIconStyle,
-  heroPlaceholderStyle,
   heroStyle,
   regionStyle,
   titleStyle,
@@ -48,13 +47,7 @@ export function TravelPickCard({
   onClick,
   className,
 }: TravelPickCardProps) {
-  const [imageError, setImageError] = useState(false)
   const isClickable = Boolean(onClick)
-  const showPlaceholder = !imageUrl || imageError
-
-  useEffect(() => {
-    setImageError(false)
-  }, [imageUrl])
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!onClick) return
@@ -84,18 +77,7 @@ export function TravelPickCard({
       tabIndex={isClickable ? 0 : undefined}
     >
       <div className={heroStyle}>
-        {showPlaceholder ? (
-          <div className={heroPlaceholderStyle} aria-hidden>
-            <Image size={28} className={heroPlaceholderIconStyle} strokeWidth={1.5} />
-          </div>
-        ) : (
-          <img
-            src={imageUrl}
-            alt=""
-            className={heroImageStyle}
-            onError={() => setImageError(true)}
-          />
-        )}
+        <SafeImage src={imageUrl} className={heroImageStyle} placeholderSize="lg" />
         {category ? <span className={badgeStyle}>{category}</span> : null}
         <button
           type="button"

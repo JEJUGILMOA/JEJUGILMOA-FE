@@ -18,13 +18,30 @@ export const heroStyle = style({
   justifyContent: 'flex-end',
   minHeight: '220px',
   padding: `${vars.space[4]} ${vars.space[5]} ${vars.space[5]}`,
-  backgroundImage: `linear-gradient(160deg, ${colors.secondary[400]}, ${colors.primary[500]})`,
+  overflow: 'hidden',
+  backgroundColor: colors.surface[5],
+})
+
+export const heroImageStyle = style({
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+})
+
+export const heroOverlayStyle = style({
+  position: 'absolute',
+  inset: 0,
+  backgroundImage:
+    'linear-gradient(180deg, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.72) 100%)',
+  pointerEvents: 'none',
 })
 
 export const heroActionsStyle = style({
   position: 'absolute',
-  insetInline: vars.space[4],
+  insetInline: vars.space[5],
   top: vars.space[4],
+  zIndex: 2,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'flex-end',
@@ -54,6 +71,8 @@ export const heroIconButtonStyle = style({
 })
 
 export const heroTitleStyle = style({
+  position: 'relative',
+  zIndex: 1,
   margin: 0,
   maxWidth: '100%',
   fontSize: vars.fontSize['2xl'],
@@ -165,7 +184,7 @@ export const photoItemStyle = style({
   width: '96px',
   height: '96px',
   borderRadius: vars.radius.buttonLg,
-  backgroundImage: `linear-gradient(135deg, ${colors.secondary[400]}, ${colors.primary[400]})`,
+  backgroundColor: colors.surface[5],
   overflow: 'hidden',
 })
 
@@ -173,7 +192,6 @@ export const photoImgStyle = style({
   display: 'block',
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
 })
 
 export const reviewListStyle = style({

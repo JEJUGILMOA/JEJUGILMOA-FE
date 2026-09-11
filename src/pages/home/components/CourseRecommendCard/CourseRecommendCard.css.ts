@@ -10,7 +10,7 @@ export const cardStyle = style({
   width: '294px',
   maxWidth: '294px',
   boxSizing: 'border-box',
-  borderRadius: '20px',
+  borderRadius: '6px',
   border: `1px solid ${colors.border[1]}`,
   overflow: 'hidden',
   backgroundColor: colors.surface[1],
@@ -37,9 +37,6 @@ export const mediaStyle = style({
 export const mediaImageStyle = style({
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
 })
 
 export const imageTagListStyle = style({
@@ -199,9 +196,7 @@ export const previewThumbStyle = style({
   height: '60px',
   flexShrink: 0,
   borderRadius: '12px',
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
+  overflow: 'hidden',
   backgroundColor: colors.surface[5],
 })
 

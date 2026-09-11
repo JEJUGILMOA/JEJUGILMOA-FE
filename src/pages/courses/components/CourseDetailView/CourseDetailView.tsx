@@ -4,6 +4,7 @@ import courseIntroBackground from '@/assets/icons/course/course-intro-background
 import keywordHashIcon from '@/assets/icons/course/keyword-hash.svg'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import type { CourseImageTag } from '@/data/mockExplore'
 import { cn } from '@/utils/cn'
@@ -128,7 +129,7 @@ export function CourseDetailView({ course, onBack, onStepClick, onStart, saveAct
       <PageHeader title="코스 상세" showBack onBack={onBack} />
 
       <section className={heroStyle} aria-label="코스 이미지">
-        {course.imageUrl ? <img src={course.imageUrl} alt="" className={heroImageStyle} /> : null}
+        <SafeImage src={course.imageUrl} className={heroImageStyle} placeholderSize="lg" />
         <div className={heroOverlayStyle} aria-hidden />
         <div className={heroActionsStyle}>
           {saveAction ? (
@@ -237,16 +238,11 @@ export function CourseDetailView({ course, onBack, onStepClick, onStart, saveAct
                       className={timelineCardStyle}
                       onClick={() => onStepClick(step.placeId)}
                     >
-                      <span
+                      <SafeImage
+                        src={step.imageUrl}
                         className={timelineThumbStyle}
-                        style={
-                          step.imageUrl
-                            ? {
-                                backgroundImage: `url(${step.imageUrl})`,
-                              }
-                            : undefined
-                        }
-                        aria-hidden
+                        placeholderSize="sm"
+                        showPlaceholderLabel={false}
                       />
                       <span className={timelineTextStyle}>
                         <span className={timelinePlaceTitleStyle}>{step.title}</span>

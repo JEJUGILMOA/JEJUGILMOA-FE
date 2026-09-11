@@ -1,11 +1,11 @@
 import { Star } from 'lucide-react'
 import { Button } from '@/components/ui/Button/Button'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import {
   categoryStyle,
   infoColumnStyle,
   mustVisitButtonRecipe,
   rowStyle,
-  thumbnailImageStyle,
   thumbnailStyle,
   titleStyle,
   toggleButtonStyle,
@@ -38,11 +38,9 @@ export function WaypointPlaceRow({
 }: WaypointPlaceRowProps) {
   return (
     <div className={rowStyle}>
-      {imageUrl ? (
-        <img src={imageUrl} alt="" className={thumbnailImageStyle} />
-      ) : (
-        <div className={thumbnailStyle} aria-hidden />
-      )}
+      <div className={thumbnailStyle}>
+        <SafeImage src={imageUrl} placeholderSize="sm" showPlaceholderLabel={false} />
+      </div>
       <div className={infoColumnStyle}>
         <span className={titleStyle}>{title}</span>
         <span className={categoryStyle}>{disabled ? '아직 담을 수 없는 장소예요' : category}</span>

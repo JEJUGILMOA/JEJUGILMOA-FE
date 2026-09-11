@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Bookmark, ChevronLeft, ChevronRight, Image } from 'lucide-react'
+import { Bookmark, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ImagePlaceholder, SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { cn } from '@/utils/cn'
 import { useDragCarousel } from './useDragCarousel'
 import {
@@ -38,13 +39,18 @@ export function PhotoCarousel({ photoUrls, isBookmarked, onToggleBookmark }: Pho
           {...trackHandlers}
         >
           {photoUrls.map((url, i) => (
-            <img key={`${url}-${i}`} className={slideImageStyle} src={url} alt="" draggable={false} />
+            <SafeImage
+              key={`${url}-${i}`}
+              src={url}
+              className={slideImageStyle}
+              placeholderSize="lg"
+              draggable={false}
+            />
           ))}
         </div>
       ) : (
         <div className={placeholderStyle}>
-          <Image size={28} aria-hidden />
-          <span>등록된 사진이 없어요</span>
+          <ImagePlaceholder size="lg" />
         </div>
       )}
 

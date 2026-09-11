@@ -1,5 +1,6 @@
 import { Clock, Heart, MapPin, Waves } from 'lucide-react'
 import { type KeyboardEvent } from 'react'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import type { CourseImageTag } from '@/data/mockExplore'
 import { cn } from '@/utils/cn'
 import {
@@ -89,7 +90,7 @@ export function CourseRecommendCard({
       tabIndex={isClickable ? 0 : undefined}
     >
       <div className={mediaStyle}>
-        {imageUrl ? <img src={imageUrl} alt="" className={mediaImageStyle} /> : null}
+        <SafeImage src={imageUrl} className={mediaImageStyle} placeholderSize="lg" />
         {visibleTags.length > 0 ? (
           <div className={imageTagListStyle}>
             {visibleTags.map((tag) => (
@@ -136,18 +137,15 @@ export function CourseRecommendCard({
         {visiblePreviews.length > 0 ? (
           <div className={previewSectionStyle}>
             <div className={previewRowStyle}>
-              {visiblePreviews.map((step, index) =>
-                step.thumbnailUrl ? (
-                  <img
-                    key={`${step.title}-${index}`}
-                    src={step.thumbnailUrl}
-                    alt=""
-                    className={previewThumbStyle}
-                  />
-                ) : (
-                  <div key={`${step.title}-${index}`} className={previewThumbStyle} aria-hidden />
-                ),
-              )}
+              {visiblePreviews.map((step, index) => (
+                <SafeImage
+                  key={`${step.title}-${index}`}
+                  src={step.thumbnailUrl}
+                  className={previewThumbStyle}
+                  placeholderSize="sm"
+                  showPlaceholderLabel={false}
+                />
+              ))}
               {extraCount > 0 ? (
                 <div className={previewMoreStyle}>+{extraCount}</div>
               ) : null}

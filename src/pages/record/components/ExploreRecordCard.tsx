@@ -1,6 +1,7 @@
-import { ChevronRight, Image, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { ChevronRight, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { ROUTES } from '@/constants'
 import { useReactToExploreRecordMutation } from '@/features/records/hooks'
 import type { ExploreRecord } from '@/features/records/types'
@@ -48,11 +49,11 @@ export function ExploreRecordCard({ record }: ExploreRecordCardProps) {
       }}
     >
       <div className={thumbnailWrapStyle}>
-        {record.photoUrls[0] ? (
-          <img className={thumbnailImageStyle} src={record.photoUrls[0]} alt="" />
-        ) : (
-          <Image size={24} aria-hidden />
-        )}
+        <SafeImage
+          src={record.photoUrls[0]}
+          className={thumbnailImageStyle}
+          placeholderSize="lg"
+        />
       </div>
 
       <div className={bodyStyle}>

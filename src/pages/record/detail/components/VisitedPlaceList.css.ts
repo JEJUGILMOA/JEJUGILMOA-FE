@@ -25,12 +25,9 @@ export const thumbnailStyle = style({
   flexShrink: 0,
   width: '64px',
   height: '64px',
-  alignItems: 'center',
-  justifyContent: 'center',
   borderRadius: vars.radius.sm,
   overflow: 'hidden',
-  backgroundColor: colors.surface[4],
-  color: colors.text[4],
+  backgroundColor: colors.surface[5],
 })
 
 export const thumbnailButtonStyle = style([
@@ -45,7 +42,6 @@ export const thumbnailButtonStyle = style([
 export const thumbnailImageStyle = style({
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
 })
 
 export const placeNameStyle = style({

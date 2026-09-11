@@ -1,14 +1,20 @@
 import { ChevronDown, LayoutGrid, ListFilter, Map as MapIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Empty } from '@/components/ui/Empty/Empty'
-import { Loading } from '@/components/ui/Loading/Loading'
 import { Popover } from '@/components/ui/Popover/Popover'
+import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { useExploreRecordsQuery } from '@/features/records/hooks'
 import type { ExploreRecord } from '@/features/records/types'
 import { ExploreRecordCard } from './ExploreRecordCard'
 import { ExplorePathPreview } from './ExplorePathPreview'
 import {
   listStyle,
+  skeletonAuthorRowStyle,
+  skeletonAvatarStyle,
+  skeletonBodyStyle,
+  skeletonCardStyle,
+  skeletonThumbStyle,
+  skeletonThumbWrapStyle,
   sortButtonStyle,
   sortMenuItemStyle,
   sortMenuListStyle,
@@ -38,6 +44,29 @@ function sortExploreRecords(records: ExploreRecord[], sort: ExploreSort): Explor
     default:
       return next.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   }
+}
+
+function ExploreRecordsSkeleton() {
+  return (
+    <div className={listStyle} aria-busy aria-label="다른 사용자의 기록을 불러오는 중">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className={skeletonCardStyle} aria-hidden>
+          <div className={skeletonThumbWrapStyle}>
+            <Skeleton width="100%" height="100%" className={skeletonThumbStyle} />
+          </div>
+          <div className={skeletonBodyStyle}>
+            <Skeleton width="58%" height={18} />
+            <Skeleton width="90%" height={14} />
+            <div className={skeletonAuthorRowStyle}>
+              <Skeleton width={24} height={24} className={skeletonAvatarStyle} />
+              <Skeleton width="28%" height={12} />
+            </div>
+            <Skeleton width="42%" height={28} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 /** STEP 06: 다른 사용자 기록 둘러보기 (카드형/지도형) */
@@ -113,7 +142,7 @@ export function ExploreView() {
       </div>
 
       {isLoading ? (
-        <Loading label="다른 사용자의 기록을 불러오는 중…" />
+        <ExploreRecordsSkeleton />
       ) : sortedRecords.length === 0 ? (
         <Empty
           title="아직 둘러볼 기록이 없어요"

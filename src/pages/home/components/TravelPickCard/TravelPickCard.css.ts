@@ -6,7 +6,7 @@ export const cardStyle = style({
   flex: '0 0 auto',
   width: '260px',
   scrollSnapAlign: 'start',
-  borderRadius: '14px',
+  borderRadius: '6px',
   overflow: 'hidden',
   backgroundColor: colors.surface[1],
   boxShadow: '0 2px 12px rgba(37, 37, 45, 0.08)',
@@ -29,22 +29,6 @@ export const heroStyle = style({
 export const heroImageStyle = style({
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
-})
-
-export const heroPlaceholderStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-  height: '100%',
-  backgroundImage: `linear-gradient(145deg, ${colors.surface[5]} 0%, ${colors.surface[4]} 100%)`,
-})
-
-export const heroPlaceholderIconStyle = style({
-  color: colors.text[6],
 })
 
 export const badgeStyle = style({
