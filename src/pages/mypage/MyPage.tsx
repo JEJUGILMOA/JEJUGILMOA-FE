@@ -1,17 +1,14 @@
 import { useNavigate } from 'react-router'
 import { BookOpen, ChevronRight, MapPin, Settings, Share2, Sparkles } from 'lucide-react'
 import { getErrorMessage } from '@/api/error'
-import { Button } from '@/components/ui/Button/Button'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
-import { toast } from '@/components/ui/Toast/Toast'
-import { useDevLoginMutation, useMyProfileQuery } from '@/features/auth/hooks'
+import { useMyProfileQuery } from '@/features/auth/hooks'
 import { useAuthStore } from '@/stores/authStore'
 import { ROUTES } from '@/constants'
 import { MenuListItem } from '@/pages/mypage/components/MenuListItem/MenuListItem'
 import { ProfileAvatar } from '@/pages/mypage/components/ProfileAvatar/ProfileAvatar'
 import {
   chevronStyle,
-  devAuthButtonStyle,
   emailStyle,
   menuListStyle,
   nameStyle,
@@ -36,32 +33,30 @@ export function MyPage() {
   const navigate = useNavigate()
   const user = useAuthStore((s) => s.user)
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isAuthResolved = useAuthStore((s) => s.isAuthResolved)
   const { data: profile, isPending, isError, error } = useMyProfileQuery()
-  const devLogin = useDevLoginMutation()
 
   const nickname = profile?.nickname ?? user?.nickname ?? ''
   const email = profile?.email
   const imageUrl = profile?.profileImageUrl ?? user?.profileImageUrl
-  const showProfileSkeleton = isAuthenticated && isPending && !profile
-
-  const handleDevLogin = async () => {
-    try {
-      const result = await devLogin.mutateAsync()
-      toast.success(`${result.nickname}님, 개발 로그인되었어요.`)
-    } catch (loginError) {
-      toast.error(getErrorMessage(loginError, '개발 로그인에 실패했어요.'))
-    }
-  }
+  // 네이티브 세션 주입 전 · 프로필 로딩 중에는 게스트 CTA 대신 스켈레톤
+  const showProfileSkeleton =
+    !isAuthResolved || (isAuthenticated && isPending && !profile)
 
   return (
     <div className={pageStyle}>
       <button
         type="button"
         className={profileButtonStyle}
-        onClick={() =>
+        onClick={() => {
+          if (!isAuthResolved) return
           navigate(isAuthenticated ? ROUTES.myProfile : `${ROUTES.login}?returnTo=${ROUTES.my}`)
+        }}
+        aria-label={
+          !isAuthResolved ? '프로필 불러오는 중' : isAuthenticated ? '프로필 보기' : '로그인'
         }
-        aria-label={isAuthenticated ? '프로필 보기' : '로그인'}
+        aria-busy={showProfileSkeleton || undefined}
+        disabled={!isAuthResolved}
       >
         <div className={profileRowStyle}>
           {showProfileSkeleton ? (
@@ -108,16 +103,6 @@ export function MyPage() {
           />
         ))}
       </div>
-
-      <Button
-        className={devAuthButtonStyle}
-        variant="secondary"
-        fullWidth
-        isLoading={devLogin.isPending}
-        onClick={() => void handleDevLogin()}
-      >
-        개발 로그인 (user@example.com)
-      </Button>
     </div>
   )
 }

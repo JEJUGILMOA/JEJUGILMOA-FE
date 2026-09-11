@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { toast } from '@/components/ui/Toast/Toast'
 import { nativeBridge } from '@/bridge/nativeBridge'
 import { logoutAuth } from '@/features/auth/api'
+import { clearClientAuthSession } from '@/features/auth/clearClientSession'
 import {
   useMySettingsQuery,
   useUpdateMySettingsMutation,
@@ -13,7 +13,7 @@ import {
 } from '@/features/auth/hooks'
 import type { UserSettings } from '@/features/auth/schemas'
 import { useAuthStore } from '@/stores/authStore'
-import { QUERY_KEYS, ROUTES } from '@/constants'
+import { ROUTES } from '@/constants'
 import { cn } from '@/utils/cn'
 import {
   dangerTextStyle,
@@ -23,8 +23,6 @@ import {
   sectionLabelStyle,
   settingLabelStyle,
   settingRowStyle,
-  settingsHintStyle,
-  settingsRetryButtonStyle,
   togglePlaceholderStyle,
   toggleStyle,
   toggleThumbStyle,
@@ -76,7 +74,6 @@ function SettingToggle({
 
 export function SettingsPage() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const clearAuth = useAuthStore((s) => s.clearAuth)
   const settingsQuery = useMySettingsQuery()
   const updateSettings = useUpdateMySettingsMutation()
@@ -127,20 +124,19 @@ export function SettingsPage() {
   }
 
   const handleLogout = async () => {
+    setLogoutOpen(false)
     try {
       await logoutAuth()
     } catch {
       // 쿠키가 이미 만료된 경우에도 로컬 세션은 정리한다.
     } finally {
+      clearClientAuthSession()
       clearAuth()
-      void queryClient.removeQueries({ queryKey: QUERY_KEYS.myProfile })
-      void queryClient.removeQueries({ queryKey: QUERY_KEYS.mySettings })
-      void queryClient.removeQueries({ queryKey: QUERY_KEYS.myBadges })
-      setLogoutOpen(false)
+      // 캐시를 즉시 비우면 로그인 화면으로 가기 전에 토글이 텅 비어 보인다.
+      // 쿼리는 enabled:false로 멈추고, 다음 로그인 시 다시 fetch 된다.
     }
 
     if (nativeBridge.isNativeWebView()) {
-      // WebView 라우팅 없이 네이티브가 /login 으로 전환 + 네이티브 토스트
       nativeBridge.postToNative({ type: 'LOGOUT' })
       return
     }
@@ -152,6 +148,7 @@ export function SettingsPage() {
   const handleWithdraw = async () => {
     try {
       await withdrawMutation.mutateAsync()
+      clearClientAuthSession()
       clearAuth()
       setWithdrawOpen(false)
       toast.success('회원 탈퇴가 완료되었어요.')
@@ -166,18 +163,6 @@ export function SettingsPage() {
       <PageHeader title="설정" showBack onBack={() => navigate(ROUTES.my)} />
 
       <p className={sectionLabelStyle}>알림</p>
-      {settingsQuery.isError || (!settingsQuery.isLoading && !settings) ? (
-        <p className={settingsHintStyle}>
-          알림·위치 설정을 불러오지 못했어요.{' '}
-          <button
-            type="button"
-            className={settingsRetryButtonStyle}
-            onClick={() => void settingsQuery.refetch()}
-          >
-            다시 시도
-          </button>
-        </p>
-      ) : null}
       <div className={settingRowStyle}>
         <span className={settingLabelStyle}>전체 알림</span>
         <SettingToggle
@@ -262,7 +247,7 @@ export function SettingsPage() {
         onClose={() => setLogoutOpen(false)}
         actions={[
           { label: '취소', onClick: () => setLogoutOpen(false), variant: 'ghost' },
-          { label: '로그아웃', onClick: handleLogout },
+          { label: '로그아웃', onClick: () => void handleLogout() },
         ]}
       />
 

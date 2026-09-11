@@ -559,4 +559,35 @@ export const handlers = [
   http.delete('*/plans/:planId', () => HttpResponse.json(envelope(null))),
 
   http.post('*/recommendations', () => HttpResponse.json(envelope(mockRecommendationResponse))),
+
+  http.get('*/map/places', () =>
+    HttpResponse.json(
+      envelope([
+        {
+          id: 1,
+          name: '성산일출봉',
+          categoryName: '자연',
+          imageUrl: 'https://example.com/seongsan.jpg',
+          latitude: 33.4589,
+          longitude: 126.9425,
+        },
+        {
+          id: 2,
+          name: '협재 해수욕장',
+          categoryName: '자연',
+          imageUrl: 'https://example.com/hyeopjae.jpg',
+          latitude: 33.394,
+          longitude: 126.239,
+        },
+      ]),
+    ),
+  ),
+  http.get('*/map/heatmap', () =>
+    HttpResponse.json(
+      envelope([
+        { latitude: 33.45, longitude: 126.92, level: 'CROWDED', intensity: 1 },
+        { latitude: 33.48, longitude: 126.55, level: 'MODERATE', intensity: 0.3 },
+      ]),
+    ),
+  ),
 ]

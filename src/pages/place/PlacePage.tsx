@@ -1,15 +1,21 @@
-import { Globe, MapPin, Phone } from 'lucide-react'
+import { Bookmark, Globe, MapPin, Phone } from 'lucide-react'
 import { useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { isApiError } from '@/api/error'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
+import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
+import {
+  useFavoritePlaceIdsQuery,
+  useToggleFavoriteMutation,
+} from '@/features/favorites/hooks'
 import { usePlaceQuery } from '@/features/places/hooks'
 import type { Place } from '@/features/places/types'
+import { useAuthStore } from '@/stores/authStore'
 import {
   bodyStyle,
   descriptionStyle,
@@ -47,8 +53,12 @@ function getPlacePhotos(place: Place) {
 
 export function PlacePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { placeId = '' } = useParams()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { data: place, isPending, isError, error, refetch } = usePlaceQuery(placeId)
+  const favoriteIdsQuery = useFavoritePlaceIdsQuery()
+  const toggleFavorite = useToggleFavoriteMutation()
 
   const photos = useMemo(() => (place ? getPlacePhotos(place) : []), [place])
   const description = place ? getPlaceDescription(place) : ''
@@ -58,6 +68,29 @@ export function PlacePage() {
   const hasContactInfo = Boolean(place?.tel || place?.homepage)
   const headerTitle = place?.name ?? '장소'
   const goBack = () => navigate(-1)
+  const favoriteIds = favoriteIdsQuery.data ?? new Set<string>()
+  const isFavorite = placeId ? favoriteIds.has(placeId) : false
+
+  const handleToggleFavorite = () => {
+    if (!placeId) return
+    if (!isAuthenticated) {
+      toast.info('즐겨찾기는 로그인 후 이용할 수 있어요.')
+      navigate(`${ROUTES.login}?returnTo=${encodeURIComponent(location.pathname)}`)
+      return
+    }
+
+    const nextFavorite = !isFavorite
+    toggleFavorite.mutate(
+      { placeId, nextFavorite },
+      {
+        onError: () => {
+          toast.error(
+            nextFavorite ? '즐겨찾기 추가에 실패했어요.' : '즐겨찾기 해제에 실패했어요.',
+          )
+        },
+      },
+    )
+  }
 
   const heroBackgroundStyle = place?.imageUrl
     ? {
@@ -129,6 +162,16 @@ export function PlacePage() {
 
       <section className={heroStyle} style={heroBackgroundStyle} aria-label="장소 이미지">
         <div className={heroActionsStyle}>
+          <button
+            type="button"
+            className={heroIconButtonStyle}
+            aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            aria-pressed={isFavorite}
+            disabled={toggleFavorite.isPending}
+            onClick={handleToggleFavorite}
+          >
+            <Bookmark size={18} fill={isFavorite ? 'currentColor' : 'none'} />
+          </button>
           <button
             type="button"
             className={heroIconButtonStyle}

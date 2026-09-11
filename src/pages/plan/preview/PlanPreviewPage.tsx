@@ -1,6 +1,6 @@
-import { differenceInCalendarDays, parse } from 'date-fns'
+import { addDays, differenceInCalendarDays, format, parse } from 'date-fns'
 import { Pencil } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Card } from '@/components/ui/Card/Card'
@@ -9,8 +9,10 @@ import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
+import { fetchPlaceById } from '@/features/places/api'
 import { buildPlanCreateRequest } from '@/features/plans/api'
 import { useCreatePlanMutation, usePlanDraft, useSavePlanEditMutation } from '@/features/plans/hooks'
+import { fetchPlanRoutes } from '@/features/plans/mapPlanApi'
 import { NEW_PLAN_ID, planDraftStore } from '@/features/plans/planDraftStore'
 import type { PlanBudgetRequest } from '@/features/plans/types'
 import {
@@ -39,7 +41,7 @@ import {
   tripMetaStyle,
   tripTitleStyle,
 } from './PlanPreviewPage.css.ts'
-import { PlanRouteMap } from './components/PlanRouteMap'
+import { PlanRouteMap, type PlanRouteMapDayRoute } from './components/PlanRouteMap'
 
 const DATE_FORMAT = 'yyyy.MM.dd'
 
@@ -60,6 +62,12 @@ export function PlanPreviewPage() {
 
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState('')
+  /** placeId → 좌표. draft에 없는 경유지는 상세 API로 보완 */
+  const [placeCoords, setPlaceCoords] = useState<Record<string, { latitude: number; longitude: number }>>(
+    {},
+  )
+  /** 서버에 저장된 계획의 Day별 경로 (없으면 빈 배열 — 마커만 표시) */
+  const [dayRoutes, setDayRoutes] = useState<PlanRouteMapDayRoute[]>([])
 
   const goBack = () => navigate(-1)
   const goEditInfo = () => navigate(ROUTES.planEdit(planId))
@@ -100,6 +108,112 @@ export function PlanPreviewPage() {
     planDraftStore.getState().updateDraft((current) => ({ ...current, title: nextTitle }))
   }
 
+  // draft에 좌표가 없는 경유지는 장소 상세로 보완한다
+  useEffect(() => {
+    if (!plan) return
+    const missingIds = [
+      ...new Set(
+        Object.values(plan.itinerary).flatMap((day) =>
+          day.waypoints
+            .filter(
+              (waypoint) =>
+                Boolean(waypoint.placeId) &&
+                (typeof waypoint.latitude !== 'number' || typeof waypoint.longitude !== 'number'),
+            )
+            .map((waypoint) => waypoint.placeId),
+        ),
+      ),
+    ]
+    if (missingIds.length === 0) return
+
+    let cancelled = false
+    void Promise.all(
+      missingIds.map(async (placeId) => {
+        try {
+          const place = await fetchPlaceById(placeId)
+          if (
+            typeof place.latitude === 'number' &&
+            typeof place.longitude === 'number' &&
+            Number.isFinite(place.latitude) &&
+            Number.isFinite(place.longitude)
+          ) {
+            return { placeId, latitude: place.latitude, longitude: place.longitude }
+          }
+        } catch {
+          // 개별 실패는 무시 — 해당 핀만 지도에서 빠진다
+        }
+        return null
+      }),
+    ).then((results) => {
+      if (cancelled) return
+      const next: Record<string, { latitude: number; longitude: number }> = {}
+      for (const row of results) {
+        if (!row) continue
+        next[row.placeId] = { latitude: row.latitude, longitude: row.longitude }
+      }
+      if (Object.keys(next).length === 0) return
+      setPlaceCoords((prev) => ({ ...prev, ...next }))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [plan])
+
+  // 서버에 저장된 계획이면 경로 API를 불러와 Day별 폴리라인으로 그린다 (draft·미생성은 스킵)
+  useEffect(() => {
+    if (!plan || plan.id === NEW_PLAN_ID) {
+      setDayRoutes([])
+      return
+    }
+    const numericId = Number(plan.id)
+    if (!Number.isFinite(numericId) || numericId <= 0) {
+      setDayRoutes([])
+      return
+    }
+
+    let cancelled = false
+    void fetchPlanRoutes(numericId)
+      .then((response) => {
+        if (cancelled) return
+        const start = parse(plan.startDate, DATE_FORMAT, new Date())
+        const dayCount = Math.max(
+          differenceInCalendarDays(parse(plan.endDate, DATE_FORMAT, new Date()), start) + 1,
+          1,
+        )
+        const dateToDay = new Map(
+          Array.from({ length: dayCount }, (_, index) => [
+            format(addDays(start, index), 'yyyy-MM-dd'),
+            index + 1,
+          ] as const),
+        )
+
+        const next: PlanRouteMapDayRoute[] = []
+        for (const route of response.routes ?? []) {
+          if (route.status !== 'READY' || !route.path?.length) continue
+          const dayNumber = dateToDay.get(route.date)
+          if (dayNumber == null) continue
+          const path: [number, number][] = []
+          for (const point of route.path) {
+            const longitude = point[0]
+            const latitude = point[1]
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue
+            path.push([latitude, longitude])
+          }
+          if (path.length < 2) continue
+          next.push({ dayNumber, path })
+        }
+        setDayRoutes(next)
+      })
+      .catch(() => {
+        if (!cancelled) setDayRoutes([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [plan])
+
   if (isPending) {
     return (
       <div>
@@ -130,9 +244,25 @@ export function PlanPreviewPage() {
     const waypoints = dayEntry?.waypoints ?? []
     const places = [
       ...(dayEntry?.departure
-        ? [{ id: dayEntry.departure.placeId, title: dayEntry.departure.title, isDeparture: true }]
+        ? [
+            {
+              id: dayEntry.departure.placeId,
+              title: dayEntry.departure.title,
+              isDeparture: true as const,
+              latitude: dayEntry.departure.latitude,
+              longitude: dayEntry.departure.longitude,
+            },
+          ]
         : []),
-      ...waypoints.map(({ placeId, title }) => ({ id: placeId, title })),
+      ...waypoints.map(({ placeId, title, latitude, longitude }) => {
+        const cached = placeCoords[placeId]
+        return {
+          id: placeId,
+          title,
+          latitude: latitude ?? cached?.latitude,
+          longitude: longitude ?? cached?.longitude,
+        }
+      }),
     ]
     return { day, places }
   })
@@ -203,7 +333,7 @@ export function PlanPreviewPage() {
             <div className={sectionHeaderRowStyle}>
               <span className={sectionTitleStyle}>경로 지도</span>
             </div>
-            <PlanRouteMap days={days} />
+            <PlanRouteMap days={days} dayRoutes={dayRoutes} />
           </Card>
 
           <Card as="section">

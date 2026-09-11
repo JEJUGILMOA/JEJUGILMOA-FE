@@ -60,6 +60,8 @@ export const courseSourceTypeSchema = z.enum(['RECOMMENDED', 'RECORD'])
 export const savedCourseSchema = z.object({
   savedCourseId: z.coerce.string(),
   sourceType: courseSourceTypeSchema,
+  /** 서버가 내려주면 추천/기록 원본 ID로 즐겨찾기 매칭에 사용 */
+  sourceId: z.coerce.string().optional(),
   title: z.string(),
   imageUrl: optionalString,
   region: optionalString,
@@ -72,6 +74,7 @@ export const savedCourseSchema = z.object({
 export const savedCourseDetailSchema = z.object({
   savedCourseId: z.coerce.string(),
   sourceType: courseSourceTypeSchema,
+  sourceId: z.coerce.string().optional(),
   title: z.string(),
   imageUrl: optionalString,
   region: optionalString,

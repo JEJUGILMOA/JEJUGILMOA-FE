@@ -22,7 +22,7 @@ export type PlanCourseNavigationState = {
 
 const TABS: SegmentedControlItem[] = [
   { value: 'recommended', label: '추천 코스' },
-  { value: 'saved', label: '저장한 코스' },
+  { value: 'saved', label: '즐겨찾기' },
 ]
 
 /** 일정 화면 "코스 추천" 버튼으로 들어오는 전용 페이지. 홈 "코스" 화면과 별개로,
@@ -80,7 +80,7 @@ export function PlanCourseRecommendPage() {
             ))}
           </div>
         ) : (
-          <Empty title="저장한 코스가 없어요" description="마음에 드는 코스를 저장해보세요." />
+          <Empty title="즐겨찾기한 코스가 없어요" description="마음에 드는 코스를 즐겨찾기에 추가해보세요." />
         )
       ) : null}
     </div>

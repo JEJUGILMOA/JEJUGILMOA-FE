@@ -86,27 +86,6 @@ export const togglePlaceholderStyle = style({
   opacity: 0.45,
 })
 
-export const settingsHintStyle = style([
-  bodySmall,
-  {
-    margin: `0 0 ${vars.space[2]}`,
-    color: colors.text[4],
-  },
-])
-
-export const settingsRetryButtonStyle = style([
-  bodySmall,
-  {
-    margin: 0,
-    padding: 0,
-    border: 'none',
-    background: 'transparent',
-    color: colors.primary[600],
-    cursor: 'pointer',
-    textDecoration: 'underline',
-  },
-])
-
 export const toggleThumbStyle = recipe({
   base: {
     position: 'absolute',

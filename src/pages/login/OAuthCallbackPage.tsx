@@ -7,7 +7,7 @@ import {
   isOAuthProvider,
   readOAuthPendingSession,
 } from '@/features/auth/oauth'
-import { applyOAuthLoginResult } from '@/features/auth/session'
+import { applyOAuthLoginResult, toBridgeAuthUser } from '@/features/auth/session'
 import { nativeBridge } from '@/bridge/nativeBridge'
 import { ROUTES } from '@/constants'
 import { Button } from '@/components/ui/Button/Button'
@@ -77,6 +77,7 @@ export function OAuthCallbackPage() {
             type: 'LOGIN_SUCCESS',
             provider: providerParam,
             returnTo,
+            user: toBridgeAuthUser(result),
           })
           return
         }
