@@ -13,7 +13,10 @@ dist-ssr
 coverage
 *.local
 .env
+.env.*
+!.env.example
 .env.*.local
+.expo/
 
 # Editor directories and files
 .vscode/*
