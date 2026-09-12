@@ -11,6 +11,8 @@ export const pageStyle = style({
   minHeight: '100%',
   backgroundColor: colors.background[1],
   fontFamily: vars.fontFamily.sans,
+  userSelect: 'none',
+  WebkitUserSelect: 'none',
 })
 
 export const chipRowStyle = style({
