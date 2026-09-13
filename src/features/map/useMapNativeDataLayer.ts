@@ -186,12 +186,19 @@ export function useMapNativeDataLayer(enabled: boolean) {
       void (async () => {
         try {
           console.info('[checkVisit] request', detail)
-          const waypoints = await checkTripVisit(detail)
-          const enriched = await enrichTripWaypoints(waypoints)
+          const result = await checkTripVisit(detail)
+          const enriched = await enrichTripWaypoints(result.waypoints)
           nativeBridge.postToNative({
             type: 'MAP_TRIP_VISIT_RESULT',
             tripId: detail.tripId,
             waypoints: enriched,
+            autoCompleted: result.autoCompleted,
+            earnedBadges: result.earnedBadges.map((badge) => ({
+              badgeId: badge.badgeId,
+              name: badge.name,
+              description: badge.description,
+              imageUrl: badge.imageUrl,
+            })),
           })
         } catch (error) {
           console.error('[checkVisit] failed', error)
@@ -245,6 +252,11 @@ export function useMapNativeDataLayer(enabled: boolean) {
             type: 'MAP_TRIP_COMPLETE_RESULT',
             tripId,
             title: result.title,
+            durationDays: result.durationDays,
+            placeCount: result.placeCount,
+            totalDistanceKm: result.totalDistanceKm,
+            startDate: result.startDate,
+            endDate: result.endDate,
             earnedBadges: (result.earnedBadges ?? []).map((badge) => ({
               badgeId: badge.badgeId,
               name: badge.name,

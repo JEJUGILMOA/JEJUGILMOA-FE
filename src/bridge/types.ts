@@ -178,12 +178,26 @@ export type WebToNativeMessage =
         latitude?: number
         longitude?: number
       }[]
+      /** 마지막 경유지 인증으로 여행이 자동 완료된 경우 */
+      autoCompleted?: boolean
+      /** 이번 방문으로 새로 지급된 뱃지 */
+      earnedBadges?: {
+        badgeId: number
+        name: string
+        description?: string
+        imageUrl?: string
+      }[]
       error?: string
     }
   | {
       type: 'MAP_TRIP_COMPLETE_RESULT'
       tripId: number
       title?: string
+      durationDays?: number
+      placeCount?: number
+      totalDistanceKm?: number
+      startDate?: string
+      endDate?: string
       earnedBadges?: {
         badgeId: number
         name: string
@@ -242,6 +256,10 @@ export type WebToNativeMessage =
       user?: { id: string; nickname: string; profileImageUrl?: string }
     }
   | { type: 'LOGOUT' }
+  /** 설정 > 위치 섹션 7회 탭 — 방문 인증 시뮬레이션 토글 */
+  | { type: 'TOGGLE_TRIP_VISIT_SPOOF' }
+  /** 계획 저장·여행 시작 후 네이티브 탭 갱신 */
+  | { type: 'REFRESH_TABS'; tabs: Array<'plan' | 'map' | 'home' | 'record' | 'my'> }
 
 /** 네이티브 → 웹 */
 export type NativeToWebMessage =
@@ -307,6 +325,8 @@ export type NativeToWebMessage =
   | { type: 'KEYBOARD_VISIBLE'; visible: boolean; height?: number }
   /** 같은 탭 재탭 시 탭 루트 경로로 이동 */
   | { type: 'TAB_POP_TO_ROOT'; path: string }
+  /** 웹 React Query 캐시 무효화 */
+  | { type: 'INVALIDATE_DATA'; scopes: Array<'plans' | 'currentTrip'> }
   | {
       type: 'APPLE_CREDENTIAL'
       identityToken: string

@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
+import { queryClient } from '@/api/queryClient'
+import { QUERY_KEYS } from '@/constants'
 import { nativeToWebMessageSchema } from './messageSchema'
 import { nativeBridge } from './nativeBridge'
 import { appStore } from '@/stores/appStore'
@@ -192,6 +194,14 @@ function handleNativeMessage(data: unknown) {
       window.dispatchEvent(
         new CustomEvent('gilmoa:tab-pop-to-root', { detail: { path: message.path } }),
       )
+      break
+    case 'INVALIDATE_DATA':
+      if (message.scopes.includes('plans')) {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
+      }
+      if (message.scopes.includes('currentTrip')) {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.currentTrip })
+      }
       break
     case 'APPLE_CREDENTIAL':
       window.dispatchEvent(

@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { useExploreRecordsQuery } from '@/features/records/hooks'
 import type { ExploreRecord } from '@/features/records/types'
 import { ExploreRecordCard } from './ExploreRecordCard'
-import { ExplorePathPreview } from './ExplorePathPreview'
 import {
   listStyle,
   skeletonAuthorRowStyle,
@@ -150,13 +149,13 @@ export function ExploreView() {
         />
       ) : (
         <div className={listStyle}>
-          {sortedRecords.map((record) =>
-            viewMode === 'card' ? (
-              <ExploreRecordCard key={record.id} record={record} />
-            ) : (
-              <ExplorePathPreview key={record.id} record={record} />
-            ),
-          )}
+          {sortedRecords.map((record) => (
+            <ExploreRecordCard
+              key={record.id}
+              record={record}
+              media={viewMode === 'map' ? 'map' : 'photos'}
+            />
+          ))}
         </div>
       )}
     </div>

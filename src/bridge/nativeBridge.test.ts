@@ -226,6 +226,8 @@ describe('bridge messageSchema', () => {
         type: 'MAP_TRIP_VISIT_RESULT',
         tripId: 1,
         waypoints: [],
+        autoCompleted: false,
+        earnedBadges: [{ badgeId: 5, name: '애월 단골' }],
       }).success,
     ).toBe(true)
     expect(

@@ -204,6 +204,8 @@ function mapDetailToVisitedPlaces(places: TravelRecordPlaceResponse[]): VisitedP
     placeId: String(place.placeId),
     placeName: place.placeName,
     address: place.address,
+    latitude: place.latitude,
+    longitude: place.longitude,
     note: place.memo ?? '',
     photoUrls: sortBySequenceOrder(place.images).map((image) => image.imageUrl),
     stayMinutes: place.stayMinutes,

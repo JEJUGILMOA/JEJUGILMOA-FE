@@ -19,12 +19,12 @@ export function SupportInquiryPage() {
       return
     }
     toast.success('문의가 등록되었어요.')
-    navigate(ROUTES.mySupport)
+    navigate(ROUTES.support)
   }
 
   return (
     <div className={pageStyle}>
-      <PageHeader title="문의하기" showBack onBack={() => navigate(ROUTES.mySupport)} />
+      <PageHeader title="문의하기" showBack onBack={() => navigate(ROUTES.support)} />
 
       <div className={fieldGroupStyle}>
         <TextField label="제목" value={title} onChange={setTitle} placeholder="문의 제목" />

@@ -2,12 +2,16 @@ import { apiGet, apiPost } from '@/api/http'
 import { isApiError } from '@/api/error'
 import {
   currentTripSchema,
+  parseTripVisitResult,
   parseTripWaypointList,
   startedTripSchema,
+  tripCancelSchema,
   tripCompleteSchema,
   type CurrentTrip,
   type StartedTrip,
+  type TripCancel,
   type TripComplete,
+  type TripVisitResult,
   type TripWaypoint,
 } from './schemas'
 
@@ -36,14 +40,14 @@ export async function checkTripVisit(params: {
   waypointId: number
   latitude: number
   longitude: number
-}): Promise<TripWaypoint[]> {
+}): Promise<TripVisitResult> {
   const data = await apiPost<unknown>(`/trips/${params.tripId}/visits`, {
     waypointId: params.waypointId,
     latitude: params.latitude,
     longitude: params.longitude,
   })
   console.info('[checkVisit] raw result', data)
-  return parseTripWaypointList(data)
+  return parseTripVisitResult(data)
 }
 
 /** POST /trips/{tripId}/waypoints/{waypointId}/skip — GPS 없이 경유지 건너뛰기 */
@@ -62,4 +66,10 @@ export async function skipTripWaypoint(params: {
 export async function completeTrip(tripId: number): Promise<TripComplete> {
   const data = await apiPost<unknown>(`/trips/${tripId}/complete`)
   return tripCompleteSchema.parse(data)
+}
+
+/** POST /trips/{tripId}/cancel — 진행중 여행 중단 (tripId = planId) */
+export async function cancelTrip(tripId: number): Promise<TripCancel> {
+  const data = await apiPost<unknown>(`/trips/${tripId}/cancel`)
+  return tripCancelSchema.parse(data)
 }

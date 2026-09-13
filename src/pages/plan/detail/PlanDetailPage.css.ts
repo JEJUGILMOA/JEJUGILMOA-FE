@@ -20,3 +20,10 @@ export const actionsStyle = style({
   flexDirection: 'column',
   gap: vars.space[2],
 })
+
+/** 진행중: 여행 취소 | 지도에서 보기 */
+export const actionsRowStyle = style({
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: vars.space[2],
+})

@@ -26,6 +26,24 @@ export const sectionLabelStyle = style([
   },
 ])
 
+/** 섹션 라벨과 동일 타이포 — 이스터에그용 button 리셋만 */
+export const sectionLabelButtonStyle = style([
+  sectionLabelStyle,
+  {
+    display: 'block',
+    width: '100%',
+    padding: 0,
+    border: 'none',
+    background: 'none',
+    cursor: 'default',
+    textAlign: 'left',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    WebkitTapHighlightColor: 'transparent',
+    userSelect: 'none',
+  },
+])
+
 export const settingRowStyle = style({
   display: 'flex',
   alignItems: 'center',

@@ -39,6 +39,7 @@ import {
   linkedPlanButtonStyle,
   metaStyle,
   pageStyle,
+  photoBleedStyle,
   reactionButtonRecipe,
   reactionSummaryStyle,
   shareButtonStyle,
@@ -200,11 +201,13 @@ export function RecordDetailPage() {
       {header}
 
       <div className={pageStyle}>
-        <PhotoCarousel
-          photoUrls={view.photoUrls}
-          isBookmarked={view.isBookmarked}
-          onToggleBookmark={handleToggleBookmark}
-        />
+        <div className={photoBleedStyle}>
+          <PhotoCarousel
+            photoUrls={view.photoUrls}
+            isBookmarked={view.isBookmarked}
+            onToggleBookmark={handleToggleBookmark}
+          />
+        </div>
 
         <div className={bodyStyle}>
           <div className={infoStyle}>
@@ -315,7 +318,7 @@ export function RecordDetailPage() {
           </div>
 
           <VisitedPlaceList places={view.visitedPlaces} />
-          <RoutePreview places={view.visitedPlaces} />
+          <RoutePreview places={view.visitedPlaces} title={view.title} />
         </div>
       </div>
     </div>

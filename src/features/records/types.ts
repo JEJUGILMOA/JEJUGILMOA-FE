@@ -78,6 +78,8 @@ export type VisitedPlaceRecord = {
   placeId: string
   placeName: string
   address: string
+  latitude: number
+  longitude: number
   note: string
   photoUrls: string[]
   stayMinutes: number | null

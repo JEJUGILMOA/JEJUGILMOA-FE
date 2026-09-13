@@ -7,6 +7,7 @@ import { ROUTES } from '@/constants'
 import { buildPlanCreateRequest } from '@/features/plans/api'
 import { useCreatePlanMutation, usePlanDraft, useSavePlanEditMutation } from '@/features/plans/hooks'
 import { NEW_PLAN_ID, planDraftStore } from '@/features/plans/planDraftStore'
+import { refreshTabsOnNative } from '@/features/navigation/refreshTabs'
 import { PlanOverview } from '@/pages/plan/components/PlanOverview/PlanOverview'
 import { emptyHintStyle, pageStyle } from './PlanPreviewPage.css.ts'
 
@@ -31,6 +32,7 @@ export function PlanPreviewPage() {
     const onSuccess = () => {
       toast.success('계획을 저장했어요')
       planDraftStore.getState().clearDraft()
+      refreshTabsOnNative(['plan'])
       navigate(ROUTES.plan)
     }
     const onError = () => {

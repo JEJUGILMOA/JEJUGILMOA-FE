@@ -6,7 +6,6 @@ import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { ROUTES } from '@/constants'
-import { openTabOnNative } from '@/features/navigation/openTab'
 import { mapPlanSummaryToTrip } from '@/features/plans/format'
 import { usePlanSummariesQuery } from '@/features/plans/hooks'
 import type { PlanApiStatus } from '@/features/plans/schemas'
@@ -90,12 +89,7 @@ export function TripsPage() {
               <TripCard
                 key={trip.id}
                 trip={trip}
-                onClick={() => {
-                  const path = ROUTES.planDetail(trip.id)
-                  if (!openTabOnNative('plan', path)) {
-                    navigate(path)
-                  }
-                }}
+                onClick={() => navigate(ROUTES.planDetail(trip.id))}
               />
             ))}
           </div>

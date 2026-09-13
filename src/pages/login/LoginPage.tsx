@@ -12,9 +12,9 @@ import appIcon from '@/assets/images/appicon.png'
 import { AppleIcon, GoogleIcon, KakaoIcon, NaverIcon } from './components/SocialIcons'
 import { SocialLoginButton } from './components/SocialLoginButton'
 import {
+  brandCopyStyle,
   buttonsStyle,
   headerStyle,
-  hintStyle,
   logoMarkStyle,
   logoImageStyle,
   pageStyle,
@@ -180,8 +180,10 @@ export function LoginPage() {
         <div className={logoMarkStyle} aria-hidden>
           <img src={appIcon} alt="" className={logoImageStyle} />
         </div>
-        <h1 className={titleStyle}>제주 길모아</h1>
-        <p className={subtitleStyle}>우리의 모든 길이 모이는 곳</p>
+        <div className={brandCopyStyle}>
+          <h1 className={titleStyle}>제주 길모아</h1>
+          <p className={subtitleStyle}>우리의 모든 길이 모이는 곳</p>
+        </div>
       </header>
 
       <div className={buttonsStyle}>
@@ -222,12 +224,6 @@ export function LoginPage() {
           />
         ) : null}
       </div>
-
-      <p className={hintStyle}>
-        소셜 계정으로 시작하면 서비스 이용약관과
-        <br />
-        개인정보 처리방침에 동의하게 됩니다.
-      </p>
     </div>
   )
 }

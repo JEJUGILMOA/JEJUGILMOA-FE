@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Modal } from '@/components/ui/Modal/Modal'
@@ -13,13 +13,14 @@ import {
 } from '@/features/auth/hooks'
 import type { UserSettings } from '@/features/auth/schemas'
 import { useAuthStore } from '@/stores/authStore'
-import { ROUTES } from '@/constants'
+import { EXTERNAL_PRIVACY_POLICY_URL, ROUTES } from '@/constants'
 import { cn } from '@/utils/cn'
 import {
   dangerTextStyle,
   dividerStyle,
   linkValueStyle,
   pageStyle,
+  sectionLabelButtonStyle,
   sectionLabelStyle,
   settingLabelStyle,
   settingRowStyle,
@@ -29,6 +30,9 @@ import {
 } from './SettingsPage.css.ts'
 
 type NotiKey = 'all' | 'schedule' | 'marketing'
+
+const DEV_UNLOCK_TAPS = 7
+const DEV_UNLOCK_WINDOW_MS = 2500
 
 function toUiState(settings: UserSettings) {
   const notifyAll =
@@ -81,6 +85,7 @@ export function SettingsPage() {
 
   const [logoutOpen, setLogoutOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
+  const locationTapRef = useRef({ count: 0, lastAt: 0 })
 
   const settings = settingsQuery.data
   const ui = settings ? toUiState(settings) : null
@@ -123,6 +128,25 @@ export function SettingsPage() {
     await patchSettings({ locationPermission: !ui.location })
   }
 
+  /** 설정 > 「위치」 섹션 라벨 7회 연속 탭 → 네이티브 방문 인증 시뮬레이션 토글 */
+  const handleLocationSectionTap = () => {
+    const now = Date.now()
+    if (now - locationTapRef.current.lastAt > DEV_UNLOCK_WINDOW_MS) {
+      locationTapRef.current.count = 0
+    }
+    locationTapRef.current.lastAt = now
+    locationTapRef.current.count += 1
+
+    if (locationTapRef.current.count < DEV_UNLOCK_TAPS) return
+
+    locationTapRef.current.count = 0
+    if (!nativeBridge.isNativeWebView()) {
+      toast.info('앱에서만 사용할 수 있어요.')
+      return
+    }
+    nativeBridge.postToNative({ type: 'TOGGLE_TRIP_VISIT_SPOOF' })
+  }
+
   const handleLogout = async () => {
     setLogoutOpen(false)
     try {
@@ -132,8 +156,6 @@ export function SettingsPage() {
     } finally {
       clearClientAuthSession()
       clearAuth()
-      // 캐시를 즉시 비우면 로그인 화면으로 가기 전에 토글이 텅 비어 보인다.
-      // 쿼리는 enabled:false로 멈추고, 다음 로그인 시 다시 fetch 된다.
     }
 
     if (nativeBridge.isNativeWebView()) {
@@ -156,6 +178,17 @@ export function SettingsPage() {
     } catch {
       toast.error('회원 탈퇴에 실패했어요.')
     }
+  }
+
+  const openPrivacyPolicy = () => {
+    if (nativeBridge.isNativeWebView()) {
+      nativeBridge.postToNative({
+        type: 'OPEN_EXTERNAL_URL',
+        url: EXTERNAL_PRIVACY_POLICY_URL,
+      })
+      return
+    }
+    window.open(EXTERNAL_PRIVACY_POLICY_URL, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -189,7 +222,14 @@ export function SettingsPage() {
       </div>
 
       <div className={dividerStyle}>
-        <p className={sectionLabelStyle}>위치</p>
+        <button
+          type="button"
+          className={sectionLabelButtonStyle}
+          onClick={handleLocationSectionTap}
+          aria-label="위치"
+        >
+          위치
+        </button>
       </div>
       <div className={settingRowStyle}>
         <span className={settingLabelStyle}>위치 권한</span>
@@ -206,24 +246,12 @@ export function SettingsPage() {
       <button
         type="button"
         className={settingRowStyle}
-        onClick={() => navigate(ROUTES.myNotices)}
-      >
-        <span className={settingLabelStyle}>공지사항</span>
-        <span className={linkValueStyle}>›</span>
-      </button>
-      <button
-        type="button"
-        className={settingRowStyle}
-        onClick={() => navigate(ROUTES.mySupport)}
+        onClick={() => navigate(ROUTES.support)}
       >
         <span className={settingLabelStyle}>고객센터</span>
         <span className={linkValueStyle}>›</span>
       </button>
-      <button
-        type="button"
-        className={settingRowStyle}
-        onClick={() => navigate(ROUTES.myTerms)}
-      >
+      <button type="button" className={settingRowStyle} onClick={openPrivacyPolicy}>
         <span className={settingLabelStyle}>약관 및 정책</span>
         <span className={linkValueStyle}>›</span>
       </button>

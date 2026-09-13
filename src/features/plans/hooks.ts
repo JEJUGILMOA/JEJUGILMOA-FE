@@ -63,16 +63,27 @@ export function usePlanDraft(planId: string) {
 
 /** STEP6 — 신규 계획 저장. STEP1~5는 전부 로컬(`planDraftStore`)에서만 편집하다가 여기서 한 번만 호출한다 */
 export function useCreatePlanMutation() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (payload: PlanCreateRequest) => createPlan(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
+    },
   })
 }
 
 /** STEP6 — 기존 DRAFT 계획 저장(PUT 전체 덮어쓰기) */
 export function useSavePlanEditMutation() {
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: ({ planId, payload }: { planId: string; payload: PlanCreateRequest }) =>
       savePlanEdit(planId, payload),
+    onSuccess: (_data, { planId }) => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plans })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.plan(planId) })
+    },
   })
 }
 

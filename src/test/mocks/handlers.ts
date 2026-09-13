@@ -646,6 +646,50 @@ export const handlers = [
     )
   }),
 
+  http.post('*/trips/:tripId/cancel', ({ params }) => {
+    const tripId = Number(params.tripId)
+    // swagger: tripId === planId
+    const planId = tripId
+    const summary = mockPlanSummaries.find((plan) => plan.planId === planId)
+    if (!summary) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN404_1',
+          message: '존재하지 않는 여행 계획입니다.',
+          result: null,
+        },
+        { status: 404 },
+      )
+    }
+    if (summary.status !== 'IN_PROGRESS') {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN400_22',
+          message: '진행중인 여행만 중단할 수 있습니다.',
+          result: null,
+        },
+        { status: 400 },
+      )
+    }
+
+    summary.status = 'DRAFT'
+    if (mockPlanDetail.planId === planId) {
+      mockPlanDetail.status = 'DRAFT'
+    }
+
+    return HttpResponse.json(
+      envelope({
+        tripId: planId,
+        title: summary.title,
+        status: 'CANCELLED',
+        actualStartedAt: new Date().toISOString(),
+        actualCancelledAt: new Date().toISOString(),
+      }),
+    )
+  }),
+
   http.post('*/trips/:tripId/waypoints/:waypointId/skip', ({ params }) => {
     const waypointId = Number(params.waypointId)
     const waypoints = (mockPlanDetail.itinerary ?? []).flatMap((day) => day.waypoints ?? [])

@@ -169,6 +169,39 @@ export const tripEarnedBadgeSchema = z.object({
   acquiredAt: optionalString,
 })
 
+/** POST /trips/{tripId}/visits 응답 — waypoints + 즉시 지급 뱃지 */
+export const tripVisitResultSchema = z.object({
+  waypoints: z.array(tripWaypointSchema),
+  autoCompleted: z.boolean().optional().default(false),
+  earnedBadges: z.array(tripEarnedBadgeSchema).optional().default([]),
+})
+
+/**
+ * checkVisit 응답 정규화.
+ * - 신규 DTO: `{ waypoints, autoCompleted, earnedBadges }`
+ * - 레거시: waypoint 배열 / 단일 객체 / `{ waypoints }`
+ */
+export function parseTripVisitResult(data: unknown): {
+  waypoints: TripWaypoint[]
+  autoCompleted: boolean
+  earnedBadges: TripEarnedBadge[]
+} {
+  const waypoints = parseTripWaypointList(data)
+
+  if (data == null || typeof data !== 'object' || Array.isArray(data)) {
+    return { waypoints, autoCompleted: false, earnedBadges: [] }
+  }
+
+  const obj = data as Record<string, unknown>
+  const badgesParsed = z.array(tripEarnedBadgeSchema).safeParse(obj.earnedBadges ?? [])
+
+  return {
+    waypoints,
+    autoCompleted: obj.autoCompleted === true,
+    earnedBadges: badgesParsed.success ? badgesParsed.data : [],
+  }
+}
+
 export const tripCompleteSchema = z.object({
   tripId: z.number(),
   title: z.string(),
@@ -183,13 +216,24 @@ export const tripCompleteSchema = z.object({
   earnedBadges: z.array(tripEarnedBadgeSchema).optional(),
 })
 
+/** POST /trips/{tripId}/cancel 응답 */
+export const tripCancelSchema = z.object({
+  tripId: z.number(),
+  title: z.string(),
+  status: z.string(),
+  actualStartedAt: optionalString,
+  actualCancelledAt: optionalString,
+})
+
 export type TripWaypoint = z.infer<typeof tripWaypointSchema>
 export type TripRoute = z.infer<typeof tripRouteSchema>
 export type CurrentTrip = z.infer<typeof currentTripSchema>
 export type StartedTrip = z.infer<typeof startedTripSchema>
 export type TripStartRequest = z.infer<typeof tripStartRequestSchema>
 export type TripComplete = z.infer<typeof tripCompleteSchema>
+export type TripCancel = z.infer<typeof tripCancelSchema>
 export type TripEarnedBadge = z.infer<typeof tripEarnedBadgeSchema>
+export type TripVisitResult = z.infer<typeof tripVisitResultSchema>
 
 /** visitDate 순 → N일차, READY 경로만 lat/lng path로 변환 */
 export function buildTripDayRoutes(

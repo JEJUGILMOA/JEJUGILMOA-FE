@@ -19,6 +19,13 @@ export const headerStyle = style({
   marginBottom: vars.space[12],
 })
 
+export const brandCopyStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: vars.space[1],
+})
+
 export const logoMarkStyle = style({
   width: 112,
   height: 112,
@@ -59,15 +66,6 @@ export const buttonsStyle = style({
   width: '100%',
   maxWidth: 360,
   margin: '0 auto',
-})
-
-export const hintStyle = style({
-  marginTop: vars.space[6],
-  textAlign: 'center',
-  fontSize: vars.fontSize.xs,
-  color: '#9CA3AF',
-  fontFamily: vars.fontFamily.sans,
-  lineHeight: vars.lineHeight.relaxed,
 })
 
 export const statusPageStyle = style({

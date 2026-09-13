@@ -56,13 +56,6 @@ export type NoticeItem = {
   body: string
 }
 
-export type TermItem = {
-  id: string
-  title: string
-  body: string
-}
-
-
 export const mockProfile: MyProfile = {
   nickname: '김여행',
   email: 'travel_kim@email.com',
@@ -165,24 +158,6 @@ export const mockNotices: NoticeItem[] = [
     title: '개인정보 처리방침 개정 안내',
     date: '2026.06.15',
     body: '관련 법령 개정에 따라 개인정보 처리방침이 일부 변경됩니다. 마이페이지 > 약관 및 정책에서 확인하세요.',
-  },
-]
-
-export const mockTerms: TermItem[] = [
-  {
-    id: 'service',
-    title: '서비스 이용약관',
-    body: '본 약관은 제주길모아 서비스 이용과 관련하여 회사와 이용자 간의 권리·의무 및 책임사항을 규정합니다.',
-  },
-  {
-    id: 'privacy',
-    title: '개인정보 처리방침',
-    body: '회사는 이용자의 개인정보를 중요시하며, 관련 법령을 준수하여 개인정보를 안전하게 처리합니다.',
-  },
-  {
-    id: 'location',
-    title: '위치기반서비스 이용약관',
-    body: '위치기반서비스는 이용자의 동의 하에 제공되며, 서비스 목적 범위 내에서만 위치정보를 이용합니다.',
   },
 ]
 

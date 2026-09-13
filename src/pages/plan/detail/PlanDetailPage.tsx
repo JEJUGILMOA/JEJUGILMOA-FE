@@ -1,15 +1,18 @@
+import { useCallback, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { getErrorMessage } from '@/api/error'
 import { Button } from '@/components/ui/Button/Button'
 import { Loading } from '@/components/ui/Loading/Loading'
+import { Modal } from '@/components/ui/Modal/Modal'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { mapPath, openMapOnNative } from '@/features/map/openMap'
+import { refreshTabsOnNative } from '@/features/navigation/refreshTabs'
 import { usePlanQuery } from '@/features/plans/hooks'
-import { useStartTripMutation } from '@/features/trips/hooks'
+import { useCancelTripMutation, useStartTripMutation } from '@/features/trips/hooks'
 import { PlanOverview } from '@/pages/plan/components/PlanOverview/PlanOverview'
-import { actionsStyle, emptyHintStyle, pageStyle } from './PlanDetailPage.css.ts'
+import { actionsRowStyle, actionsStyle, emptyHintStyle, pageStyle } from './PlanDetailPage.css.ts'
 
 /** 저장된 계획 조회 — DRAFT에서 여행 시작 CTA 제공 */
 export function PlanDetailPage() {
@@ -17,6 +20,10 @@ export function PlanDetailPage() {
   const navigate = useNavigate()
   const planQuery = usePlanQuery(planId)
   const startTripMutation = useStartTripMutation()
+  const cancelTripMutation = useCancelTripMutation()
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
+  /** 네이티브 버튼 탭 시 action+dismiss 레이스에서 isPending보다 먼저 막기 위함 */
+  const cancellingRef = useRef(false)
 
   const goBack = () => navigate(-1)
   const plan = planQuery.data
@@ -36,6 +43,7 @@ export function PlanDetailPage() {
     startTripMutation.mutate(numericId, {
       onSuccess: () => {
         toast.success('여행을 시작했어요')
+        refreshTabsOnNative(['plan', 'map'])
         goToActiveTripMap()
       },
       onError: (error) => {
@@ -43,6 +51,34 @@ export function PlanDetailPage() {
       },
     })
   }
+
+  const closeCancelConfirm = useCallback(() => {
+    if (cancellingRef.current || cancelTripMutation.isPending) return
+    setCancelConfirmOpen(false)
+  }, [cancelTripMutation.isPending])
+
+  const handleCancelTrip = useCallback(() => {
+    const numericId = Number(planId)
+    if (!Number.isFinite(numericId) || numericId <= 0) {
+      toast.error('유효하지 않은 여행이에요.')
+      return
+    }
+
+    cancellingRef.current = true
+    cancelTripMutation.mutate(numericId, {
+      onSuccess: () => {
+        setCancelConfirmOpen(false)
+        toast.success('여행을 취소했어요')
+        navigate(ROUTES.plan)
+      },
+      onError: (error) => {
+        toast.error(getErrorMessage(error, '여행 취소에 실패했어요. 다시 시도해 주세요.'))
+      },
+      onSettled: () => {
+        cancellingRef.current = false
+      },
+    })
+  }, [planId, cancelTripMutation, navigate])
 
   if (planQuery.isPending) {
     return (
@@ -92,22 +128,46 @@ export function PlanDetailPage() {
           ) : null}
 
           {plan.status === 'ongoing' ? (
-            <>
-              <Button fullWidth size="lg" onClick={goToActiveTripMap}>
-                지도에서 보기
-              </Button>
+            <div className={actionsRowStyle}>
               <Button
                 fullWidth
                 size="lg"
-                variant="outline"
-                onClick={() => navigate(ROUTES.planItinerary(planId))}
+                variant="danger"
+                isLoading={cancelTripMutation.isPending}
+                onClick={(event) => {
+                  // 네이티브 모달이 touchend 전에 뜨면 :active 색이 남는 iOS/WebView 이슈
+                  event.currentTarget.blur()
+                  window.setTimeout(() => setCancelConfirmOpen(true), 0)
+                }}
               >
-                일정 보기
+                여행 취소
               </Button>
-            </>
+              <Button fullWidth size="lg" onClick={goToActiveTripMap}>
+                지도에서 보기
+              </Button>
+            </div>
           ) : null}
         </div>
       </div>
+
+      <Modal
+        open={cancelConfirmOpen}
+        title="여행을 취소할까요?"
+        description="진행 중인 여행을 중단해요. 방문 인증 기록은 유지됩니다."
+        onClose={closeCancelConfirm}
+        actions={[
+          {
+            label: '닫기',
+            variant: 'ghost',
+            onClick: closeCancelConfirm,
+          },
+          {
+            label: '여행 취소',
+            variant: 'danger',
+            onClick: handleCancelTrip,
+          },
+        ]}
+      />
     </div>
   )
 }

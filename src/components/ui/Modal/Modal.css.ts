@@ -18,7 +18,7 @@ export const panelStyle = style({
   maxWidth: '360px',
   display: 'flex',
   flexDirection: 'column',
-  gap: vars.space[6],
+  gap: 0,
   padding: `${vars.space[4]} ${vars.space[3]}`,
   borderRadius: vars.radius.lg,
   backgroundColor: colors.surface[1],
@@ -28,7 +28,7 @@ export const panelStyle = style({
 export const bodyStyle = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: vars.space[3],
+  gap: vars.space[2],
   paddingInline: vars.space[2],
 })
 
@@ -50,6 +50,7 @@ export const actionsStyle = style({
   display: 'flex',
   gap: vars.space[2],
   width: '100%',
+  paddingTop: vars.space[5],
 })
 
 export const actionGrowStyle = style({

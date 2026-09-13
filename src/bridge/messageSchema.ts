@@ -252,12 +252,28 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
         longitude: z.number().optional(),
       }),
     ),
+    autoCompleted: z.boolean().optional(),
+    earnedBadges: z
+      .array(
+        z.object({
+          badgeId: z.number(),
+          name: z.string(),
+          description: z.string().optional(),
+          imageUrl: z.string().optional(),
+        }),
+      )
+      .optional(),
     error: z.string().optional(),
   }),
   z.object({
     type: z.literal('MAP_TRIP_COMPLETE_RESULT'),
     tripId: z.number(),
     title: z.string().optional(),
+    durationDays: z.number().optional(),
+    placeCount: z.number().optional(),
+    totalDistanceKm: z.number().optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
     earnedBadges: z
       .array(
         z.object({
@@ -335,6 +351,11 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     user: bridgeAuthUserSchema.optional(),
   }),
   z.object({ type: z.literal('LOGOUT') }),
+  z.object({ type: z.literal('TOGGLE_TRIP_VISIT_SPOOF') }),
+  z.object({
+    type: z.literal('REFRESH_TABS'),
+    tabs: z.array(z.enum(['plan', 'map', 'home', 'record', 'my'])).min(1),
+  }),
 ])
 
 export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
@@ -439,6 +460,10 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('TAB_POP_TO_ROOT'),
     path: z.enum(['/', '/plan', '/record', '/my', '/map']),
+  }),
+  z.object({
+    type: z.literal('INVALIDATE_DATA'),
+    scopes: z.array(z.enum(['plans', 'currentTrip'])).min(1),
   }),
   z.object({
     type: z.literal('APPLE_CREDENTIAL'),
