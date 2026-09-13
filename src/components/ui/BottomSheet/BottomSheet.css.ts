@@ -21,11 +21,20 @@ export const contentStyle = style({
   right: 0,
   bottom: 0,
   zIndex: vars.zIndex.modal,
+  // vaul snapPoints는 뷰포트 전체 높이 기준으로 transform한다.
+  height: '100%',
+  outline: 'none',
+  // 배경은 보이는 패널(visiblePanelStyle)에만 둔다
+  backgroundColor: 'transparent',
+  boxShadow: 'none',
+})
+
+/** snap 높이만큼만 차지하는 실제 시트 UI (핸들·본문·하단 CTA가 모두 여기 안에) */
+export const visiblePanelStyle = style({
   display: 'flex',
   flexDirection: 'column',
-  height: '100%',
-  maxHeight: '85dvh',
-  outline: 'none',
+  width: '100%',
+  overflow: 'hidden',
   borderTopLeftRadius: vars.radius.xl,
   borderTopRightRadius: vars.radius.xl,
   backgroundColor: colors.surface[1],
@@ -52,9 +61,12 @@ export const titleStyle = style({
 })
 
 export const bodyStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
   flex: 1,
   minHeight: 0,
   overflowY: 'auto',
+  WebkitOverflowScrolling: 'touch',
   padding: vars.space[4],
   paddingTop: vars.space[2],
   paddingBottom: `calc(${vars.space[6]} + env(safe-area-inset-bottom))`,

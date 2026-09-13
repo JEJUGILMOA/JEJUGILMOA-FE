@@ -16,9 +16,15 @@ export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError
 }
 
+/** 사용자 표시용 — `[PLAN400_12]` 같은 코드 prefix 제거 */
+function toUserFacingMessage(message: string, fallback: string): string {
+  const stripped = message.replace(/^\[[A-Za-z0-9_]+\]\s*/, '').trim()
+  return stripped || fallback
+}
+
 export function getErrorMessage(error: unknown, fallback = '요청을 처리하지 못했습니다.') {
-  if (isApiError(error)) return error.message
-  if (error instanceof Error) return error.message
+  if (isApiError(error)) return toUserFacingMessage(error.message, fallback)
+  if (error instanceof Error) return toUserFacingMessage(error.message, fallback)
   return fallback
 }
 

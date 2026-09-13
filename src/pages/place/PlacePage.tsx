@@ -15,12 +15,12 @@ import {
   useToggleFavoriteMutation,
 } from '@/features/favorites/hooks'
 import { usePlaceQuery } from '@/features/places/hooks'
+import { openNaverMapPlace } from '@/features/places/openNaverMap'
 import type { Place } from '@/features/places/types'
 import { useAuthStore } from '@/stores/authStore'
 import {
   bodyStyle,
   descriptionStyle,
-  footerStyle,
   heroActionsStyle,
   heroIconButtonStyle,
   heroImageStyle,
@@ -172,8 +172,14 @@ export function PlacePage() {
           <button
             type="button"
             className={heroIconButtonStyle}
-            aria-label="지도에서 보기"
-            onClick={() => navigate(`${ROUTES.map}?placeId=${place.id}`)}
+            aria-label="네이버 지도에서 보기"
+            onClick={() =>
+              openNaverMapPlace({
+                name: place.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+              })
+            }
           >
             <MapPin size={18} />
           </button>
@@ -239,19 +245,6 @@ export function PlacePage() {
           <h2 className={sectionTitleStyle}>리뷰</h2>
           <Empty title="아직 리뷰가 없어요" description="이 장소의 첫 리뷰를 남겨보세요." />
         </section>
-      </div>
-
-      <div className={footerStyle}>
-        <Button variant="outline" size="lg" fullWidth onClick={() => navigate(ROUTES.plan)}>
-          코스에 추가
-        </Button>
-        <Button
-          size="lg"
-          fullWidth
-          onClick={() => navigate(`${ROUTES.map}?placeId=${place.id}`)}
-        >
-          길찾기
-        </Button>
       </div>
     </div>
   )

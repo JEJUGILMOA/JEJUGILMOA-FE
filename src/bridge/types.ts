@@ -9,9 +9,24 @@ export type WebToNativeMessage =
   | { type: 'WEB_READY' }
   | { type: 'REQUEST_LOCATION' }
   | { type: 'REQUEST_BACK_HANDLER'; enabled: boolean }
-  | { type: 'OPEN_EXTERNAL_URL'; url: string }
+  | { type: 'OPEN_EXTERNAL_URL'; url: string; fallbackUrl?: string }
   | { type: 'HAPTIC'; style?: 'light' | 'medium' | 'heavy' }
   | { type: 'CLOSE_WEBVIEW' }
+  | {
+      type: 'NAVIGATE_TO_MAP'
+      payload?: {
+        placeId?: string
+        /** 네이티브 지도 모드. 여행 시작 후엔 `activeTrip` */
+        mode?: 'general' | 'plan' | 'activeTrip' | 'heatmap'
+      }
+    }
+  | {
+      type: 'NAVIGATE_TO_TAB'
+      /** 네이티브 탭 이름 */
+      tab: 'home' | 'map' | 'plan' | 'record' | 'my'
+      /** 해당 탭 WebView에서 열 경로. 예: `/plan/123` */
+      path?: string
+    }
   | {
       type: 'SET_HEADER'
       title?: string
@@ -136,6 +151,11 @@ export type WebToNativeMessage =
           skipped?: boolean
           latitude?: number
           longitude?: number
+        }[]
+        /** READY 도로 경로 (일차별). 없으면 네이티브가 직선 폴백 */
+        dayRoutes?: {
+          dayNumber: number
+          path: { latitude: number; longitude: number }[]
         }[]
       } | null
       error?: string
@@ -269,6 +289,11 @@ export type NativeToWebMessage =
       waypointId: number
       latitude: number
       longitude: number
+    }
+  | {
+      type: 'REQUEST_TRIP_SKIP'
+      tripId: number
+      waypointId: number
     }
   | { type: 'REQUEST_TRIP_COMPLETE'; tripId: number }
   | { type: 'MODAL_ACTION'; id: string }

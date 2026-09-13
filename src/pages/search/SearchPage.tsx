@@ -1,7 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Clock, Coffee, MapPin, X, type LucideIcon } from 'lucide-react'
-import { Chip } from '@/components/ui/Chip/Chip'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
@@ -9,11 +8,15 @@ import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { placePath } from '@/constants'
 import { usePlacesQuery } from '@/features/places/hooks'
 import type { PlaceListItem } from '@/features/places/types'
+import {
+  addRecentSearch,
+  loadRecentSearches,
+  saveRecentSearches,
+} from '@/features/search/recentSearches'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import {
   bodyStyle,
   cancelButtonStyle,
-  chipWrapStyle,
   matchStyle,
   pageStyle,
   recentButtonStyle,
@@ -36,10 +39,6 @@ import {
 
 const SEARCH_DEBOUNCE_MS = 300
 const SEARCH_PAGE_SIZE = 20
-
-const INITIAL_RECENT = ['협재 해수욕장', '오설록 티뮤지엄', '성산일출봉', '애월 카페거리']
-
-const POPULAR_KEYWORDS = ['성산일출봉', '애월 카페거리', '동문시장', '한라산', '흑돼지 맛집']
 
 function shortAddress(address?: string) {
   if (!address) return ''
@@ -75,7 +74,7 @@ function highlightMatch(text: string, query: string): ReactNode {
 export function SearchPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
-  const [recentSearches, setRecentSearches] = useState(INITIAL_RECENT)
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => loadRecentSearches())
 
   const trimmedQuery = query.trim()
   const debouncedKeyword = useDebouncedValue(trimmedQuery, SEARCH_DEBOUNCE_MS)
@@ -90,9 +89,11 @@ export function SearchPage() {
   const results = useMemo(() => placesQuery.data ?? [], [placesQuery.data])
 
   const pushRecent = (term: string) => {
-    const next = term.trim()
-    if (!next) return
-    setRecentSearches((prev) => [next, ...prev.filter((item) => item !== next)].slice(0, 8))
+    setRecentSearches((prev) => {
+      const next = addRecentSearch(prev, term)
+      saveRecentSearches(next)
+      return next
+    })
   }
 
   const handleCancel = () => {
@@ -110,7 +111,11 @@ export function SearchPage() {
   }
 
   const handleRemoveRecent = (term: string) => {
-    setRecentSearches((prev) => prev.filter((item) => item !== term))
+    setRecentSearches((prev) => {
+      const next = prev.filter((item) => item !== term)
+      saveRecentSearches(next)
+      return next
+    })
   }
 
   const isLoadingResults =
@@ -184,59 +189,38 @@ export function SearchPage() {
       <div className={bodyStyle}>
         {showResults ? (
           renderSearchResults()
-        ) : (
-          <>
-            <section className={sectionStyle} aria-labelledby="search-popular-title">
-              <h2 id="search-popular-title" className={sectionTitleStyle}>
-                인기 검색어
-              </h2>
-              <div className={chipWrapStyle}>
-                {POPULAR_KEYWORDS.map((keyword) => (
-                  <Chip
-                    key={keyword}
-                    size="md"
-                    colorScheme="neutral"
-                    isSelected
-                    onClick={() => handleSelectKeyword(keyword)}
+        ) : recentSearches.length > 0 ? (
+          <section className={sectionStyle} aria-labelledby="search-recent-title">
+            <h2 id="search-recent-title" className={sectionTitleStyle}>
+              최근 검색
+            </h2>
+            <ul className={recentListStyle}>
+              {recentSearches.map((term) => (
+                <li key={term} className={recentItemStyle}>
+                  <button
+                    type="button"
+                    className={recentButtonStyle}
+                    onClick={() => handleSelectKeyword(term)}
                   >
-                    {keyword}
-                  </Chip>
-                ))}
-              </div>
-            </section>
-
-            {recentSearches.length > 0 ? (
-              <section className={sectionStyle} aria-labelledby="search-recent-title">
-                <h2 id="search-recent-title" className={sectionTitleStyle}>
-                  최근 검색
-                </h2>
-                <ul className={recentListStyle}>
-                  {recentSearches.map((term) => (
-                    <li key={term} className={recentItemStyle}>
-                      <button
-                        type="button"
-                        className={recentButtonStyle}
-                        onClick={() => handleSelectKeyword(term)}
-                      >
-                        <span className={recentIconStyle} aria-hidden>
-                          <Clock size={18} strokeWidth={1.75} />
-                        </span>
-                        <span className={recentLabelStyle}>{term}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={removeButtonStyle}
-                        aria-label={`${term} 삭제`}
-                        onClick={() => handleRemoveRecent(term)}
-                      >
-                        <X size={14} aria-hidden />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-          </>
+                    <span className={recentIconStyle} aria-hidden>
+                      <Clock size={18} strokeWidth={1.75} />
+                    </span>
+                    <span className={recentLabelStyle}>{term}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={removeButtonStyle}
+                    aria-label={`${term} 삭제`}
+                    onClick={() => handleRemoveRecent(term)}
+                  >
+                    <X size={14} aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : (
+          <Empty title="최근 검색이 없어요" description="장소를 검색해 보세요." />
         )}
       </div>
     </div>

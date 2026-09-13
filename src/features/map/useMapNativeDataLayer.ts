@@ -1,15 +1,27 @@
 import { useEffect } from 'react'
+import { getErrorMessage } from '@/api/error'
 import { nativeBridge } from '@/bridge/nativeBridge'
 import { buildMapPlanDetail, toBridgePlanSummary } from '@/features/map/buildMapPlanDetail'
 import { fetchMapHeatmap, fetchMapPlaces } from '@/features/map/api'
 import type { MapBounds } from '@/features/map/schemas'
 import { fetchPlanSummaries } from '@/features/plans/summariesApi'
 import { fetchPlaceById } from '@/features/places/api'
-import { checkTripVisit, completeTrip, fetchCurrentTrip } from '@/features/trips/api'
-import type { TripWaypoint } from '@/features/trips/schemas'
+import { checkTripVisit, completeTrip, fetchCurrentTrip, skipTripWaypoint } from '@/features/trips/api'
+import { buildTripDayRoutes, TripWaypointParseError, type TripWaypoint } from '@/features/trips/schemas'
+import { ZodError } from 'zod'
 
 const MAP_PLACES_LIMIT = 25
 const MAP_HEATMAP_GRID = 10
+
+function tripActionErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof TripWaypointParseError) {
+    return error.message
+  }
+  if (error instanceof ZodError) {
+    return '방문 인증 응답을 해석하지 못했어요.'
+  }
+  return getErrorMessage(error, fallback)
+}
 
 async function enrichTripWaypoints(waypoints: TripWaypoint[]) {
   return Promise.all(
@@ -111,9 +123,10 @@ async function pushCurrentTrip() {
       return
     }
     const waypoints = await enrichTripWaypoints(trip.waypoints)
+    const dayRoutes = buildTripDayRoutes(waypoints, trip.routes)
     nativeBridge.postToNative({
       type: 'MAP_CURRENT_TRIP',
-      trip: { ...trip, waypoints },
+      trip: { ...trip, waypoints, dayRoutes },
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : '진행중 여행을 불러오지 못했어요'
@@ -172,6 +185,7 @@ export function useMapNativeDataLayer(enabled: boolean) {
       if (!detail) return
       void (async () => {
         try {
+          console.info('[checkVisit] request', detail)
           const waypoints = await checkTripVisit(detail)
           const enriched = await enrichTripWaypoints(waypoints)
           nativeBridge.postToNative({
@@ -180,7 +194,38 @@ export function useMapNativeDataLayer(enabled: boolean) {
             waypoints: enriched,
           })
         } catch (error) {
-          const message = error instanceof Error ? error.message : '방문 인증에 실패했어요'
+          console.error('[checkVisit] failed', error)
+          const message = tripActionErrorMessage(error, '방문 인증에 실패했어요')
+          nativeBridge.postToNative({
+            type: 'MAP_TRIP_VISIT_RESULT',
+            tripId: detail.tripId,
+            waypoints: [],
+            error: message,
+          })
+        }
+      })()
+    }
+    const onTripSkip = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{
+          tripId: number
+          waypointId: number
+        }>
+      ).detail
+      if (!detail) return
+      void (async () => {
+        try {
+          console.info('[skipWaypoint] request', detail)
+          const waypoints = await skipTripWaypoint(detail)
+          const enriched = await enrichTripWaypoints(waypoints)
+          nativeBridge.postToNative({
+            type: 'MAP_TRIP_VISIT_RESULT',
+            tripId: detail.tripId,
+            waypoints: enriched,
+          })
+        } catch (error) {
+          console.error('[skipWaypoint] failed', error)
+          const message = tripActionErrorMessage(error, '경유지 건너뛰기에 실패했어요')
           nativeBridge.postToNative({
             type: 'MAP_TRIP_VISIT_RESULT',
             tripId: detail.tripId,
@@ -223,6 +268,7 @@ export function useMapNativeDataLayer(enabled: boolean) {
     window.addEventListener('gilmoa:request-current-trip', onCurrentTrip)
     window.addEventListener('gilmoa:request-map-search', onMapSearch)
     window.addEventListener('gilmoa:request-trip-visit', onTripVisit)
+    window.addEventListener('gilmoa:request-trip-skip', onTripSkip)
     window.addEventListener('gilmoa:request-trip-complete', onTripComplete)
 
     return () => {
@@ -231,6 +277,7 @@ export function useMapNativeDataLayer(enabled: boolean) {
       window.removeEventListener('gilmoa:request-current-trip', onCurrentTrip)
       window.removeEventListener('gilmoa:request-map-search', onMapSearch)
       window.removeEventListener('gilmoa:request-trip-visit', onTripVisit)
+      window.removeEventListener('gilmoa:request-trip-skip', onTripSkip)
       window.removeEventListener('gilmoa:request-trip-complete', onTripComplete)
     }
   }, [enabled])

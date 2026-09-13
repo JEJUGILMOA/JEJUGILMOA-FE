@@ -10,7 +10,7 @@ export const pageStyle = style({
   gap: vars.space[4],
   padding: vars.space[4],
   paddingTop: 0,
-  backgroundColor: colors.background[2],
+  backgroundColor: colors.surface[1],
   vars: {
     [PAGE_HEADER_BLEED_VAR]: vars.space[4],
   },
@@ -26,7 +26,7 @@ export const skeletonCardStyle = style({
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
-  borderRadius: '20px',
+  borderRadius: vars.radius.sm,
   backgroundColor: colors.surface[1],
   boxShadow: '0 4px 16px rgba(37, 37, 45, 0.08)',
 })

@@ -24,6 +24,7 @@ export const ROUTES = {
   plan: '/plan',
   planCreate: '/plan/new',
   planCourseRecommend: '/plan/courses',
+  planDetail: (id: string) => `/plan/${id}`,
   planEdit: (id: string) => `/plan/${id}/edit`,
   planItinerary: (id: string) => `/plan/${id}/itinerary`,
   planBudget: (id: string) => `/plan/${id}/budget`,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import '@/pages/plan/itinerary/nativeMapPassThrough.css.ts'
 import { Chip } from '@/components/ui/Chip/Chip'
 import { Empty } from '@/components/ui/Empty/Empty'
@@ -23,6 +23,7 @@ import {
 import { useMapHeatmapQuery, useMapPlacesQuery } from '@/features/map/hooks'
 import type { MapBounds } from '@/features/map/schemas'
 import { useMapNativeDataLayer } from '@/features/map/useMapNativeDataLayer'
+import { useCurrentTripQuery } from '@/features/trips/hooks'
 import { useAppStore } from '@/stores/appStore'
 import {
   chipRowStyle,
@@ -46,6 +47,12 @@ import {
 const FILTERS = ['전체', ...PLACE_CATEGORIES.map((category) => category.label)] as const
 type PlaceFilter = (typeof FILTERS)[number]
 
+const MAP_MODES = [
+  { id: 'general', label: '탐색' },
+  { id: 'activeTrip', label: '진행중 여행' },
+] as const
+type WebMapMode = (typeof MAP_MODES)[number]['id']
+
 /** 한 번에 가져올 장소 수 (화면이 과밀해지지 않도록) */
 const MAP_PLACES_LIMIT = 25
 /** 지도 화면 가운데 기준으로 검색할 영역 비율 */
@@ -56,20 +63,38 @@ function isPlaceFilter(value: string): value is PlaceFilter {
   return (FILTERS as readonly string[]).includes(value)
 }
 
+function isWebMapMode(value: string | null): value is WebMapMode {
+  return value === 'general' || value === 'activeTrip'
+}
+
 function toSearchArea(bounds: MapBounds): MapBounds {
   return roundBounds(shrinkBounds(bounds, SEARCH_BOUNDS_RATIO))
 }
 
 export function MapPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const location = useAppStore((s) => s.nativeLocation)
   const isNative = nativeBridge.isNativeWebView()
+
+  const mapModeParam = searchParams.get('mode')
+  const mapMode: WebMapMode = isWebMapMode(mapModeParam) ? mapModeParam : 'general'
+
+  const setMapMode = (mode: WebMapMode) => {
+    if (mode === 'general') {
+      setSearchParams({}, { replace: true })
+      return
+    }
+    setSearchParams({ mode }, { replace: true })
+  }
 
   const [filter, setFilter] = useState<PlaceFilter>('전체')
   /** 지도가 움직일 때마다 갱신되는 전체 뷰포트 */
   const [viewBounds, setViewBounds] = useState<MapBounds | null>(null)
   /** 실제 API에 사용하는 검색 영역 (버튼/초기 로드 시에만 커밋) */
   const [searchBounds, setSearchBounds] = useState<MapBounds | null>(null)
+
+  const currentTripQuery = useCurrentTripQuery(!isNative && mapMode === 'activeTrip')
 
   const fallbackBounds = useMemo(() => {
     if (location) return boundsAround(location.latitude, location.longitude)
@@ -93,7 +118,7 @@ export function MapPage() {
   const isUnsupportedCategory = filter !== '전체' && !apiCategory
 
   const placesQuery = useMapPlacesQuery(
-    !isNative && searchBounds && !isUnsupportedCategory
+    !isNative && mapMode === 'general' && searchBounds && !isUnsupportedCategory
       ? {
           ...searchBounds,
           category: apiCategory,
@@ -102,7 +127,7 @@ export function MapPage() {
       : null,
   )
   const heatmapQuery = useMapHeatmapQuery(
-    !isNative && searchBounds
+    !isNative && mapMode === 'general' && searchBounds
       ? {
           ...searchBounds,
           gridSize: MAP_HEATMAP_GRID,
@@ -195,6 +220,66 @@ export function MapPage() {
 
   return (
     <div className={pageStyle}>
+      <HorizontalScrollArea className={chipRowStyle} role="tablist" aria-label="지도 모드">
+        {MAP_MODES.map((item) => (
+          <Chip
+            key={item.id}
+            size="md"
+            colorScheme="primary"
+            isSelected={mapMode === item.id}
+            onClick={() => setMapMode(item.id)}
+          >
+            {item.label}
+          </Chip>
+        ))}
+      </HorizontalScrollArea>
+
+      {mapMode === 'activeTrip' ? (
+        <>
+          {currentTripQuery.isLoading ? <Loading label="진행중 여행을 불러오는 중" /> : null}
+          {currentTripQuery.isError ? (
+            <ErrorState onRetry={() => void currentTripQuery.refetch()} />
+          ) : null}
+          {!currentTripQuery.isLoading && !currentTripQuery.isError ? (
+            currentTripQuery.data ? (
+              <section>
+                <div className={mapCanvasStyle} aria-label="진행중 여행">
+                  <p className={mapHintStyle}>{currentTripQuery.data.title}</p>
+                  <p className={statusStyle}>진행중 여행 · 경유지 {currentTripQuery.data.waypoints.length}곳</p>
+                </div>
+                <h2 className={sectionTitleStyle}>경유지</h2>
+                {currentTripQuery.data.waypoints.length === 0 ? (
+                  <Empty title="경유지가 없어요" description="일정에 담긴 장소가 여기 나타납니다." />
+                ) : (
+                  <ul className={listStyle}>
+                    {currentTripQuery.data.waypoints.map((wp) => (
+                      <li key={wp.waypointId}>
+                        <div className={listItemStyle}>
+                          <span className={listTitleStyle}>
+                            {wp.visited ? '✓ ' : ''}
+                            {wp.placeName ?? `장소 ${wp.placeId}`}
+                          </span>
+                          <span className={listMetaStyle}>
+                            {[wp.visitDate, wp.skipped ? '건너뜀' : wp.visited ? '방문 완료' : '방문 예정']
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            ) : (
+              <Empty
+                title="진행중인 여행이 없어요"
+                description="계획 상세에서 여행을 시작해 보세요."
+              />
+            )
+          ) : null}
+        </>
+      ) : (
+        <>
       <HorizontalScrollArea className={chipRowStyle} role="tablist" aria-label="카테고리 필터">
         {FILTERS.map((item) => (
           <Chip
@@ -309,6 +394,8 @@ export function MapPage() {
           </section>
         </>
       ) : null}
+        </>
+      )}
     </div>
   )
 }

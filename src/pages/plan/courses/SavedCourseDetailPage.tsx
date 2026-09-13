@@ -5,8 +5,12 @@ import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES, placePath } from '@/constants'
-import { mapSavedCourseDetail } from '@/features/courses/format'
-import { useDeleteSavedCourseMutation, useSavedCourseDetailQuery } from '@/features/courses/hooks'
+import { mapRecommendedCourseDetail, mapSavedCourseDetail } from '@/features/courses/format'
+import {
+  useDeleteSavedCourseMutation,
+  useRecommendedCourseDetailQuery,
+  useSavedCourseDetailQuery,
+} from '@/features/courses/hooks'
 import { CourseDetailView } from '@/pages/courses/components/CourseDetailView/CourseDetailView'
 import { pageStyle } from '@/pages/courses/components/CourseDetailView/CourseDetailView.css.ts'
 import type { PlanCourseNavigationState } from '@/pages/plan/courses/PlanCourseRecommendPage'
@@ -21,7 +25,12 @@ export function SavedCourseDetailPage() {
   const goBack = () => navigate(-1)
   const navState = location.state as PlanCourseNavigationState | null
 
-  if (courseQuery.isLoading) {
+  const sourceId =
+    courseQuery.data?.sourceType === 'RECOMMENDED' ? (courseQuery.data.sourceId ?? '') : ''
+  const recommendedQuery = useRecommendedCourseDetailQuery(sourceId)
+  const isEnriching = Boolean(sourceId) && recommendedQuery.isLoading
+
+  if (courseQuery.isLoading || isEnriching) {
     return (
       <div className={pageStyle}>
         <PageHeader title="코스 상세" showBack onBack={goBack} />
@@ -56,7 +65,10 @@ export function SavedCourseDetailPage() {
     )
   }
 
-  const course = mapSavedCourseDetail(courseQuery.data)
+  // 추천 원본이면 코스 id(sourceId) 상세를 우선, 실패 시 저장 상세로 fallback
+  const course = recommendedQuery.data
+    ? mapRecommendedCourseDetail(recommendedQuery.data)
+    : mapSavedCourseDetail(courseQuery.data)
 
   const handleStart = () => {
     if (!navState?.planId) return

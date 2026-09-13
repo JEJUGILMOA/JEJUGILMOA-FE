@@ -545,13 +545,39 @@ export const handlers = [
 
   http.get('*/plans', () => HttpResponse.json(envelope(mockPlanSummaries))),
   http.get('*/plans/:planId', ({ params }) => {
-    if (params.planId !== String(mockPlanDetail.planId)) {
+    const planId = Number(params.planId)
+    if (planId === mockPlanDetail.planId) {
+      return HttpResponse.json(envelope(mockPlanDetail))
+    }
+
+    const summary = mockPlanSummaries.find((plan) => plan.planId === planId)
+    if (!summary) {
       return HttpResponse.json(
         { isSuccess: false, code: 'PLAN404_1', message: '존재하지 않는 여행 계획입니다.', result: null },
         { status: 404 },
       )
     }
-    return HttpResponse.json(envelope(mockPlanDetail))
+
+    return HttpResponse.json(
+      envelope({
+        planId: summary.planId,
+        title: summary.title,
+        startDate: summary.startDate,
+        endDate: summary.endDate,
+        nights: summary.nights,
+        days: summary.days,
+        status: summary.status,
+        travelStyle: null,
+        companion: null,
+        categories: null,
+        itinerary: [],
+        budgetTransportation: null,
+        budgetAccommodation: null,
+        budgetFood: null,
+        budgetEtc: null,
+        totalBudget: null,
+      } satisfies TravelPlanDetailResponse),
+    )
   }),
   http.post('*/plans', async ({ request }) => {
     const payload = (await request.json()) as PlanCreateRequest
@@ -562,6 +588,104 @@ export const handlers = [
     return HttpResponse.json(envelope(toDetailResponse(Number(params.planId), payload)))
   }),
   http.delete('*/plans/:planId', () => HttpResponse.json(envelope(null))),
+
+  http.post('*/trips', async ({ request }) => {
+    const body = (await request.json()) as { planId?: number }
+    const planId = body.planId
+    if (typeof planId !== 'number' || !Number.isFinite(planId)) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'COMMON400',
+          message: '잘못된 요청입니다.',
+          result: null,
+        },
+        { status: 400 },
+      )
+    }
+
+    const summary = mockPlanSummaries.find((plan) => plan.planId === planId)
+    if (!summary) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN404_1',
+          message: '존재하지 않는 여행 계획입니다.',
+          result: null,
+        },
+        { status: 404 },
+      )
+    }
+
+    if (summary.status !== 'DRAFT') {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN400_8',
+          message: '시작할 수 없는 여행 계획입니다.',
+          result: null,
+        },
+        { status: 400 },
+      )
+    }
+
+    summary.status = 'IN_PROGRESS'
+    if (mockPlanDetail.planId === planId) {
+      mockPlanDetail.status = 'IN_PROGRESS'
+    }
+
+    return HttpResponse.json(
+      envelope({
+        tripId: planId * 1000,
+        title: summary.title,
+        status: 'IN_PROGRESS',
+        actualStartedAt: new Date().toISOString(),
+        waypoints: [],
+      }),
+      { status: 201 },
+    )
+  }),
+
+  http.post('*/trips/:tripId/waypoints/:waypointId/skip', ({ params }) => {
+    const waypointId = Number(params.waypointId)
+    const waypoints = (mockPlanDetail.itinerary ?? []).flatMap((day) => day.waypoints ?? [])
+    const target = waypoints.find((wp) => wp.waypointId === waypointId)
+    if (!target) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN404_1',
+          message: '존재하지 않는 경유지입니다.',
+          result: null,
+        },
+        { status: 404 },
+      )
+    }
+    if (target.visited) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN400_11',
+          message: '이미 처리된 경유지입니다.',
+          result: null,
+        },
+        { status: 400 },
+      )
+    }
+    return HttpResponse.json(
+      envelope(
+        waypoints.map((wp) =>
+          wp.waypointId === waypointId
+            ? {
+                ...wp,
+                skipped: true,
+                skippedAt: new Date().toISOString(),
+              }
+            : { ...wp, skipped: false, skippedAt: null },
+        ),
+      ),
+    )
+  }),
 
   http.post('*/recommendations', () => HttpResponse.json(envelope(mockRecommendationResponse))),
 

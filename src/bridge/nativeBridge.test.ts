@@ -191,6 +191,13 @@ describe('bridge messageSchema', () => {
       }).success,
     ).toBe(true)
     expect(
+      nativeToWebMessageSchema.safeParse({
+        type: 'REQUEST_TRIP_SKIP',
+        tripId: 1,
+        waypointId: 2,
+      }).success,
+    ).toBe(true)
+    expect(
       nativeToWebMessageSchema.safeParse({ type: 'REQUEST_TRIP_COMPLETE', tripId: 1 }).success,
     ).toBe(true)
 
@@ -226,6 +233,19 @@ describe('bridge messageSchema', () => {
         type: 'MAP_TRIP_COMPLETE_RESULT',
         tripId: 1,
         earnedBadges: [],
+      }).success,
+    ).toBe(true)
+    expect(
+      webToNativeMessageSchema.safeParse({
+        type: 'NAVIGATE_TO_MAP',
+        payload: { mode: 'activeTrip' },
+      }).success,
+    ).toBe(true)
+    expect(
+      webToNativeMessageSchema.safeParse({
+        type: 'NAVIGATE_TO_TAB',
+        tab: 'plan',
+        path: '/plan/123',
       }).success,
     ).toBe(true)
   })

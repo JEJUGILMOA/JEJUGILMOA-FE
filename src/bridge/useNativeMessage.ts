@@ -138,6 +138,16 @@ function handleNativeMessage(data: unknown) {
         }),
       )
       break
+    case 'REQUEST_TRIP_SKIP':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:request-trip-skip', {
+          detail: {
+            tripId: message.tripId,
+            waypointId: message.waypointId,
+          },
+        }),
+      )
+      break
     case 'REQUEST_TRIP_COMPLETE':
       window.dispatchEvent(
         new CustomEvent('gilmoa:request-trip-complete', {

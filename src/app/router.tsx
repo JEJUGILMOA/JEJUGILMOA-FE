@@ -14,6 +14,7 @@ import { PlanCreatePage } from '@/pages/plan/create/PlanCreatePage'
 import { PlanItineraryPage } from '@/pages/plan/itinerary/PlanItineraryPage'
 import { PlanBudgetPage } from '@/pages/plan/budget/PlanBudgetPage'
 import { PlanPreviewPage } from '@/pages/plan/preview/PlanPreviewPage'
+import { PlanDetailPage } from '@/pages/plan/detail/PlanDetailPage'
 import { PlanCourseRecommendPage } from '@/pages/plan/courses/PlanCourseRecommendPage'
 import { SavedCourseDetailPage } from '@/pages/plan/courses/SavedCourseDetailPage'
 import { RecordPage } from '@/pages/record/RecordPage'
@@ -189,6 +190,11 @@ export const router = createBrowserRouter([
         path: 'plan/:planId/preview',
         Component: PlanPreviewPage,
         handle: { title: '계획 미리보기', ...withPageHeader } satisfies RouteHandle,
+      },
+      {
+        path: 'plan/:planId',
+        Component: PlanDetailPage,
+        handle: { title: '여행 계획', ...withPageHeader } satisfies RouteHandle,
       },
       {
         path: ROUTES.record.slice(1),

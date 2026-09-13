@@ -25,13 +25,29 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('OPEN_EXTERNAL_URL'),
-    url: z.string().url(),
+    /** http(s)뿐 아니라 nmap:// 등 앱 스킴 허용 */
+    url: z.string().min(1),
+    fallbackUrl: z.string().min(1).optional(),
   }),
   z.object({
     type: z.literal('HAPTIC'),
     style: z.enum(['light', 'medium', 'heavy']).optional(),
   }),
   z.object({ type: z.literal('CLOSE_WEBVIEW') }),
+  z.object({
+    type: z.literal('NAVIGATE_TO_MAP'),
+    payload: z
+      .object({
+        placeId: z.string().optional(),
+        mode: z.enum(['general', 'plan', 'activeTrip', 'heatmap']).optional(),
+      })
+      .optional(),
+  }),
+  z.object({
+    type: z.literal('NAVIGATE_TO_TAB'),
+    tab: z.enum(['home', 'map', 'plan', 'record', 'my']),
+    path: z.string().optional(),
+  }),
   z.object({
     type: z.literal('SET_HEADER'),
     title: z.string().optional(),
@@ -204,6 +220,14 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
             longitude: z.number().optional(),
           }),
         ),
+        dayRoutes: z
+          .array(
+            z.object({
+              dayNumber: z.number(),
+              path: z.array(z.object({ latitude: z.number(), longitude: z.number() })),
+            }),
+          )
+          .optional(),
       })
       .nullable(),
     error: z.string().optional(),
@@ -374,6 +398,11 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
     waypointId: z.number(),
     latitude: z.number(),
     longitude: z.number(),
+  }),
+  z.object({
+    type: z.literal('REQUEST_TRIP_SKIP'),
+    tripId: z.number(),
+    waypointId: z.number(),
   }),
   z.object({
     type: z.literal('REQUEST_TRIP_COMPLETE'),

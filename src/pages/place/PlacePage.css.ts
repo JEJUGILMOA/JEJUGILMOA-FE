@@ -8,7 +8,7 @@ export const pageStyle = style({
   minHeight: '100%',
   backgroundColor: colors.background[1],
   fontFamily: vars.fontFamily.sans,
-  paddingBottom: '88px',
+  paddingBottom: `calc(${vars.space[6]} + env(safe-area-inset-bottom))`,
 })
 
 export const heroStyle = style({

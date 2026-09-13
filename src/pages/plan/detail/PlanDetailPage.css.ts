@@ -14,3 +14,9 @@ export const emptyHintStyle = style({
   fontSize: vars.fontSize.sm,
   color: colors.text[4],
 })
+
+export const actionsStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+})
