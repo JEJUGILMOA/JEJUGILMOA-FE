@@ -72,7 +72,7 @@ function normalizeTripRoutesInput(input: unknown): unknown[] {
       })
     }
   }
-  console.warn('[trip] unexpected routes shape', input)
+  // console.warn('[trip] unexpected routes shape', input)
   return []
 }
 
@@ -119,19 +119,19 @@ export function parseTripWaypointList(data: unknown) {
     list = [data]
   }
 
-  console.info('[tripWaypoint] parse input', {
-    rawType: Array.isArray(data) ? 'array' : data === null ? 'null' : typeof data,
-    raw: data,
-    normalizedLength: list.length,
-  })
+  // console.info('[tripWaypoint] parse input', {
+  //   rawType: Array.isArray(data) ? 'array' : data === null ? 'null' : typeof data,
+  //   raw: data,
+  //   normalizedLength: list.length,
+  // })
   const parsed = tripWaypointSchema.array().safeParse(list)
   if (!parsed.success) {
-    console.error('[tripWaypoint] parse failed', {
-      issues: parsed.error.issues,
-      flatten: parsed.error.flatten(),
-      raw: data,
-      list,
-    })
+    // console.error('[tripWaypoint] parse failed', {
+    //   issues: parsed.error.issues,
+    //   flatten: parsed.error.flatten(),
+    //   raw: data,
+    //   list,
+    // })
     throw new TripWaypointParseError(
       data,
       parsed.error.issues.map((issue) => ({
@@ -140,7 +140,7 @@ export function parseTripWaypointList(data: unknown) {
       })),
     )
   }
-  console.info('[tripWaypoint] parse ok', parsed.data)
+  // console.info('[tripWaypoint] parse ok', parsed.data)
   return parsed.data
 }
 

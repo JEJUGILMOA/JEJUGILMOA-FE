@@ -52,8 +52,9 @@ export const ROUTES = {
   test: ['/test/jinsung', '/test/suji'],
 } as const
 
-/** 약관 및 정책 (외부 사이트) */
+/** 약관 및 정책 / 고객센터 (외부 사이트) */
 export const EXTERNAL_PRIVACY_POLICY_URL = 'https://gilmoa.site/privacy-policy'
+export const EXTERNAL_SUPPORT_URL = 'https://gilmoa.site/support'
 
 export function placePath(placeId: string) {
   return `/place/${placeId}`

@@ -46,7 +46,7 @@ export async function checkTripVisit(params: {
     latitude: params.latitude,
     longitude: params.longitude,
   })
-  console.info('[checkVisit] raw result', data)
+  // console.info('[checkVisit] raw result', data)
   return parseTripVisitResult(data)
 }
 
@@ -58,7 +58,7 @@ export async function skipTripWaypoint(params: {
   const data = await apiPost<unknown>(
     `/trips/${params.tripId}/waypoints/${params.waypointId}/skip`,
   )
-  console.info('[skipWaypoint] raw result', data)
+  // console.info('[skipWaypoint] raw result', data)
   return parseTripWaypointList(data)
 }
 

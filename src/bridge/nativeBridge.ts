@@ -32,7 +32,7 @@ function shouldUseMockBridge() {
 export function postToNative(message: WebToNativeMessage) {
   const parsed = webToNativeMessageSchema.safeParse(message)
   if (!parsed.success) {
-    console.warn('[bridge] invalid web→native message', parsed.error)
+    // console.warn('[bridge] invalid web→native message', parsed.error)
     return
   }
 
@@ -44,11 +44,11 @@ export function postToNative(message: WebToNativeMessage) {
   }
 
   if (shouldUseMockBridge()) {
-    console.info('[mock-bridge] web→native', parsed.data)
+    // console.info('[mock-bridge] web→native', parsed.data)
     return
   }
 
-  console.warn('[bridge] ReactNativeWebView is not available')
+  // console.warn('[bridge] ReactNativeWebView is not available')
 }
 
 export function emitMockNativeMessage(message: unknown) {

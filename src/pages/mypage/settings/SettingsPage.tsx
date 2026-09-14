@@ -13,7 +13,7 @@ import {
 } from '@/features/auth/hooks'
 import type { UserSettings } from '@/features/auth/schemas'
 import { useAuthStore } from '@/stores/authStore'
-import { EXTERNAL_PRIVACY_POLICY_URL, ROUTES } from '@/constants'
+import { EXTERNAL_PRIVACY_POLICY_URL, EXTERNAL_SUPPORT_URL, ROUTES } from '@/constants'
 import { cn } from '@/utils/cn'
 import {
   dangerTextStyle,
@@ -180,16 +180,19 @@ export function SettingsPage() {
     }
   }
 
-  const openPrivacyPolicy = () => {
+  const openExternalUrl = (url: string) => {
     if (nativeBridge.isNativeWebView()) {
       nativeBridge.postToNative({
         type: 'OPEN_EXTERNAL_URL',
-        url: EXTERNAL_PRIVACY_POLICY_URL,
+        url,
       })
       return
     }
-    window.open(EXTERNAL_PRIVACY_POLICY_URL, '_blank', 'noopener,noreferrer')
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
+
+  const openPrivacyPolicy = () => openExternalUrl(EXTERNAL_PRIVACY_POLICY_URL)
+  const openSupport = () => openExternalUrl(EXTERNAL_SUPPORT_URL)
 
   return (
     <div className={pageStyle}>
@@ -243,11 +246,7 @@ export function SettingsPage() {
       <div className={dividerStyle}>
         <p className={sectionLabelStyle}>지원</p>
       </div>
-      <button
-        type="button"
-        className={settingRowStyle}
-        onClick={() => navigate(ROUTES.support)}
-      >
+      <button type="button" className={settingRowStyle} onClick={openSupport}>
         <span className={settingLabelStyle}>고객센터</span>
         <span className={linkValueStyle}>›</span>
       </button>

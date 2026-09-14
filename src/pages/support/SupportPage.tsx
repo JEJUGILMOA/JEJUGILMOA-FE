@@ -1,6 +1,3 @@
-import { useNavigate } from 'react-router'
-import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
-import { ROUTES } from '@/constants'
 import {
   descStyle,
   emailLinkStyle,
@@ -14,20 +11,8 @@ const SUPPORT_EMAIL = 'jskim6335@naver.com'
 
 /** 공개 고객센터 — 로그인·마이 탭과 무관한 독립 페이지 */
 export function SupportPage() {
-  const navigate = useNavigate()
-
-  const goBack = () => {
-    if (window.history.length > 1) {
-      navigate(-1)
-      return
-    }
-    navigate(ROUTES.home)
-  }
-
   return (
     <div className={pageStyle}>
-      <PageHeader title="고객센터" showBack onBack={goBack} />
-
       <section className={sectionStyle}>
         <h2 className={titleStyle}>고객센터</h2>
         <p className={descStyle}>

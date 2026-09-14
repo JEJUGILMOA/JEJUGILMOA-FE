@@ -187,9 +187,9 @@ async function fetchRecordDetails(mine: boolean): Promise<TravelRecordDetailResp
     params: { mine, view: 'CARD' },
   })
   const results = await Promise.allSettled(page.content.map((item) => fetchRecordDetail(item.recordId)))
-  return results.flatMap((result, index) => {
+  return results.flatMap((result) => {
     if (result.status === 'fulfilled') return [result.value]
-    console.warn(`기록 상세 조회 실패 (recordId=${page.content[index].recordId})`, result.reason)
+    // console.warn(`기록 상세 조회 실패`, result.reason)
     return []
   })
 }

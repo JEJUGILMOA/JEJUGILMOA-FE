@@ -185,7 +185,7 @@ export function useMapNativeDataLayer(enabled: boolean) {
       if (!detail) return
       void (async () => {
         try {
-          console.info('[checkVisit] request', detail)
+          // console.info('[checkVisit] request', detail)
           const result = await checkTripVisit(detail)
           const enriched = await enrichTripWaypoints(result.waypoints)
           nativeBridge.postToNative({
@@ -201,7 +201,7 @@ export function useMapNativeDataLayer(enabled: boolean) {
             })),
           })
         } catch (error) {
-          console.error('[checkVisit] failed', error)
+          // console.error('[checkVisit] failed', error)
           const message = tripActionErrorMessage(error, '방문 인증에 실패했어요')
           nativeBridge.postToNative({
             type: 'MAP_TRIP_VISIT_RESULT',
@@ -222,7 +222,7 @@ export function useMapNativeDataLayer(enabled: boolean) {
       if (!detail) return
       void (async () => {
         try {
-          console.info('[skipWaypoint] request', detail)
+          // console.info('[skipWaypoint] request', detail)
           const waypoints = await skipTripWaypoint(detail)
           const enriched = await enrichTripWaypoints(waypoints)
           nativeBridge.postToNative({
@@ -231,7 +231,7 @@ export function useMapNativeDataLayer(enabled: boolean) {
             waypoints: enriched,
           })
         } catch (error) {
-          console.error('[skipWaypoint] failed', error)
+          // console.error('[skipWaypoint] failed', error)
           const message = tripActionErrorMessage(error, '경유지 건너뛰기에 실패했어요')
           nativeBridge.postToNative({
             type: 'MAP_TRIP_VISIT_RESULT',

@@ -51,7 +51,7 @@ function handleNativeMessage(data: unknown) {
       appStore.getState().setNativeLocation(message.location)
       break
     case 'LOCATION_ERROR':
-      console.warn('[bridge] location error', message.message)
+      // console.warn('[bridge] location error', message.message)
       break
     case 'AUTH_TOKEN':
       authStore.getState().setAuth({
