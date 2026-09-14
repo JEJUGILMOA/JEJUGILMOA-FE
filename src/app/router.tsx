@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router'
+import { createBrowserRouter } from 'react-router'
 import { AppLayout, type RouteHandle } from '@/components/layout/AppLayout/AppLayout'
 import { HomePage } from '@/pages/home/HomePage'
 import { LoginPage } from '@/pages/login/LoginPage'
@@ -34,9 +34,6 @@ import { BadgesPage } from '@/pages/mypage/badges/BadgesPage'
 import { SharedRecordsPage } from '@/pages/mypage/shared-records/SharedRecordsPage'
 import { NoticesPage } from '@/pages/mypage/notices/NoticesPage'
 import { NoticeDetailPage } from '@/pages/mypage/notices/NoticeDetailPage'
-import { SupportPage } from '@/pages/support/SupportPage'
-import { SupportInquiryPage } from '@/pages/mypage/support/SupportInquiryPage'
-import { PrivacyPolicyPage } from '@/pages/privacy/PrivacyPolicyPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { TestPageJinsung } from '@/pages/test/TestPageJinsung'
 import { TestPageSuji } from '@/pages/test/TestPageSuji'
@@ -55,14 +52,6 @@ const mySubPageHandle = {
   hideNav: true,
   flush: true,
   showHeader: false,
-} as const satisfies Partial<RouteHandle>
-
-/** 로그인 없이 열리는 공개 단독 페이지 (하단 탭·네이티브 헤더 없음) */
-const publicStandaloneHandle = {
-  hideNav: true,
-  flush: true,
-  showHeader: false,
-  showBack: false,
 } as const satisfies Partial<RouteHandle>
 
 const authPageHandle = {
@@ -299,30 +288,7 @@ export const router = createBrowserRouter([
             Component: NoticeDetailPage,
             handle: { title: '공지사항', ...mySubPageHandle } satisfies RouteHandle,
           },
-          {
-            path: 'support',
-            element: <Navigate to={ROUTES.support} replace />,
-          },
-          {
-            path: 'support/inquiry',
-            Component: SupportInquiryPage,
-            handle: { title: '문의하기', ...mySubPageHandle } satisfies RouteHandle,
-          },
-          {
-            path: 'privacy-policy',
-            element: <Navigate to={ROUTES.privacyPolicy} replace />,
-          },
         ],
-      },
-      {
-        path: ROUTES.support.slice(1),
-        Component: SupportPage,
-        handle: { title: '고객센터', ...publicStandaloneHandle } satisfies RouteHandle,
-      },
-      {
-        path: ROUTES.privacyPolicy.slice(1),
-        Component: PrivacyPolicyPage,
-        handle: { title: '개인정보처리방침', ...publicStandaloneHandle } satisfies RouteHandle,
       },
       {
         path: ROUTES.test[0].slice(1),

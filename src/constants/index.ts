@@ -45,16 +45,12 @@ export const ROUTES = {
   mySharedRecords: '/my/shared-records',
   myNotices: '/my/notices',
   myNoticeDetail: '/my/notices/:noticeId',
-  mySupportInquiry: '/my/support/inquiry',
-  /** 로그인·마이와 분리된 공개 페이지 */
-  support: '/support',
-  privacyPolicy: '/privacy-policy',
   test: ['/test/jinsung', '/test/suji'],
 } as const
 
 /** 약관 및 정책 / 고객센터 (외부 사이트) */
-export const EXTERNAL_PRIVACY_POLICY_URL = 'https://gilmoa.site/privacy-policy'
-export const EXTERNAL_SUPPORT_URL = 'https://gilmoa.site/support'
+export const EXTERNAL_PRIVACY_POLICY_URL = 'https://www.gilmoa.site/privacy-policy'
+export const EXTERNAL_SUPPORT_URL = 'https://www.gilmoa.site/support'
 
 export function placePath(placeId: string) {
   return `/place/${placeId}`
