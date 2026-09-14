@@ -37,6 +37,8 @@ export const courseStopSchema = z.object({
   placeId: z.coerce.string(),
   placeName: z.string(),
   placeImageUrl: optionalString,
+  placeDescription: optionalString,
+  description: optionalString,
   travelTimeToNext: optionalNumber,
 })
 
@@ -51,6 +53,8 @@ export const recommendedCourseDetailSchema = z.object({
   placeCount: optionalNumber,
   estimatedMinutes: optionalNumber,
   description: optionalString,
+  theme: z.string().nullish().transform((value) => value ?? undefined),
+  tags: z.array(z.string()).nullish().transform((value) => value ?? []),
   stops: z.array(courseStopSchema).nullish().transform((value) => value ?? []),
 })
 
@@ -60,6 +64,8 @@ export const courseSourceTypeSchema = z.enum(['RECOMMENDED', 'RECORD'])
 export const savedCourseSchema = z.object({
   savedCourseId: z.coerce.string(),
   sourceType: courseSourceTypeSchema,
+  /** 서버가 내려주면 추천/기록 원본 ID로 즐겨찾기 매칭에 사용 */
+  sourceId: z.coerce.string().optional(),
   title: z.string(),
   imageUrl: optionalString,
   region: optionalString,
@@ -72,6 +78,7 @@ export const savedCourseSchema = z.object({
 export const savedCourseDetailSchema = z.object({
   savedCourseId: z.coerce.string(),
   sourceType: courseSourceTypeSchema,
+  sourceId: z.coerce.string().optional(),
   title: z.string(),
   imageUrl: optionalString,
   region: optionalString,
@@ -79,6 +86,7 @@ export const savedCourseDetailSchema = z.object({
   estimatedMinutes: optionalNumber,
   transportMode: optionalString,
   description: optionalString,
+  tags: z.array(z.string()).nullish().transform((value) => value ?? []),
   stops: z.array(courseStopSchema).nullish().transform((value) => value ?? []),
 })
 

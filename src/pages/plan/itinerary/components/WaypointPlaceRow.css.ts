@@ -15,17 +15,8 @@ export const thumbnailStyle = style({
   width: '48px',
   height: '48px',
   borderRadius: vars.radius.sm,
-  backgroundColor: colors.surface[4],
-})
-
-export const thumbnailImageStyle = style({
-  flexShrink: 0,
-  width: '48px',
-  height: '48px',
-  borderRadius: vars.radius.sm,
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
+  overflow: 'hidden',
+  backgroundColor: colors.surface[5],
 })
 
 export const infoColumnStyle = style({

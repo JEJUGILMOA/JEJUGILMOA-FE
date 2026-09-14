@@ -89,13 +89,7 @@ export function TripsPage() {
               <TripCard
                 key={trip.id}
                 trip={trip}
-                onClick={
-                  trip.status === 'ongoing'
-                    ? () => navigate(ROUTES.planItinerary(trip.id))
-                    : trip.status === 'planned'
-                      ? () => navigate(ROUTES.planPreview(trip.id))
-                      : undefined
-                }
+                onClick={() => navigate(ROUTES.planDetail(trip.id))}
               />
             ))}
           </div>

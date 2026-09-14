@@ -1,5 +1,6 @@
 import { Clock, Heart, MapPin, Waves } from 'lucide-react'
 import { type KeyboardEvent } from 'react'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import type { CourseImageTag } from '@/data/mockExplore'
 import { cn } from '@/utils/cn'
 import {
@@ -7,6 +8,7 @@ import {
   cardStyle,
   descStyle,
   imageTagListStyle,
+  imageTagMoreStyle,
   imageTagRecipe,
   infoStyle,
   locationStyle,
@@ -23,6 +25,8 @@ import {
 } from './CourseRecommendCard.css.ts'
 
 const VISIBLE_PREVIEWS = 3
+const VISIBLE_TAGS = 3
+
 
 export type CoursePreviewStep = {
   title: string
@@ -65,6 +69,9 @@ export function CourseRecommendCard({
   const isClickable = Boolean(onClick)
   const visiblePreviews = previewSteps.slice(0, VISIBLE_PREVIEWS)
   const extraCount = Math.max(0, previewSteps.length - VISIBLE_PREVIEWS)
+  const visibleTags = imageTags.slice(0, VISIBLE_TAGS)
+  const extraTagCount = Math.max(0, imageTags.length - VISIBLE_TAGS)
+
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!onClick) return
@@ -83,15 +90,18 @@ export function CourseRecommendCard({
       tabIndex={isClickable ? 0 : undefined}
     >
       <div className={mediaStyle}>
-        {imageUrl ? <img src={imageUrl} alt="" className={mediaImageStyle} /> : null}
-        {imageTags.length > 0 ? (
+        <SafeImage src={imageUrl} className={mediaImageStyle} placeholderSize="lg" />
+        {visibleTags.length > 0 ? (
           <div className={imageTagListStyle}>
-            {imageTags.map((tag) => (
+            {visibleTags.map((tag) => (
               <span key={tag.label} className={imageTagRecipe({ tone: tag.tone })}>
                 <ImageTagIcon tone={tag.tone} />
                 {tag.label}
               </span>
             ))}
+            {extraTagCount > 0 ? (
+              <span className={imageTagMoreStyle}>+{extraTagCount}개</span>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -127,18 +137,15 @@ export function CourseRecommendCard({
         {visiblePreviews.length > 0 ? (
           <div className={previewSectionStyle}>
             <div className={previewRowStyle}>
-              {visiblePreviews.map((step, index) =>
-                step.thumbnailUrl ? (
-                  <img
-                    key={`${step.title}-${index}`}
-                    src={step.thumbnailUrl}
-                    alt=""
-                    className={previewThumbStyle}
-                  />
-                ) : (
-                  <div key={`${step.title}-${index}`} className={previewThumbStyle} aria-hidden />
-                ),
-              )}
+              {visiblePreviews.map((step, index) => (
+                <SafeImage
+                  key={`${step.title}-${index}`}
+                  src={step.thumbnailUrl}
+                  className={previewThumbStyle}
+                  placeholderSize="sm"
+                  showPlaceholderLabel={false}
+                />
+              ))}
               {extraCount > 0 ? (
                 <div className={previewMoreStyle}>+{extraCount}</div>
               ) : null}

@@ -121,7 +121,7 @@ const mockCourses = [
 
 const mockCourseDetail = {
   courseId: 10,
-  imageUrl: 'https://example.com/aewol-course.jpg',
+  imageUrl: undefined,
   title: '애월 감성 코스',
   region: '제주시 애월읍',
   isFree: true,
@@ -129,13 +129,17 @@ const mockCourseDetail = {
   transportMode: 'DRIVE',
   placeCount: 2,
   estimatedMinutes: 180,
-  description: '카페와 해안을 잇는 여유 코스',
+  description:
+    '카페와 해안을 잇는 여유 코스. 애월의 감성 카페를 거쳐 곽지해수욕장까지 이어지는 드라이브 코스입니다.',
+  theme: 'CAFE',
+  tags: ['카페', '해안', '힐링', '드라이브', '일몰'],
   stops: [
     {
       sequenceOrder: 1,
       placeId: 11,
       placeName: '애월 카페거리',
       placeImageUrl: 'https://example.com/aewol.jpg',
+      placeDescription: '감성 카페가 늘어선 애월의 핫플',
       travelTimeToNext: 15,
     },
     {
@@ -143,6 +147,7 @@ const mockCourseDetail = {
       placeId: 12,
       placeName: '곽지해수욕장',
       placeImageUrl: 'https://example.com/gwakji.jpg',
+      placeDescription: '에메랄드빛 바다가 펼쳐지는 해변',
       travelTimeToNext: null,
     },
   ],
@@ -540,13 +545,39 @@ export const handlers = [
 
   http.get('*/plans', () => HttpResponse.json(envelope(mockPlanSummaries))),
   http.get('*/plans/:planId', ({ params }) => {
-    if (params.planId !== String(mockPlanDetail.planId)) {
+    const planId = Number(params.planId)
+    if (planId === mockPlanDetail.planId) {
+      return HttpResponse.json(envelope(mockPlanDetail))
+    }
+
+    const summary = mockPlanSummaries.find((plan) => plan.planId === planId)
+    if (!summary) {
       return HttpResponse.json(
         { isSuccess: false, code: 'PLAN404_1', message: '존재하지 않는 여행 계획입니다.', result: null },
         { status: 404 },
       )
     }
-    return HttpResponse.json(envelope(mockPlanDetail))
+
+    return HttpResponse.json(
+      envelope({
+        planId: summary.planId,
+        title: summary.title,
+        startDate: summary.startDate,
+        endDate: summary.endDate,
+        nights: summary.nights,
+        days: summary.days,
+        status: summary.status,
+        travelStyle: null,
+        companion: null,
+        categories: null,
+        itinerary: [],
+        budgetTransportation: null,
+        budgetAccommodation: null,
+        budgetFood: null,
+        budgetEtc: null,
+        totalBudget: null,
+      } satisfies TravelPlanDetailResponse),
+    )
   }),
   http.post('*/plans', async ({ request }) => {
     const payload = (await request.json()) as PlanCreateRequest
@@ -558,5 +589,178 @@ export const handlers = [
   }),
   http.delete('*/plans/:planId', () => HttpResponse.json(envelope(null))),
 
+  http.post('*/trips', async ({ request }) => {
+    const body = (await request.json()) as { planId?: number }
+    const planId = body.planId
+    if (typeof planId !== 'number' || !Number.isFinite(planId)) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'COMMON400',
+          message: '잘못된 요청입니다.',
+          result: null,
+        },
+        { status: 400 },
+      )
+    }
+
+    const summary = mockPlanSummaries.find((plan) => plan.planId === planId)
+    if (!summary) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN404_1',
+          message: '존재하지 않는 여행 계획입니다.',
+          result: null,
+        },
+        { status: 404 },
+      )
+    }
+
+    if (summary.status !== 'DRAFT') {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN400_8',
+          message: '시작할 수 없는 여행 계획입니다.',
+          result: null,
+        },
+        { status: 400 },
+      )
+    }
+
+    summary.status = 'IN_PROGRESS'
+    if (mockPlanDetail.planId === planId) {
+      mockPlanDetail.status = 'IN_PROGRESS'
+    }
+
+    return HttpResponse.json(
+      envelope({
+        tripId: planId * 1000,
+        title: summary.title,
+        status: 'IN_PROGRESS',
+        actualStartedAt: new Date().toISOString(),
+        waypoints: [],
+      }),
+      { status: 201 },
+    )
+  }),
+
+  http.post('*/trips/:tripId/cancel', ({ params }) => {
+    const tripId = Number(params.tripId)
+    // swagger: tripId === planId
+    const planId = tripId
+    const summary = mockPlanSummaries.find((plan) => plan.planId === planId)
+    if (!summary) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN404_1',
+          message: '존재하지 않는 여행 계획입니다.',
+          result: null,
+        },
+        { status: 404 },
+      )
+    }
+    if (summary.status !== 'IN_PROGRESS') {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN400_22',
+          message: '진행중인 여행만 중단할 수 있습니다.',
+          result: null,
+        },
+        { status: 400 },
+      )
+    }
+
+    summary.status = 'DRAFT'
+    if (mockPlanDetail.planId === planId) {
+      mockPlanDetail.status = 'DRAFT'
+    }
+
+    return HttpResponse.json(
+      envelope({
+        tripId: planId,
+        title: summary.title,
+        status: 'CANCELLED',
+        actualStartedAt: new Date().toISOString(),
+        actualCancelledAt: new Date().toISOString(),
+      }),
+    )
+  }),
+
+  http.post('*/trips/:tripId/waypoints/:waypointId/skip', ({ params }) => {
+    const waypointId = Number(params.waypointId)
+    const waypoints = (mockPlanDetail.itinerary ?? []).flatMap((day) => day.waypoints ?? [])
+    const target = waypoints.find((wp) => wp.waypointId === waypointId)
+    if (!target) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN404_1',
+          message: '존재하지 않는 경유지입니다.',
+          result: null,
+        },
+        { status: 404 },
+      )
+    }
+    if (target.visited) {
+      return HttpResponse.json(
+        {
+          isSuccess: false,
+          code: 'PLAN400_11',
+          message: '이미 처리된 경유지입니다.',
+          result: null,
+        },
+        { status: 400 },
+      )
+    }
+    return HttpResponse.json(
+      envelope(
+        waypoints.map((wp) =>
+          wp.waypointId === waypointId
+            ? {
+                ...wp,
+                skipped: true,
+                skippedAt: new Date().toISOString(),
+              }
+            : { ...wp, skipped: false, skippedAt: null },
+        ),
+      ),
+    )
+  }),
+
   http.post('*/recommendations', () => HttpResponse.json(envelope(mockRecommendationResponse))),
+
+  http.get('*/map/places', () =>
+    HttpResponse.json(
+      envelope([
+        {
+          id: 1,
+          name: '성산일출봉',
+          categoryName: '자연',
+          imageUrl: 'https://example.com/seongsan.jpg',
+          latitude: 33.4589,
+          longitude: 126.9425,
+        },
+        {
+          id: 2,
+          name: '협재 해수욕장',
+          categoryName: '자연',
+          imageUrl: 'https://example.com/hyeopjae.jpg',
+          latitude: 33.394,
+          longitude: 126.239,
+        },
+      ]),
+    ),
+  ),
+  http.get('*/map/heatmap', () =>
+    HttpResponse.json(
+      envelope([
+        { latitude: 33.45, longitude: 126.92, level: 'CROWDED', intensity: 1 },
+        { latitude: 33.48, longitude: 126.55, level: 'MODERATE', intensity: 0.3 },
+      ]),
+    ),
+  ),
 ]

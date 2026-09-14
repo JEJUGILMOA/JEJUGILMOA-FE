@@ -103,25 +103,12 @@ export const coverStyle = style({
   height: 100,
   overflow: 'hidden',
   borderRadius: vars.radius.sm,
-  backgroundColor: colors.surface[4],
+  backgroundColor: colors.surface[5],
 })
 
 export const coverImageStyle = style({
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
-})
-
-export const coverPlaceholderStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '100%',
-  height: '100%',
-  backgroundImage: `linear-gradient(145deg, ${colors.surface[5]} 0%, ${colors.surface[4]} 100%)`,
-  color: colors.text[6],
 })
 
 export const skeletonItemStyle = style({

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { useDragCarousel } from './useDragCarousel'
 import {
   closeButtonStyle,
@@ -52,7 +53,14 @@ export function PlacePhotoModal({ photoUrls, placeName, onClose }: PlacePhotoMod
           {...trackHandlers}
         >
           {photoUrls.map((url, i) => (
-            <img key={`${url}-${i}`} className={slideImageStyle} src={url} alt="" draggable={false} />
+            <SafeImage
+              key={`${url}-${i}`}
+              src={url}
+              className={slideImageStyle}
+              placeholderSize="lg"
+              fit="contain"
+              draggable={false}
+            />
           ))}
         </div>
 

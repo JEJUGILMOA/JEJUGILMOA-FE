@@ -65,9 +65,7 @@ export const imageRecipe = recipe({
   base: {
     flexShrink: 0,
     overflow: 'hidden',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
+    backgroundColor: colors.surface[5],
   },
   variants: {
     variant: {
@@ -87,16 +85,9 @@ export const imageRecipe = recipe({
         borderRadius: vars.radius.sm,
       },
     },
-    hasImage: {
-      true: {},
-      false: {
-        backgroundImage: `linear-gradient(135deg, ${colors.secondary[400]}, ${colors.primary[400]})`,
-      },
-    },
   },
   defaultVariants: {
     variant: 'vertical',
-    hasImage: false,
   },
 })
 

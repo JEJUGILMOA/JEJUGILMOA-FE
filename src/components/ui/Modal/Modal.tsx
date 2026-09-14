@@ -83,8 +83,14 @@ export function Modal({
 
   const isNative = nativeBridge.isNativeWebView()
 
+  // actions 배열 참조가 매 렌더 바뀌어도 SET_MODAL을 다시 쏘지 않도록 시그니처만 의존
+  const actionSignature = resolvedActions
+    .map((action) => `${action.label}:${action.variant ?? 'primary'}`)
+    .join('|')
+
   useLayoutEffect(() => {
     if (!isNative) return
+
     if (open) {
       nativeBridge.postToNative({
         type: 'SET_MODAL',
@@ -92,7 +98,7 @@ export function Modal({
         id: modalId,
         title,
         description,
-        actions: resolvedActions.map((action, index) => ({
+        actions: actionsRef.current.map((action, index) => ({
           id: `${modalId}#${index}`,
           label: action.label,
           variant: action.variant ?? 'primary',
@@ -100,8 +106,17 @@ export function Modal({
       })
       return
     }
+
     nativeBridge.postToNative({ type: 'SET_MODAL', visible: false, id: modalId })
-  }, [isNative, open, modalId, title, description, actions])
+  }, [isNative, open, modalId, title, description, actionSignature])
+
+  // 언마운트 시에만 네이티브 모달 정리 (deps 변경마다 hide→show 깜빡임 방지)
+  useEffect(() => {
+    if (!isNative) return
+    return () => {
+      nativeBridge.postToNative({ type: 'SET_MODAL', visible: false, id: modalId })
+    }
+  }, [isNative, modalId])
 
   useEffect(() => {
     if (!isNative || !open) return

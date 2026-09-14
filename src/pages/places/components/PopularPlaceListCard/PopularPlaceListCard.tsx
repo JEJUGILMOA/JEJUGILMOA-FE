@@ -1,11 +1,11 @@
 import { MoreVertical } from 'lucide-react'
 import { type KeyboardEvent } from 'react'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { cn } from '@/utils/cn'
 import {
   cardStyle,
   categoryStyle,
   headerRowStyle,
-  imagePlaceholderStyle,
   imageRowStyle,
   imageStyle,
   metaStyle,
@@ -90,22 +90,15 @@ export function PopularPlaceListCard({
       </div>
 
       <div className={imageRowStyle}>
-        {thumbs.map((url, index) =>
-          url ? (
-            <img
-              key={`${title}-${index}`}
-              src={url}
-              alt=""
-              className={imageStyle}
-            />
-          ) : (
-            <div
-              key={`${title}-placeholder-${index}`}
-              className={imagePlaceholderStyle}
-              aria-hidden
-            />
-          ),
-        )}
+        {thumbs.map((url, index) => (
+          <SafeImage
+            key={`${title}-${index}`}
+            src={url}
+            className={imageStyle}
+            placeholderSize="sm"
+            showPlaceholderLabel={false}
+          />
+        ))}
       </div>
     </article>
   )

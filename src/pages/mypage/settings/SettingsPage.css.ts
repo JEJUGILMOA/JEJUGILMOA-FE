@@ -26,6 +26,24 @@ export const sectionLabelStyle = style([
   },
 ])
 
+/** 섹션 라벨과 동일 타이포 — 이스터에그용 button 리셋만 */
+export const sectionLabelButtonStyle = style([
+  sectionLabelStyle,
+  {
+    display: 'block',
+    width: '100%',
+    padding: 0,
+    border: 'none',
+    background: 'none',
+    cursor: 'default',
+    textAlign: 'left',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    WebkitTapHighlightColor: 'transparent',
+    userSelect: 'none',
+  },
+])
+
 export const settingRowStyle = style({
   display: 'flex',
   alignItems: 'center',
@@ -85,27 +103,6 @@ export const togglePlaceholderStyle = style({
   backgroundColor: colors.border[1],
   opacity: 0.45,
 })
-
-export const settingsHintStyle = style([
-  bodySmall,
-  {
-    margin: `0 0 ${vars.space[2]}`,
-    color: colors.text[4],
-  },
-])
-
-export const settingsRetryButtonStyle = style([
-  bodySmall,
-  {
-    margin: 0,
-    padding: 0,
-    border: 'none',
-    background: 'transparent',
-    color: colors.primary[600],
-    cursor: 'pointer',
-    textDecoration: 'underline',
-  },
-])
 
 export const toggleThumbStyle = recipe({
   base: {

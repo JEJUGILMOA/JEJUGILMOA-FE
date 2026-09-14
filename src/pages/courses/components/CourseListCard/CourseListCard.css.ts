@@ -34,9 +34,6 @@ export const mediaStyle = style({
 export const mediaImageStyle = style({
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
 })
 
 export const imageTagListStyle = style({
@@ -201,8 +198,7 @@ export const previewThumbStyle = style({
   width: '64px',
   height: '48px',
   borderRadius: '8px',
-  objectFit: 'cover',
-  objectPosition: 'center',
+  overflow: 'hidden',
   backgroundColor: colors.surface[5],
 })
 

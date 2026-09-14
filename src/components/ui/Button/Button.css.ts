@@ -100,15 +100,22 @@ export const buttonRecipe = recipe({
         backgroundColor: colors.error[100],
         color: colors.text[5],
         selectors: {
-          '&:hover:not(:disabled)': {
-            backgroundColor: colors.error[300],
-          },
+          // 터치는 pressed 피드백 유지. hover만 포인터 장치에 제한 (sticky hover 방지)
           '&:active:not(:disabled)': {
             backgroundColor: colors.error[500],
           },
           '&:disabled': {
             backgroundColor: colors.surface[5],
             color: colors.text[4],
+          },
+        },
+        '@media': {
+          '(hover: hover) and (pointer: fine)': {
+            selectors: {
+              '&:hover:not(:disabled)': {
+                backgroundColor: colors.error[300],
+              },
+            },
           },
         },
       },

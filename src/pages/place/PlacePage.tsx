@@ -1,21 +1,30 @@
-import { Globe, MapPin, Phone } from 'lucide-react'
+import { Bookmark, Globe, MapPin, Phone } from 'lucide-react'
 import { useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { isApiError } from '@/api/error'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
+import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
+import {
+  useFavoritePlaceIdsQuery,
+  useToggleFavoriteMutation,
+} from '@/features/favorites/hooks'
 import { usePlaceQuery } from '@/features/places/hooks'
+import { openNaverMapPlace } from '@/features/places/openNaverMap'
 import type { Place } from '@/features/places/types'
+import { useAuthStore } from '@/stores/authStore'
 import {
   bodyStyle,
   descriptionStyle,
-  footerStyle,
   heroActionsStyle,
   heroIconButtonStyle,
+  heroImageStyle,
+  heroOverlayStyle,
   heroStyle,
   heroTitleStyle,
   infoIconStyle,
@@ -47,8 +56,12 @@ function getPlacePhotos(place: Place) {
 
 export function PlacePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { placeId = '' } = useParams()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { data: place, isPending, isError, error, refetch } = usePlaceQuery(placeId)
+  const favoriteIdsQuery = useFavoritePlaceIdsQuery()
+  const toggleFavorite = useToggleFavoriteMutation()
 
   const photos = useMemo(() => (place ? getPlacePhotos(place) : []), [place])
   const description = place ? getPlaceDescription(place) : ''
@@ -58,14 +71,29 @@ export function PlacePage() {
   const hasContactInfo = Boolean(place?.tel || place?.homepage)
   const headerTitle = place?.name ?? '장소'
   const goBack = () => navigate(-1)
+  const favoriteIds = favoriteIdsQuery.data ?? new Set<string>()
+  const isFavorite = placeId ? favoriteIds.has(placeId) : false
 
-  const heroBackgroundStyle = place?.imageUrl
-    ? {
-        backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.55) 100%), url(${place.imageUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }
-    : undefined
+  const handleToggleFavorite = () => {
+    if (!placeId) return
+    if (!isAuthenticated) {
+      toast.info('즐겨찾기는 로그인 후 이용할 수 있어요.')
+      navigate(`${ROUTES.login}?returnTo=${encodeURIComponent(location.pathname)}`)
+      return
+    }
+
+    const nextFavorite = !isFavorite
+    toggleFavorite.mutate(
+      { placeId, nextFavorite },
+      {
+        onError: () => {
+          toast.error(
+            nextFavorite ? '즐겨찾기 추가에 실패했어요.' : '즐겨찾기 해제에 실패했어요.',
+          )
+        },
+      },
+    )
+  }
 
   if (!placeId) {
     return (
@@ -127,13 +155,31 @@ export function PlacePage() {
     <div className={pageStyle}>
       <PageHeader title={headerTitle} showBack onBack={goBack} />
 
-      <section className={heroStyle} style={heroBackgroundStyle} aria-label="장소 이미지">
+      <section className={heroStyle} aria-label="장소 이미지">
+        <SafeImage src={place.imageUrl} className={heroImageStyle} placeholderSize="lg" />
+        <div className={heroOverlayStyle} aria-hidden />
         <div className={heroActionsStyle}>
           <button
             type="button"
             className={heroIconButtonStyle}
-            aria-label="지도에서 보기"
-            onClick={() => navigate(`${ROUTES.map}?placeId=${place.id}`)}
+            aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            aria-pressed={isFavorite}
+            disabled={toggleFavorite.isPending}
+            onClick={handleToggleFavorite}
+          >
+            <Bookmark size={18} fill={isFavorite ? 'currentColor' : 'none'} />
+          </button>
+          <button
+            type="button"
+            className={heroIconButtonStyle}
+            aria-label="네이버 지도에서 보기"
+            onClick={() =>
+              openNaverMapPlace({
+                name: place.name,
+                latitude: place.latitude,
+                longitude: place.longitude,
+              })
+            }
           >
             <MapPin size={18} />
           </button>
@@ -188,7 +234,7 @@ export function PlacePage() {
             <div className={photoListStyle}>
               {photos.map((url) => (
                 <div key={url} className={photoItemStyle}>
-                  <img src={url} alt="" className={photoImgStyle} />
+                  <SafeImage src={url} className={photoImgStyle} placeholderSize="sm" showPlaceholderLabel={false} />
                 </div>
               ))}
             </div>
@@ -199,19 +245,6 @@ export function PlacePage() {
           <h2 className={sectionTitleStyle}>리뷰</h2>
           <Empty title="아직 리뷰가 없어요" description="이 장소의 첫 리뷰를 남겨보세요." />
         </section>
-      </div>
-
-      <div className={footerStyle}>
-        <Button variant="outline" size="lg" fullWidth onClick={() => navigate(ROUTES.plan)}>
-          코스에 추가
-        </Button>
-        <Button
-          size="lg"
-          fullWidth
-          onClick={() => navigate(`${ROUTES.map}?placeId=${place.id}`)}
-        >
-          길찾기
-        </Button>
       </div>
     </div>
   )

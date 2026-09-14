@@ -1,6 +1,5 @@
 import { style } from '@vanilla-extract/css'
 import { recipe } from '@vanilla-extract/recipes'
-import { PAGE_HEADER_BLEED_VAR } from '@/components/ui/PageHeader/PageHeader.css.ts'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
@@ -10,12 +9,10 @@ export const subHeaderStyle = style({
   alignItems: 'center',
   justifyContent: 'space-between',
   minHeight: vars.size.header,
-  marginTop: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, ${vars.space[3]}))`,
-  marginInline: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, ${vars.space[3]}))`,
-  padding: `${vars.space[2]} 4px ${vars.space[2]} 10px`,
+  padding: `${vars.space[2]} ${vars.space[4]}`,
   backgroundColor: colors.surface[1],
   position: 'sticky',
-  top: `calc(-1 * var(${PAGE_HEADER_BLEED_VAR}, ${vars.space[3]}))`,
+  top: 0,
   zIndex: vars.zIndex.sticky,
 })
 
@@ -47,16 +44,20 @@ export const pageStyle = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[6],
-  marginInline: `calc(-1 * ${vars.space[3]})`,
-  paddingBottom: vars.space[8],
+  paddingInline: vars.space[4],
+  paddingBottom: `calc(${vars.space[10]} + env(safe-area-inset-bottom))`,
 })
 
-/** 사진 아래 본문 — 좌우 패딩 */
+/** 사진 캐러셀만 좌우 풀블리드 */
+export const photoBleedStyle = style({
+  marginInline: `calc(-1 * ${vars.space[4]})`,
+})
+
+/** 사진 아래 본문 */
 export const bodyStyle = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[6],
-  paddingInline: vars.space[4],
 })
 
 export const infoStyle = style({

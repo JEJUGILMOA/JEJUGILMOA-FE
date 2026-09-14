@@ -1,11 +1,11 @@
-import { Image, Pencil } from 'lucide-react'
+import { Pencil } from 'lucide-react'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import {
   bodyStyle,
   editButtonStyle,
   noteStyle,
   placeNameStyle,
   rowStyle,
-  thumbnailImageStyle,
   thumbnailStyle,
 } from './EditPlaceMemoRow.css.ts'
 
@@ -21,11 +21,11 @@ export function EditPlaceMemoRow({ placeName, note, thumbnailUrl, onEdit }: Edit
   return (
     <div className={rowStyle}>
       <div className={thumbnailStyle}>
-        {thumbnailUrl ? (
-          <img className={thumbnailImageStyle} src={thumbnailUrl} alt="" />
-        ) : (
-          <Image size={20} aria-hidden />
-        )}
+        <SafeImage
+          src={thumbnailUrl}
+          placeholderSize="sm"
+          showPlaceholderLabel={false}
+        />
       </div>
       <div className={bodyStyle}>
         <p className={placeNameStyle}>{placeName}</p>

@@ -1,9 +1,11 @@
-import { ChevronRight, Image, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { ChevronRight, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { ROUTES } from '@/constants'
 import { useReactToExploreRecordMutation } from '@/features/records/hooks'
 import type { ExploreRecord } from '@/features/records/types'
+import { ExploreRecordMiniMap } from './ExploreRecordMiniMap'
 import {
   authorNameStyle,
   authorRowStyle,
@@ -20,12 +22,16 @@ import {
   titleStyle,
 } from './ExploreRecordCard.css.ts'
 
+export type ExploreRecordCardMedia = 'photos' | 'map'
+
 export type ExploreRecordCardProps = {
   record: ExploreRecord
+  /** 카드형 사진 썸네일 / 지도형 Leaflet 미니맵 */
+  media?: ExploreRecordCardMedia
 }
 
 /** STEP 06: 둘러보기 카드형의 카드 한 장 (STEP 07: 좋아요·싫어요 반응 포함). 클릭하면 STEP 08 상세보기로 이동한다 */
-export function ExploreRecordCard({ record }: ExploreRecordCardProps) {
+export function ExploreRecordCard({ record, media = 'photos' }: ExploreRecordCardProps) {
   const navigate = useNavigate()
   const reactMutation = useReactToExploreRecordMutation()
 
@@ -48,10 +54,21 @@ export function ExploreRecordCard({ record }: ExploreRecordCardProps) {
       }}
     >
       <div className={thumbnailWrapStyle}>
-        {record.photoUrls[0] ? (
-          <img className={thumbnailImageStyle} src={record.photoUrls[0]} alt="" />
+        {media === 'map' ? (
+          <ExploreRecordMiniMap
+            title={record.title}
+            places={record.visitedPlaces.map((place) => ({
+              id: place.placeId,
+              latitude: place.latitude,
+              longitude: place.longitude,
+            }))}
+          />
         ) : (
-          <Image size={24} aria-hidden />
+          <SafeImage
+            src={record.photoUrls[0]}
+            className={thumbnailImageStyle}
+            placeholderSize="lg"
+          />
         )}
       </div>
 

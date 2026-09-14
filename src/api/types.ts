@@ -23,7 +23,7 @@ export type AppleLoginRequest = {
 export type OAuthLoginResult = {
   userId: number
   nickname: string
-  profileImageUrl?: string
+  profileImageUrl?: string | null
   role: 'USER' | 'ADMIN'
   newUser: boolean
 }

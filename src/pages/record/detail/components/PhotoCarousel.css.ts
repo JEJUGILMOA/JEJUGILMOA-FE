@@ -26,20 +26,12 @@ export const slideImageStyle = style({
   flex: '0 0 100%',
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
   userSelect: 'none',
 })
 
 export const placeholderStyle = style({
-  display: 'flex',
   width: '100%',
   height: '100%',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: vars.space[2],
-  color: colors.text[4],
-  fontSize: vars.fontSize.sm,
 })
 
 export const bookmarkButtonStyle = style({

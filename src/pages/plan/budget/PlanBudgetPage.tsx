@@ -115,7 +115,8 @@ export function PlanBudgetPage() {
               <TextField
                 key={key}
                 label={label}
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={amounts[key]}
                 onChange={(value) => handleAmountChange(key, value)}
                 placeholder="0"

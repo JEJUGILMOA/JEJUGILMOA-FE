@@ -4,14 +4,12 @@ import '@/pages/plan/itinerary/nativeMapPassThrough.css.ts'
 import { nativeBridge } from '@/bridge/nativeBridge'
 import { useZoomPan } from '@/hooks/useZoomPan'
 import { getPinLatLng, getPinPosition } from '@/utils/mapPinPositions'
-import { colors } from '@/styles/colors.css.ts'
 import { cn } from '@/utils/cn'
 import {
   canvasStyle,
   departurePinStyle,
   emptyStateStyle,
   mustVisitBadgeStyle,
-  routeSvgStyle,
   stopPinRecipe,
   unassignedPinRecipe,
   viewportHidden,
@@ -22,13 +20,19 @@ import {
 
 export type ItineraryDayMapProps = {
   /** 이 Day의 출발지 (검색으로 고른 곳, 없으면 null) */
-  departurePlace: { id: string; title: string } | null
+  departurePlace: { id: string; title: string; latitude?: number; longitude?: number } | null
   /** 현재 Day에 배정된 장소 (방문 순서대로) */
-  stops: { id: string; title: string }[]
+  stops: { id: string; title: string; latitude?: number; longitude?: number }[]
   /** 이 Day에서 "꼭 가고 싶은 장소"로 정한 곳들 — 지도에서 별 배지로 구분 표시한다 */
   mustVisitIds?: string[]
   /** 아직 어느 Day에도 배정되지 않은 장소 */
-  unassignedPlaces: { id: string; title: string }[]
+  unassignedPlaces: {
+    id: string
+    title: string
+    latitude?: number
+    longitude?: number
+    categoryLabel?: string
+  }[]
   /** 미배정 장소 핀 색상 — 지금 추천 기준(유명한/가까운 장소)에 맞춰 지도에서도 구분해 보여준다 */
   unassignedPinKind?: 'popular' | 'nearby'
   /** 미배정 장소 핀을 클릭했을 때 현재 Day에 담는다 */
@@ -111,11 +115,27 @@ export function ItineraryDayMap({
   }, [])
 
   const mapPayload = useMemo(() => {
-    const toPin = (place: { id: string; title: string }) => ({
-      id: place.id,
-      title: place.title,
-      ...getPinLatLng(place.id),
-    })
+    const toPin = (place: {
+      id: string
+      title: string
+      latitude?: number
+      longitude?: number
+      categoryLabel?: string
+    }) => {
+      const hasCoords =
+        typeof place.latitude === 'number' &&
+        Number.isFinite(place.latitude) &&
+        typeof place.longitude === 'number' &&
+        Number.isFinite(place.longitude)
+      return {
+        id: place.id,
+        title: place.title,
+        ...(place.categoryLabel ? { categoryName: place.categoryLabel } : {}),
+        ...(hasCoords
+          ? { latitude: place.latitude!, longitude: place.longitude! }
+          : getPinLatLng(place.id)),
+      }
+    }
     return {
       type: 'SET_MAP' as const,
       visible: true,
@@ -183,12 +203,6 @@ export function ItineraryDayMap({
     handlePointerUp()
   }
 
-  // 동선(점선)이 출발지에서부터 시작하도록, 있으면 맨 앞에 끼워 넣는다.
-  const routePoints = [
-    ...(departurePlace ? [getPinPosition(departurePlace.id)] : []),
-    ...stops.map((stop) => getPinPosition(stop.id)),
-  ]
-
   const handleZoomIn = () => {
     if (hideInNative) {
       nativeBridge.postToNative({ type: 'MAP_ZOOM', delta: 1 })
@@ -221,19 +235,6 @@ export function ItineraryDayMap({
       >
         {!departurePlace && stops.length === 0 && unassignedPlaces.length === 0 ? (
           <span className={emptyStateStyle}>이 Day에 배정된 장소가 없어요</span>
-        ) : null}
-
-        {routePoints.length > 1 ? (
-          <svg className={routeSvgStyle} viewBox="0 0 100 100" preserveAspectRatio="none">
-            <polyline
-              points={routePoints.map((point) => `${point.left},${point.top}`).join(' ')}
-              fill="none"
-              stroke={colors.primary[500]}
-              strokeWidth={0.6}
-              strokeDasharray="2.2 1.8"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
         ) : null}
 
         {unassignedPlaces.map((place) => {

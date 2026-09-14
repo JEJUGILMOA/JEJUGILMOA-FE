@@ -3,35 +3,55 @@ import { recipe } from '@vanilla-extract/recipes'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
-export const tabRowStyle = style({
+/** 시안: 밑줄 탭 + 우측 N/10곳 카운터 */
+export const tabHeaderStyle = style({
   display: 'flex',
-  gap: vars.space[1],
-  padding: vars.space[1],
-  borderRadius: vars.radius.full,
-  backgroundColor: colors.surface[4],
+  alignItems: 'flex-end',
+  justifyContent: 'space-between',
+  gap: vars.space[3],
+  borderBottom: `1px solid ${colors.border[1]}`,
+})
+
+export const tabListStyle = style({
+  display: 'flex',
+  alignItems: 'stretch',
+  gap: vars.space[4],
+  minWidth: 0,
 })
 
 export const tabButtonRecipe = recipe({
   base: {
-    flex: 1,
-    display: 'flex',
+    position: 'relative',
+    display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    height: '36px',
+    height: '40px',
+    padding: `0 ${vars.space[1]}`,
     border: 'none',
-    borderRadius: vars.radius.full,
     background: 'transparent',
-    fontSize: vars.fontSize.sm,
+    fontSize: vars.fontSize.md,
     fontWeight: vars.fontWeight.semibold,
     color: colors.text[4],
     cursor: 'pointer',
+    whiteSpace: 'nowrap',
   },
   variants: {
     active: {
       true: {
-        backgroundColor: colors.surface[1],
         color: colors.text[1],
-        boxShadow: vars.shadow.sm,
+        fontWeight: vars.fontWeight.bold,
+        selectors: {
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: '-1px',
+            height: '2px',
+            borderRadius: vars.radius.full,
+            backgroundColor: colors.primary[600],
+          },
+        },
       },
       false: {},
     },
@@ -39,6 +59,23 @@ export const tabButtonRecipe = recipe({
   defaultVariants: {
     active: false,
   },
+})
+
+export const placeCountStyle = style({
+  flexShrink: 0,
+  paddingBottom: vars.space[3],
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.text[4],
+})
+
+/** @deprecated pill 탭 잔여 — tabHeaderStyle로 대체 */
+export const tabRowStyle = style({
+  display: 'flex',
+  gap: vars.space[1],
+  padding: vars.space[1],
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.surface[4],
 })
 
 export const pageRootStyle = style({
@@ -91,27 +128,33 @@ export const dayPagerFloatStyle = style({
   position: 'absolute',
   top: vars.space[3],
   left: '64px',
-  right: '84px',
+  right: '64px',
   zIndex: vars.zIndex.toast,
   filter: 'drop-shadow(0 2px 10px rgba(0, 0, 0, 0.12))',
 })
 
-// 네이버맵처럼 지도 위, 뒤로가기·Day페이저·다음 버튼 줄 바로 아래에 항상 떠 있는 검색창 —
-// "일정" 탭을 보고 있어도 탭 전환 없이 바로 검색할 수 있게 한다.
-export const headerSearchBarStyle = style({
-  position: 'absolute',
-  top: '64px',
-  left: vars.space[3],
-  right: vars.space[3],
-  zIndex: vars.zIndex.toast,
+export const sheetFooterHintStyle = style({
+  textAlign: 'center',
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+  lineHeight: 1.4,
+})
+
+/** 장소 추가 탭 안 검색창 (지도 float 아님) */
+export const sheetSearchBarStyle = style({
   display: 'flex',
   alignItems: 'center',
   gap: vars.space[2],
-  height: '40px',
-  padding: `0 ${vars.space[4]}`,
-  borderRadius: vars.radius.full,
-  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-  boxShadow: vars.shadow.sm,
+  height: '44px',
+  padding: `0 ${vars.space[3]}`,
+  borderRadius: vars.radius.lg,
+  backgroundColor: colors.surface[4],
+})
+
+export const sheetSearchBarActiveStyle = style({
+  border: `1.5px solid ${colors.secondary[500]}`,
+  boxShadow: `0 0 0 3px ${colors.secondary[100]}`,
+  backgroundColor: colors.surface[1],
 })
 
 export const headerSearchIconStyle = style({
@@ -149,13 +192,6 @@ export const headerSearchClearButtonStyle = style({
   cursor: 'pointer',
 })
 
-// 헤더 검색창이 "출발지 검색 모드"로 전환됐을 때의 강조 테두리 — 필드 포커스 색과 동일한
-// secondary 톤을 써서 지금 검색이 평소와 다른 의미(장소 담기 아님)임을 알려준다.
-export const headerSearchBarActiveStyle = style({
-  border: `1.5px solid ${colors.secondary[500]}`,
-  boxShadow: `0 0 0 3px ${colors.secondary[100]}`,
-})
-
 export const headerSearchModeLabelStyle = style({
   flexShrink: 0,
   fontSize: vars.fontSize.xs,
@@ -179,7 +215,7 @@ export const headerSearchCancelButtonStyle = style({
 export const sectionStyle = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: vars.space[2],
+  gap: vars.space[3],
 })
 
 export const sectionHeaderStyle = style({
@@ -206,17 +242,12 @@ export const emptyTextStyle = style({
   color: colors.text[4],
 })
 
-// 목록이 통째로 비었을 때 쓰는 emptyTextStyle과 달리, 출발지 버튼 바로 아래 끼워 넣는
-// 한 줄짜리 안내라 위아래 여백을 넉넉히 주면 오히려 붕 떠 보인다 — 그래서 여백을 없앴다.
 export const inlineHintTextStyle = style({
   textAlign: 'center',
   fontSize: vars.fontSize.sm,
   color: colors.text[4],
 })
 
-// "꼭 가고 싶은 장소"가 뭘 위해 쓰이는지, 몇 개까지 정할 수 있는지 알려주는 안내줄.
-// 일정 목록 자체는 시간순을 유지해야 해서(방문 순서 그대로), 항목을 재배치하는
-// 대신 목록 위에 안내만 얹는다 — 실제 강조는 각 행에서 개별적으로 한다.
 export const mustVisitSummaryRowStyle = style({
   display: 'flex',
   alignItems: 'center',
@@ -248,14 +279,12 @@ export const courseRowStyle = style({
   gap: vars.space[2],
 })
 
-
 export const gatewayLabelStyle = style({
   fontSize: vars.fontSize.sm,
   fontWeight: vars.fontWeight.semibold,
   color: colors.text[2],
 })
 
-// 출발지 등, 일정 화면 안에서 탭하면 바로 값을 고칠 수 있는 필드 행.
 export const fieldRowStyle = style({
   display: 'flex',
   alignItems: 'center',
@@ -277,9 +306,123 @@ export const fieldHintStyle = style({
   color: colors.primary[600],
 })
 
-// 출발지 검색 결과 행 — 헤더 검색창을 통해 "추천·검색" 탭에 뜨는, 탭하면 바로
-// 출발지로 지정되는 목록. 일반 장소 추천 행(WaypointPlaceRow)과 달리 담기·별표
-// 토글이 없는 단순 선택 목록이라 별도 스타일로 둔다.
+/** 시안: 출발지 카드 (베이지 배경) */
+export const departureCardStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[3],
+  width: '100%',
+  padding: vars.space[3],
+  border: 'none',
+  borderRadius: vars.radius.lg,
+  backgroundColor: '#F7F1E8',
+  font: 'inherit',
+  textAlign: 'left',
+  cursor: 'pointer',
+})
+
+export const departureCardIconStyle = style({
+  flexShrink: 0,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: colors.primary[600],
+})
+
+export const departureCardTextStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+  minWidth: 0,
+  flex: 1,
+})
+
+export const departureCardTitleStyle = style({
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.bold,
+  color: colors.text[1],
+})
+
+export const departureCardMetaStyle = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+})
+
+export const departureCardActionStyle = style({
+  flexShrink: 0,
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.primary[600],
+  whiteSpace: 'nowrap',
+})
+
+/** 시안: 추천 코스 / 장소 직접 추가 액션 행 */
+export const emptyActionListStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+})
+
+export const emptyActionRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[3],
+  width: '100%',
+  padding: `${vars.space[4]} 0`,
+  border: 'none',
+  borderBottom: `1px solid ${colors.border[1]}`,
+  background: 'none',
+  font: 'inherit',
+  textAlign: 'left',
+  cursor: 'pointer',
+  selectors: {
+    '&:last-child': { borderBottom: 'none' },
+  },
+})
+
+export const emptyActionIconWrapStyle = style({
+  flexShrink: 0,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '40px',
+  height: '40px',
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.primary[100],
+  color: colors.primary[600],
+})
+
+export const emptyActionIconMutedStyle = style({
+  backgroundColor: colors.surface[4],
+  color: colors.text[3],
+})
+
+export const emptyActionTextStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+  minWidth: 0,
+  flex: 1,
+})
+
+export const emptyActionTitleStyle = style({
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.bold,
+  color: colors.text[1],
+})
+
+export const emptyActionMetaStyle = style({
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})
+
+export const emptyActionChevronStyle = style({
+  flexShrink: 0,
+  color: colors.text[6],
+})
+
 export const departureResultRowStyle = style({
   display: 'flex',
   alignItems: 'center',
@@ -309,7 +452,6 @@ export const departureResultChevronStyle = style({
   color: colors.text[6],
 })
 
-// 전날 출발지를 그대로 재사용할 수 있게 목록 맨 위에 얹는 추천 행의 배지.
 export const departureSuggestionBadgeStyle = style({
   alignSelf: 'flex-start',
   padding: `2px ${vars.space[2]}`,

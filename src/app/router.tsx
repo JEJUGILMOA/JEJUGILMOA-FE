@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, Navigate } from 'react-router'
 import { AppLayout, type RouteHandle } from '@/components/layout/AppLayout/AppLayout'
 import { HomePage } from '@/pages/home/HomePage'
 import { LoginPage } from '@/pages/login/LoginPage'
@@ -14,6 +14,7 @@ import { PlanCreatePage } from '@/pages/plan/create/PlanCreatePage'
 import { PlanItineraryPage } from '@/pages/plan/itinerary/PlanItineraryPage'
 import { PlanBudgetPage } from '@/pages/plan/budget/PlanBudgetPage'
 import { PlanPreviewPage } from '@/pages/plan/preview/PlanPreviewPage'
+import { PlanDetailPage } from '@/pages/plan/detail/PlanDetailPage'
 import { PlanCourseRecommendPage } from '@/pages/plan/courses/PlanCourseRecommendPage'
 import { SavedCourseDetailPage } from '@/pages/plan/courses/SavedCourseDetailPage'
 import { RecordPage } from '@/pages/record/RecordPage'
@@ -33,10 +34,9 @@ import { BadgesPage } from '@/pages/mypage/badges/BadgesPage'
 import { SharedRecordsPage } from '@/pages/mypage/shared-records/SharedRecordsPage'
 import { NoticesPage } from '@/pages/mypage/notices/NoticesPage'
 import { NoticeDetailPage } from '@/pages/mypage/notices/NoticeDetailPage'
-import { SupportPage } from '@/pages/mypage/support/SupportPage'
+import { SupportPage } from '@/pages/support/SupportPage'
 import { SupportInquiryPage } from '@/pages/mypage/support/SupportInquiryPage'
-import { TermsPage } from '@/pages/mypage/terms/TermsPage'
-import { TermDetailPage } from '@/pages/mypage/terms/TermDetailPage'
+import { PrivacyPolicyPage } from '@/pages/privacy/PrivacyPolicyPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { TestPageJinsung } from '@/pages/test/TestPageJinsung'
 import { TestPageSuji } from '@/pages/test/TestPageSuji'
@@ -55,6 +55,14 @@ const mySubPageHandle = {
   hideNav: true,
   flush: true,
   showHeader: false,
+} as const satisfies Partial<RouteHandle>
+
+/** 로그인 없이 열리는 공개 단독 페이지 (하단 탭·네이티브 헤더 없음) */
+const publicStandaloneHandle = {
+  hideNav: true,
+  flush: true,
+  showHeader: false,
+  showBack: false,
 } as const satisfies Partial<RouteHandle>
 
 const authPageHandle = {
@@ -104,7 +112,8 @@ export const router = createBrowserRouter([
           title: '장소',
           hideNav: true,
           flush: true,
-          ...withPageHeader,
+          showHeader: false,
+          showBack: true,
         } satisfies RouteHandle,
       },
       {
@@ -112,9 +121,7 @@ export const router = createBrowserRouter([
         Component: PopularPlacesPage,
         handle: {
           title: '인기 관광지',
-          hideNav: true,
-          flush: true,
-          ...withPageHeader,
+          ...mySubPageHandle,
         } satisfies RouteHandle,
       },
       {
@@ -124,7 +131,8 @@ export const router = createBrowserRouter([
           title: '오늘의 추천 코스',
           hideNav: true,
           flush: true,
-          ...withPageHeader,
+          showHeader: false,
+          showBack: true,
         } satisfies RouteHandle,
       },
       {
@@ -134,7 +142,8 @@ export const router = createBrowserRouter([
           title: '코스 상세',
           hideNav: true,
           flush: true,
-          ...withPageHeader,
+          showHeader: false,
+          showBack: true,
         } satisfies RouteHandle,
       },
       {
@@ -193,6 +202,17 @@ export const router = createBrowserRouter([
         handle: { title: '계획 미리보기', ...withPageHeader } satisfies RouteHandle,
       },
       {
+        path: 'plan/:planId',
+        Component: PlanDetailPage,
+        // 웹 PageHeader — flush로 AppLayout 상단 패딩 제거 (장소 상세와 동일)
+        handle: {
+          title: '여행 계획',
+          flush: true,
+          showHeader: false,
+          showBack: true,
+        } satisfies RouteHandle,
+      },
+      {
         path: ROUTES.record.slice(1),
         Component: RecordPage,
         handle: { title: '기록' } satisfies RouteHandle,
@@ -205,7 +225,10 @@ export const router = createBrowserRouter([
       {
         path: 'record/:recordId',
         Component: RecordDetailPage,
-        handle: { title: '기록 상세' } satisfies RouteHandle,
+        handle: {
+          title: '기록 상세',
+          flush: true,
+        } satisfies RouteHandle,
       },
       {
         path: 'record/:recordId/plan',
@@ -278,8 +301,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'support',
-            Component: SupportPage,
-            handle: { title: '고객센터', ...mySubPageHandle } satisfies RouteHandle,
+            element: <Navigate to={ROUTES.support} replace />,
           },
           {
             path: 'support/inquiry',
@@ -287,16 +309,20 @@ export const router = createBrowserRouter([
             handle: { title: '문의하기', ...mySubPageHandle } satisfies RouteHandle,
           },
           {
-            path: 'terms',
-            Component: TermsPage,
-            handle: { title: '약관 및 정책', ...mySubPageHandle } satisfies RouteHandle,
-          },
-          {
-            path: 'terms/:termId',
-            Component: TermDetailPage,
-            handle: { title: '약관', ...mySubPageHandle } satisfies RouteHandle,
+            path: 'privacy-policy',
+            element: <Navigate to={ROUTES.privacyPolicy} replace />,
           },
         ],
+      },
+      {
+        path: ROUTES.support.slice(1),
+        Component: SupportPage,
+        handle: { title: '고객센터', ...publicStandaloneHandle } satisfies RouteHandle,
+      },
+      {
+        path: ROUTES.privacyPolicy.slice(1),
+        Component: PrivacyPolicyPage,
+        handle: { title: '개인정보처리방침', ...publicStandaloneHandle } satisfies RouteHandle,
       },
       {
         path: ROUTES.test[0].slice(1),

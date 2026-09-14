@@ -7,6 +7,7 @@ import {
   overlayStyle,
   srOnlyStyle,
   titleStyle,
+  visiblePanelStyle,
 } from './BottomSheet.css.ts'
 
 type SnapValue = number | string
@@ -44,9 +45,9 @@ function buildSnapPoints(min: SnapValue, initial: SnapValue, max: SnapValue): Sn
   return [...unique.values()].sort((a, b) => snapToNumber(a) - snapToNumber(b))
 }
 
-function toMaxHeightCss(maxHeight: SnapValue) {
-  if (typeof maxHeight === 'number') return `${maxHeight * 100}dvh`
-  return maxHeight
+function toHeightCss(height: SnapValue) {
+  if (typeof height === 'number') return `${height * 100}dvh`
+  return height
 }
 
 /**
@@ -76,6 +77,8 @@ export function BottomSheet({
     if (open) setActiveSnapPoint(initialHeight)
   }
 
+  const sheetHeight = activeSnapPoint ?? initialHeight
+
   return (
     <Drawer.Root
       open={open}
@@ -85,21 +88,26 @@ export function BottomSheet({
       setActiveSnapPoint={setActiveSnapPoint}
       modal
       dismissible
+      // 키보드 열릴 때 visualViewport 재배치로 시트가 내려가거나 닫히는 것 방지
+      repositionInputs={false}
       shouldScaleBackground={false}
     >
       <Drawer.Portal>
         <Drawer.Overlay className={overlayStyle} />
-        <Drawer.Content
-          className={contentStyle}
-          style={{ maxHeight: toMaxHeightCss(maxHeight) }}
-        >
-          <div className={handleStyle} />
-          {title ? (
-            <Drawer.Title className={titleStyle}>{title}</Drawer.Title>
-          ) : (
-            <Drawer.Title className={srOnlyStyle}>상세</Drawer.Title>
-          )}
-          <div className={bodyStyle}>{children}</div>
+        <Drawer.Content className={contentStyle}>
+          {/*
+            vaul은 drawer를 뷰포트 전체 높이로 두고 translateY로 스냅한다.
+            실제 UI는 스냅 높이 패널에만 두어 하단 버튼이 화면 밖으로 밀리지 않게 한다.
+          */}
+          <div className={visiblePanelStyle} style={{ height: toHeightCss(sheetHeight) }}>
+            <div className={handleStyle} />
+            {title ? (
+              <Drawer.Title className={titleStyle}>{title}</Drawer.Title>
+            ) : (
+              <Drawer.Title className={srOnlyStyle}>상세</Drawer.Title>
+            )}
+            <div className={bodyStyle}>{children}</div>
+          </div>
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>

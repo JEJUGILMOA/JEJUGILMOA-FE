@@ -8,7 +8,7 @@ export const cardStyle = style({
   flexShrink: 0,
   width: '148px',
   overflow: 'hidden',
-  borderRadius: vars.radius.lg,
+  borderRadius: '6px',
   border: `1px solid ${colors.border[1]}`,
   backgroundColor: colors.surface[1],
   fontFamily: vars.fontFamily.sans,
@@ -25,18 +25,7 @@ export const imageStyle = style({
   width: '100%',
   aspectRatio: '1 / 1',
   overflow: 'hidden',
-  backgroundImage: `linear-gradient(135deg, ${colors.secondary[400]}, ${colors.primary[400]})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-})
-
-export const imageImgStyle = style({
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-  objectPosition: 'center',
-  display: 'block',
+  backgroundColor: colors.surface[5],
 })
 
 export const contentStyle = style({

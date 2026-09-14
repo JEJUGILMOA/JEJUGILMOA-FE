@@ -11,9 +11,14 @@ import {
   bodyStyle,
   contentStyle,
   expandButtonStyle,
+  footerStyle,
   handleStyle,
   handleWrapStyle,
+  headerStyle,
   nativeBodyStyle,
+  nativeFooterStyle,
+  nativeHeaderStyle,
+  nativeRootStyle,
   titleStyle,
 } from './ItineraryBottomSheet.css.ts'
 
@@ -21,14 +26,18 @@ const SNAP_FRACTIONS = [0.28, 0.58, 0.92]
 /** 드래그로 끝까지 내리면 네이버맵처럼 시트가 완전히 사라진다 — 대신 지도 위에
  * 뜨는 별도 버튼으로만 다시 펼칠 수 있다. */
 const COLLAPSED_HEIGHT = 0
-/** 지도 위에 항상 떠 있는 뒤로가기·Day페이저·다음 버튼 줄 + 헤더 검색창이 차지하는 높이 —
- * 시트가 이보다 더 올라오면 그 위에 겹쳐 보이니, 최대 높이를 여기서 제한한다. */
-const RESERVED_TOP_SPACE = 120
+/** 지도 위 뒤로가기·Day페이저가 차지하는 높이 — 시트가 이보다 더 올라오면 겹친다. */
+const RESERVED_TOP_SPACE = 72
 
 export type ItineraryBottomSheetProps = {
-  title: string
+  /** 접힘 펼치기 버튼 라벨 등. 시안처럼 시트 상단에 제목을 안 쓸 때는 빈 문자열 */
+  title?: string
   children: ReactNode
-  /** true로 바뀌는 순간(예: 헤더 검색창에 입력 시작) 접혀 있던 시트를 자동으로 펼친다 */
+  /** 시트 상단에 고정되는 탭/카운터 영역 (스크롤되지 않음) */
+  header?: ReactNode
+  /** 시트 하단에 고정되는 CTA 영역 (스크롤되지 않음) */
+  footer?: ReactNode
+  /** true로 바뀌는 순간(예: 검색 입력 시작) 접혀 있던 시트를 자동으로 펼친다 */
   expandTrigger?: boolean
 }
 
@@ -48,15 +57,25 @@ function clamp(value: number, min: number, max: number) {
 export function ItineraryBottomSheet(props: ItineraryBottomSheetProps) {
   if (nativeBridge.isNativeWebView()) {
     return (
-      <div data-gilmoa-overlay data-gilmoa-itinerary-sheet-body className={nativeBodyStyle}>
-        {props.children}
+      <div data-gilmoa-overlay className={nativeRootStyle}>
+        {props.header ? <div className={nativeHeaderStyle}>{props.header}</div> : null}
+        <div data-gilmoa-itinerary-sheet-body className={nativeBodyStyle}>
+          {props.children}
+        </div>
+        {props.footer ? <div className={nativeFooterStyle}>{props.footer}</div> : null}
       </div>
     )
   }
   return <BrowserItineraryBottomSheet {...props} />
 }
 
-function BrowserItineraryBottomSheet({ title, children, expandTrigger = false }: ItineraryBottomSheetProps) {
+function BrowserItineraryBottomSheet({
+  title = '',
+  children,
+  header,
+  footer,
+  expandTrigger = false,
+}: ItineraryBottomSheetProps) {
   const [viewportHeight, setViewportHeight] = useState(() =>
     typeof window === 'undefined'
       ? 800
@@ -171,16 +190,18 @@ function BrowserItineraryBottomSheet({ title, children, expandTrigger = false }:
       >
         <div className={handleWrapStyle} onPointerDown={handlePointerDown}>
           <div className={handleStyle} aria-hidden />
-          <span className={titleStyle}>{title}</span>
+          {title ? <span className={titleStyle}>{title}</span> : null}
         </div>
 
+        {header ? <div className={headerStyle}>{header}</div> : null}
         <div className={bodyStyle}>{children}</div>
+        {footer ? <div className={footerStyle}>{footer}</div> : null}
       </div>
 
       {showExpandButton ? (
         <button type="button" data-gilmoa-overlay className={expandButtonStyle} onClick={expand}>
           <ChevronUp size={16} aria-hidden />
-          {title}
+          펼치기
         </button>
       ) : null}
     </>

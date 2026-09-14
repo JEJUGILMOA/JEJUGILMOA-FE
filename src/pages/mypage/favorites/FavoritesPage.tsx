@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Image } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { SegmentedControl, type SegmentedControlItem } from '@/components/ui/SegmentedControl/SegmentedControl'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { ROUTES, placePath, savedCoursePath } from '@/constants'
 import { useFavoritesQuery } from '@/features/favorites/hooks'
@@ -17,7 +17,6 @@ import {
   addressStyle,
   categoryStyle,
   coverImageStyle,
-  coverPlaceholderStyle,
   coverStyle,
   itemStyle,
   listItemStyle,
@@ -129,13 +128,12 @@ export function FavoritesPage() {
                         <p className={addressStyle}>{place.address ?? '주소 없음'}</p>
                       </div>
                       <div className={coverStyle}>
-                        {place.imageUrl ? (
-                          <img src={place.imageUrl} alt="" className={coverImageStyle} />
-                        ) : (
-                          <div className={coverPlaceholderStyle} aria-hidden>
-                            <Image size={24} strokeWidth={1.5} />
-                          </div>
-                        )}
+                        <SafeImage
+                          src={place.imageUrl}
+                          className={coverImageStyle}
+                          placeholderSize="sm"
+                          showPlaceholderLabel={false}
+                        />
                       </div>
                     </button>
                   </li>

@@ -29,19 +29,19 @@ export type PlanListItemProps = {
   status: PlanStatus
 }
 
-/** `/plan` 목록의 계획 카드 1개 항목. 클릭하면 계획 미리보기(수정 가능)로 이동한다. */
+/** `/plan` 목록의 계획 카드 1개 항목. 클릭하면 저장된 계획 조회로 이동한다. */
 export function PlanListItem({ plan, status }: PlanListItemProps) {
   const navigate = useNavigate()
   const deletePlanMutation = useDeletePlanMutation()
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
-  const goToPreview = () => navigate(ROUTES.planPreview(plan.id))
+  const goToDetail = () => navigate(ROUTES.planDetail(plan.id))
 
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      goToPreview()
+      goToDetail()
     }
   }
 
@@ -72,7 +72,7 @@ export function PlanListItem({ plan, status }: PlanListItemProps) {
       className={clickableCardStyle}
       role="button"
       tabIndex={0}
-      onClick={goToPreview}
+      onClick={goToDetail}
       onKeyDown={handleKeyDown}
     >
       <div className={titleRowStyle}>

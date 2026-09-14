@@ -37,6 +37,8 @@ export type TextFieldProps = {
   leftIcon?: ReactNode
   /** input type. 기본값 text */
   type?: 'text' | 'email' | 'password' | 'tel' | 'url' | 'search' | 'number'
+  /** 모바일 키보드 힌트 (숫자만 입력 등) */
+  inputMode?: 'text' | 'email' | 'tel' | 'url' | 'search' | 'numeric' | 'decimal'
   /** password일 때 표시/숨김 토글 버튼. 기본값 false */
   togglePassword?: boolean
   className?: string
@@ -60,6 +62,7 @@ export function TextField({
   suffix,
   leftIcon,
   type = 'text',
+  inputMode,
   togglePassword = false,
   className,
 }: TextFieldProps) {
@@ -100,6 +103,7 @@ export function TextField({
         <input
           id={inputId}
           type={resolvedType}
+          inputMode={inputMode}
           className={fieldInputReset}
           value={value}
           onChange={handleChange}

@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useQueryClient } from '@tanstack/react-query'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { toast } from '@/components/ui/Toast/Toast'
 import { nativeBridge } from '@/bridge/nativeBridge'
 import { logoutAuth } from '@/features/auth/api'
+import { clearClientAuthSession } from '@/features/auth/clearClientSession'
 import {
   useMySettingsQuery,
   useUpdateMySettingsMutation,
@@ -13,24 +13,26 @@ import {
 } from '@/features/auth/hooks'
 import type { UserSettings } from '@/features/auth/schemas'
 import { useAuthStore } from '@/stores/authStore'
-import { QUERY_KEYS, ROUTES } from '@/constants'
+import { EXTERNAL_PRIVACY_POLICY_URL, EXTERNAL_SUPPORT_URL, ROUTES } from '@/constants'
 import { cn } from '@/utils/cn'
 import {
   dangerTextStyle,
   dividerStyle,
   linkValueStyle,
   pageStyle,
+  sectionLabelButtonStyle,
   sectionLabelStyle,
   settingLabelStyle,
   settingRowStyle,
-  settingsHintStyle,
-  settingsRetryButtonStyle,
   togglePlaceholderStyle,
   toggleStyle,
   toggleThumbStyle,
 } from './SettingsPage.css.ts'
 
 type NotiKey = 'all' | 'schedule' | 'marketing'
+
+const DEV_UNLOCK_TAPS = 7
+const DEV_UNLOCK_WINDOW_MS = 2500
 
 function toUiState(settings: UserSettings) {
   const notifyAll =
@@ -76,7 +78,6 @@ function SettingToggle({
 
 export function SettingsPage() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const clearAuth = useAuthStore((s) => s.clearAuth)
   const settingsQuery = useMySettingsQuery()
   const updateSettings = useUpdateMySettingsMutation()
@@ -84,6 +85,7 @@ export function SettingsPage() {
 
   const [logoutOpen, setLogoutOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
+  const locationTapRef = useRef({ count: 0, lastAt: 0 })
 
   const settings = settingsQuery.data
   const ui = settings ? toUiState(settings) : null
@@ -126,21 +128,37 @@ export function SettingsPage() {
     await patchSettings({ locationPermission: !ui.location })
   }
 
+  /** 설정 > 「위치」 섹션 라벨 7회 연속 탭 → 네이티브 방문 인증 시뮬레이션 토글 */
+  const handleLocationSectionTap = () => {
+    const now = Date.now()
+    if (now - locationTapRef.current.lastAt > DEV_UNLOCK_WINDOW_MS) {
+      locationTapRef.current.count = 0
+    }
+    locationTapRef.current.lastAt = now
+    locationTapRef.current.count += 1
+
+    if (locationTapRef.current.count < DEV_UNLOCK_TAPS) return
+
+    locationTapRef.current.count = 0
+    if (!nativeBridge.isNativeWebView()) {
+      toast.info('앱에서만 사용할 수 있어요.')
+      return
+    }
+    nativeBridge.postToNative({ type: 'TOGGLE_TRIP_VISIT_SPOOF' })
+  }
+
   const handleLogout = async () => {
+    setLogoutOpen(false)
     try {
       await logoutAuth()
     } catch {
       // 쿠키가 이미 만료된 경우에도 로컬 세션은 정리한다.
     } finally {
+      clearClientAuthSession()
       clearAuth()
-      void queryClient.removeQueries({ queryKey: QUERY_KEYS.myProfile })
-      void queryClient.removeQueries({ queryKey: QUERY_KEYS.mySettings })
-      void queryClient.removeQueries({ queryKey: QUERY_KEYS.myBadges })
-      setLogoutOpen(false)
     }
 
     if (nativeBridge.isNativeWebView()) {
-      // WebView 라우팅 없이 네이티브가 /login 으로 전환 + 네이티브 토스트
       nativeBridge.postToNative({ type: 'LOGOUT' })
       return
     }
@@ -152,6 +170,7 @@ export function SettingsPage() {
   const handleWithdraw = async () => {
     try {
       await withdrawMutation.mutateAsync()
+      clearClientAuthSession()
       clearAuth()
       setWithdrawOpen(false)
       toast.success('회원 탈퇴가 완료되었어요.')
@@ -161,23 +180,25 @@ export function SettingsPage() {
     }
   }
 
+  const openExternalUrl = (url: string) => {
+    if (nativeBridge.isNativeWebView()) {
+      nativeBridge.postToNative({
+        type: 'OPEN_EXTERNAL_URL',
+        url,
+      })
+      return
+    }
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  const openPrivacyPolicy = () => openExternalUrl(EXTERNAL_PRIVACY_POLICY_URL)
+  const openSupport = () => openExternalUrl(EXTERNAL_SUPPORT_URL)
+
   return (
     <div className={pageStyle}>
       <PageHeader title="설정" showBack onBack={() => navigate(ROUTES.my)} />
 
       <p className={sectionLabelStyle}>알림</p>
-      {settingsQuery.isError || (!settingsQuery.isLoading && !settings) ? (
-        <p className={settingsHintStyle}>
-          알림·위치 설정을 불러오지 못했어요.{' '}
-          <button
-            type="button"
-            className={settingsRetryButtonStyle}
-            onClick={() => void settingsQuery.refetch()}
-          >
-            다시 시도
-          </button>
-        </p>
-      ) : null}
       <div className={settingRowStyle}>
         <span className={settingLabelStyle}>전체 알림</span>
         <SettingToggle
@@ -204,7 +225,14 @@ export function SettingsPage() {
       </div>
 
       <div className={dividerStyle}>
-        <p className={sectionLabelStyle}>위치</p>
+        <button
+          type="button"
+          className={sectionLabelButtonStyle}
+          onClick={handleLocationSectionTap}
+          aria-label="위치"
+        >
+          위치
+        </button>
       </div>
       <div className={settingRowStyle}>
         <span className={settingLabelStyle}>위치 권한</span>
@@ -218,27 +246,11 @@ export function SettingsPage() {
       <div className={dividerStyle}>
         <p className={sectionLabelStyle}>지원</p>
       </div>
-      <button
-        type="button"
-        className={settingRowStyle}
-        onClick={() => navigate(ROUTES.myNotices)}
-      >
-        <span className={settingLabelStyle}>공지사항</span>
-        <span className={linkValueStyle}>›</span>
-      </button>
-      <button
-        type="button"
-        className={settingRowStyle}
-        onClick={() => navigate(ROUTES.mySupport)}
-      >
+      <button type="button" className={settingRowStyle} onClick={openSupport}>
         <span className={settingLabelStyle}>고객센터</span>
         <span className={linkValueStyle}>›</span>
       </button>
-      <button
-        type="button"
-        className={settingRowStyle}
-        onClick={() => navigate(ROUTES.myTerms)}
-      >
+      <button type="button" className={settingRowStyle} onClick={openPrivacyPolicy}>
         <span className={settingLabelStyle}>약관 및 정책</span>
         <span className={linkValueStyle}>›</span>
       </button>
@@ -262,7 +274,7 @@ export function SettingsPage() {
         onClose={() => setLogoutOpen(false)}
         actions={[
           { label: '취소', onClick: () => setLogoutOpen(false), variant: 'ghost' },
-          { label: '로그아웃', onClick: handleLogout },
+          { label: '로그아웃', onClick: () => void handleLogout() },
         ]}
       />
 

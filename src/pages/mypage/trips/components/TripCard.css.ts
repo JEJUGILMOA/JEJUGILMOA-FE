@@ -11,7 +11,7 @@ export const cardStyle = style({
   padding: 0,
   overflow: 'hidden',
   border: 'none',
-  borderRadius: '20px',
+  borderRadius: vars.radius.sm,
   backgroundColor: colors.surface[1],
   boxShadow: '0 4px 16px rgba(37, 37, 45, 0.08)',
   cursor: 'pointer',

@@ -1,5 +1,4 @@
 import { style } from '@vanilla-extract/css'
-import { PAGE_HEADER_BLEED_VAR } from '@/components/ui/PageHeader/PageHeader.css.ts'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 import { bodyMedium, heading3 } from '@/styles/typography.css.ts'
@@ -10,11 +9,8 @@ export const pageStyle = style({
   flex: 1,
   gap: vars.space[4],
   padding: vars.space[4],
-  paddingTop: 0,
+  paddingBottom: vars.space[10],
   backgroundColor: colors.surface[1],
-  vars: {
-    [PAGE_HEADER_BLEED_VAR]: vars.space[4],
-  },
 })
 
 export const sectionStyle = style({
@@ -39,3 +35,18 @@ export const descStyle = style([
     color: colors.text[4],
   },
 ])
+
+export const emailLinkStyle = style({
+  display: 'inline-flex',
+  alignSelf: 'flex-start',
+  marginTop: vars.space[2],
+  textDecoration: 'none',
+})
+
+export const emailStyle = style({
+  fontSize: vars.fontSize.md,
+  fontWeight: vars.fontWeight.semibold,
+  color: colors.primary[600],
+  textDecoration: 'underline',
+  textUnderlineOffset: 3,
+})

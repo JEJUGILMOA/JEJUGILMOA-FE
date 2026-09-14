@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Image, Star } from 'lucide-react'
+import { Star } from 'lucide-react'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import type { VisitedPlaceRecord } from '@/features/records/types'
 import { PlacePhotoModal } from './PlacePhotoModal'
 import {
@@ -42,11 +43,20 @@ export function VisitedPlaceList({ places }: VisitedPlaceListProps) {
                 aria-label={`${place.placeName} 사진 보기`}
                 onClick={() => setOpenPlaceId(place.placeId)}
               >
-                <img className={thumbnailImageStyle} src={place.photoUrls[0]} alt="" />
+                <SafeImage
+                  src={place.photoUrls[0]}
+                  className={thumbnailImageStyle}
+                  placeholderSize="sm"
+                  showPlaceholderLabel={false}
+                />
               </button>
             ) : (
               <div className={thumbnailStyle}>
-                <Image size={20} aria-hidden />
+                <SafeImage
+                  src={undefined}
+                  placeholderSize="sm"
+                  showPlaceholderLabel={false}
+                />
               </div>
             )}
             <div>

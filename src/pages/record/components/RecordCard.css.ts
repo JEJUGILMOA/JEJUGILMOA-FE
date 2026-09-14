@@ -22,16 +22,6 @@ export const thumbnailWrapStyle = style({
 export const thumbnailImageStyle = style({
   width: '100%',
   height: '100%',
-  objectFit: 'cover',
-})
-
-export const thumbnailPlaceholderStyle = style({
-  display: 'flex',
-  width: '100%',
-  height: '100%',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: colors.text[4],
 })
 
 export const badgeWrapStyle = style({

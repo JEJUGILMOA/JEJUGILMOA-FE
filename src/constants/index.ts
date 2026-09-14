@@ -24,6 +24,7 @@ export const ROUTES = {
   plan: '/plan',
   planCreate: '/plan/new',
   planCourseRecommend: '/plan/courses',
+  planDetail: (id: string) => `/plan/${id}`,
   planEdit: (id: string) => `/plan/${id}/edit`,
   planItinerary: (id: string) => `/plan/${id}/itinerary`,
   planBudget: (id: string) => `/plan/${id}/budget`,
@@ -44,12 +45,16 @@ export const ROUTES = {
   mySharedRecords: '/my/shared-records',
   myNotices: '/my/notices',
   myNoticeDetail: '/my/notices/:noticeId',
-  mySupport: '/my/support',
   mySupportInquiry: '/my/support/inquiry',
-  myTerms: '/my/terms',
-  myTermDetail: '/my/terms/:termId',
+  /** 로그인·마이와 분리된 공개 페이지 */
+  support: '/support',
+  privacyPolicy: '/privacy-policy',
   test: ['/test/jinsung', '/test/suji'],
 } as const
+
+/** 약관 및 정책 / 고객센터 (외부 사이트) */
+export const EXTERNAL_PRIVACY_POLICY_URL = 'https://gilmoa.site/privacy-policy'
+export const EXTERNAL_SUPPORT_URL = 'https://gilmoa.site/support'
 
 export function placePath(placeId: string) {
   return `/place/${placeId}`
@@ -97,4 +102,20 @@ export const QUERY_KEYS = {
   planSummaries: (status?: string) => ['plans', 'summaries', status] as const,
   favorites: (page?: number, size?: number) => ['favorites', page, size] as const,
   favoritePlaceIds: ['favorites', 'ids'] as const,
+  mapPlaces: (params?: {
+    minLat?: number
+    maxLat?: number
+    minLng?: number
+    maxLng?: number
+    category?: string
+    limit?: number
+  }) => ['map', 'places', params] as const,
+  mapHeatmap: (params?: {
+    minLat?: number
+    maxLat?: number
+    minLng?: number
+    maxLng?: number
+    gridSize?: number
+  }) => ['map', 'heatmap', params] as const,
+  currentTrip: ['trips', 'current'] as const,
 } as const
