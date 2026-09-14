@@ -79,6 +79,7 @@ export function RecordCreatePage() {
         navigate(ROUTES.record)
       },
       onError: (error) => {
+        // console.error('[createRecord]', error)
         toast.error(getErrorMessage(error, '기록 저장에 실패했어요. 다시 시도해 주세요.'))
       },
     })
