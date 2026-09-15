@@ -34,31 +34,71 @@ export const placeholderStyle = style({
   height: '100%',
 })
 
-export const bookmarkButtonStyle = style({
+export const overlayActionsStyle = style({
   position: 'absolute',
   top: vars.space[3],
-  left: vars.space[3],
+  right: vars.space[3],
+  zIndex: 2,
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[2],
+})
+
+export const overlayButtonStyle = style({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
   width: '36px',
   height: '36px',
+  padding: 0,
   border: 'none',
   borderRadius: vars.radius.full,
   backgroundColor: colors.surface[1],
-  color: colors.text[2],
+  color: colors.text[1],
   cursor: 'pointer',
-  boxShadow: vars.shadow.sm,
+  boxShadow: '0 1px 4px rgba(37, 37, 45, 0.12)',
 })
 
 export const bookmarkActiveStyle = style({
   color: colors.primary[500],
 })
 
+export const menuListStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+  minWidth: '148px',
+})
+
+export const menuItemStyle = style({
+  padding: `${vars.space[2]} ${vars.space[3]}`,
+  borderRadius: vars.radius.sm,
+  textAlign: 'left',
+  fontSize: vars.fontSize.sm,
+  color: colors.text[1],
+  backgroundColor: 'transparent',
+  border: 'none',
+  cursor: 'pointer',
+  selectors: {
+    '&:hover': {
+      backgroundColor: colors.surface[3],
+    },
+  },
+})
+
+export const menuItemDangerStyle = style([
+  menuItemStyle,
+  {
+    color: colors.error[100],
+  },
+])
+
 export const counterStyle = style({
   position: 'absolute',
-  top: vars.space[3],
-  right: vars.space[3],
+  bottom: vars.space[3],
+  left: '50%',
+  transform: 'translateX(-50%)',
+  zIndex: 2,
   padding: `${vars.space[1]} ${vars.space[2]}`,
   borderRadius: vars.radius.full,
   backgroundColor: 'rgba(37, 37, 45, 0.6)',

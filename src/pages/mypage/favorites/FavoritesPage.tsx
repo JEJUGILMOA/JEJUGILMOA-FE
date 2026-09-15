@@ -12,6 +12,7 @@ import { ROUTES, placePath, savedCoursePath } from '@/constants'
 import { useFavoritesQuery } from '@/features/favorites/hooks'
 import { mapSavedCourseToListCard } from '@/features/courses/format'
 import { useSavedCoursesQuery } from '@/features/courses/hooks'
+import { useFavoriteRecordsQuery } from '@/features/records/hooks'
 import { CourseListCard } from '@/pages/courses/components/CourseListCard/CourseListCard'
 import {
   addressStyle,
@@ -30,11 +31,12 @@ import {
   titleRowStyle,
 } from './FavoritesPage.css.ts'
 
-type FavoritesTab = 'places' | 'courses'
+type FavoritesTab = 'places' | 'courses' | 'records'
 
 const TABS: SegmentedControlItem[] = [
-  { value: 'places', label: '즐겨찾기 장소' },
-  { value: 'courses', label: '저장한 코스' },
+  { value: 'places', label: '장소' },
+  { value: 'courses', label: '코스' },
+  { value: 'records', label: '기록' },
 ]
 
 function FavoritesSkeleton() {
@@ -59,6 +61,7 @@ export function FavoritesPage() {
   const [query, setQuery] = useState('')
   const favoritesQuery = useFavoritesQuery({ page: 0, size: 50 })
   const savedCoursesQuery = useSavedCoursesQuery()
+  const favoriteRecordsQuery = useFavoriteRecordsQuery({ page: 0, size: 50 })
 
   const favorites = favoritesQuery.data?.content ?? []
   const filteredFavorites = useMemo(() => {
@@ -72,8 +75,12 @@ export function FavoritesPage() {
     )
   }, [favorites, query])
   const savedCourses = savedCoursesQuery.data ?? []
-
-  const isPlacesTab = tab === 'places'
+  const favoriteRecords = favoriteRecordsQuery.data?.content ?? []
+  const filteredRecords = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return favoriteRecords
+    return favoriteRecords.filter((record) => record.title.toLowerCase().includes(q))
+  }, [favoriteRecords, query])
 
   return (
     <div className={pageStyle}>
@@ -82,12 +89,15 @@ export function FavoritesPage() {
       <SegmentedControl
         items={TABS}
         value={tab}
-        onChange={(value) => setTab(value as FavoritesTab)}
+        onChange={(value) => {
+          setTab(value as FavoritesTab)
+          setQuery('')
+        }}
         aria-label="즐겨찾기 보기 전환"
         fullWidth
       />
 
-      {isPlacesTab ? (
+      {tab === 'places' ? (
         <>
           <SearchBar
             value={query}
@@ -142,7 +152,9 @@ export function FavoritesPage() {
             )
           ) : null}
         </>
-      ) : (
+      ) : null}
+
+      {tab === 'courses' ? (
         <>
           {savedCoursesQuery.isLoading ? <Loading label="코스를 불러오는 중…" /> : null}
           {savedCoursesQuery.isError ? (
@@ -165,7 +177,69 @@ export function FavoritesPage() {
             )
           ) : null}
         </>
-      )}
+      ) : null}
+
+      {tab === 'records' ? (
+        <>
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            placeholder="저장한 기록에서 검색"
+            onClear={() => setQuery('')}
+          />
+
+          {favoriteRecordsQuery.isLoading ? <FavoritesSkeleton /> : null}
+          {favoriteRecordsQuery.isError ? (
+            <ErrorState onRetry={() => void favoriteRecordsQuery.refetch()} />
+          ) : null}
+
+          {!favoriteRecordsQuery.isLoading && !favoriteRecordsQuery.isError ? (
+            filteredRecords.length === 0 ? (
+              <Empty
+                title={query.trim() ? '검색 결과가 없어요' : '저장한 기록이 없어요'}
+                description={
+                  query.trim()
+                    ? '다른 키워드로 검색해 보세요.'
+                    : '마음에 드는 여행 기록을 즐겨찾기해 보세요.'
+                }
+              />
+            ) : (
+              <ul className={listStyle}>
+                {filteredRecords.map((record) => {
+                  const placeCount = record.visitedPlaceCount ?? record.placeCount
+                  return (
+                    <li key={record.recordId} className={listItemStyle}>
+                      <button
+                        type="button"
+                        className={itemStyle}
+                        onClick={() => navigate(ROUTES.recordDetail(record.recordId))}
+                      >
+                        <div className={metaStyle}>
+                          <div className={titleRowStyle}>
+                            <span className={nameStyle}>{record.title}</span>
+                          </div>
+                          <p className={addressStyle}>
+                            {placeCount != null ? `방문 장소 ${placeCount}곳` : '여행 기록'}
+                            {record.likeCount != null ? ` · 좋아요 ${record.likeCount}` : ''}
+                          </p>
+                        </div>
+                        <div className={coverStyle}>
+                          <SafeImage
+                            src={record.thumbnailUrl}
+                            className={coverImageStyle}
+                            placeholderSize="sm"
+                            showPlaceholderLabel={false}
+                          />
+                        </div>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )
+          ) : null}
+        </>
+      ) : null}
     </div>
   )
 }

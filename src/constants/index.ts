@@ -30,6 +30,9 @@ export const ROUTES = {
   planBudget: (id: string) => `/plan/${id}/budget`,
   planPreview: (id: string) => `/plan/${id}/preview`,
   record: '/record',
+  /** 기록 탭 — `myrecord`(내 기록) | `search`(둘러보기) */
+  recordTab: (tab: 'myrecord' | 'search' = 'myrecord') =>
+    tab === 'myrecord' ? '/record?tab=myrecord' : '/record?tab=search',
   recordCreate: '/record/new',
   recordDetail: (id: string) => `/record/${id}`,
   recordPlan: (id: string) => `/record/${id}/plan`,
@@ -43,6 +46,7 @@ export const ROUTES = {
   myFavorites: '/my/favorites',
   myBadges: '/my/badges',
   mySharedRecords: '/my/shared-records',
+  myBlocks: '/my/blocks',
   myNotices: '/my/notices',
   myNoticeDetail: '/my/notices/:noticeId',
   test: ['/test/jinsung', '/test/suji'],
@@ -92,6 +96,10 @@ export const QUERY_KEYS = {
   myRecords: ['records', 'my'] as const,
   mySharedRecords: (page?: number) => ['records', 'shared', page] as const,
   exploreRecords: ['records', 'explore'] as const,
+  favoriteRecordIds: ['records', 'favorites', 'ids'] as const,
+  favoriteRecords: (page?: number, size?: number) =>
+    ['records', 'favorites', 'list', page, size] as const,
+  blockedUsers: ['users', 'blocks'] as const,
   myProfile: ['users', 'me'] as const,
   mySettings: ['users', 'me', 'settings'] as const,
   myBadges: ['badges', 'me'] as const,

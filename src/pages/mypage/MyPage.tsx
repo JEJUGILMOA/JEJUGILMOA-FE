@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { BookOpen, ChevronRight, MapPin, Settings, Share2, Sparkles } from 'lucide-react'
+import { BookOpen, ChevronRight, MapPin, Settings, Share2, Sparkles, UserX } from 'lucide-react'
 import { getErrorMessage } from '@/api/error'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { useMyProfileQuery } from '@/features/auth/hooks'
@@ -10,6 +10,7 @@ import { ProfileAvatar } from '@/pages/mypage/components/ProfileAvatar/ProfileAv
 import {
   chevronStyle,
   emailStyle,
+  menuDividerStyle,
   menuListStyle,
   nameStyle,
   pageStyle,
@@ -26,6 +27,7 @@ const MENU_ITEMS = [
   { label: '즐겨찾기', to: ROUTES.myFavorites, icon: MapPin },
   { label: '배지', to: ROUTES.myBadges, icon: Sparkles },
   { label: '공유기록', to: ROUTES.mySharedRecords, icon: Share2 },
+  { label: '차단 관리', to: ROUTES.myBlocks, icon: UserX },
   { label: '설정', to: ROUTES.mySettings, icon: Settings },
 ] as const
 
@@ -94,14 +96,18 @@ export function MyPage() {
       </button>
 
       <div className={menuListStyle}>
-        {MENU_ITEMS.map(({ label, to, icon: Icon }) => (
-          <MenuListItem
-            key={to}
-            label={label}
-            icon={<Icon size={15} strokeWidth={2} />}
-            onClick={() => navigate(to)}
-          />
-        ))}
+        {MENU_ITEMS.flatMap(({ label, to, icon: Icon }, index) => {
+          const item = (
+            <MenuListItem
+              key={to}
+              label={label}
+              icon={<Icon size={15} strokeWidth={2} />}
+              onClick={() => navigate(to)}
+            />
+          )
+          if (index === 0) return [item]
+          return [<hr key={`divider-${to}`} className={menuDividerStyle} />, item]
+        })}
       </div>
     </div>
   )

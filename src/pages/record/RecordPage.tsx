@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { FloatingActionButton } from '@/components/ui/FloatingActionButton/FloatingActionButton'
@@ -26,6 +25,10 @@ const TABS = [
   { value: 'explore', label: '둘러보기' },
 ]
 
+function tabFromSearchParam(value: string | null): RecordTab {
+  return value === 'search' ? 'explore' : 'mine'
+}
+
 function RecordsSkeleton() {
   return (
     <div className={listStyle} aria-busy aria-label="기록을 불러오는 중">
@@ -48,10 +51,18 @@ function RecordsSkeleton() {
 
 export function RecordPage() {
   const navigate = useNavigate()
-  const [tab, setTab] = useState<RecordTab>('mine')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = tabFromSearchParam(searchParams.get('tab'))
   const { data: records = [], isLoading } = useMyRecordsQuery()
 
   const goToCreate = () => navigate(ROUTES.recordCreate)
+
+  const handleTabChange = (value: string) => {
+    setSearchParams(
+      (value as RecordTab) === 'explore' ? { tab: 'search' } : { tab: 'myrecord' },
+      { replace: true },
+    )
+  }
 
   return (
     <div className={pageStyle}>
@@ -59,7 +70,7 @@ export function RecordPage() {
         <SegmentedControl
           items={TABS}
           value={tab}
-          onChange={(value) => setTab(value as RecordTab)}
+          onChange={handleTabChange}
           aria-label="기록 보기 전환"
           fullWidth
         />

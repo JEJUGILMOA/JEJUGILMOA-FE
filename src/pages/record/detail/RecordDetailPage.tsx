@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router'
 import { ChevronLeft, ChevronRight, Share2, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
+import { useState } from 'react'
 import { Badge } from '@/components/ui/Badge/Badge'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
@@ -14,11 +15,12 @@ import {
   useReactToExploreRecordMutation,
   useReactToRecordMutation,
   useToggleExploreRecordBookmarkMutation,
-  useToggleRecordBookmarkMutation,
 } from '@/features/records/hooks'
 import type { ExploreRecord, ReactionType, SavedRecord } from '@/features/records/types'
+import { useBlockUserMutation } from '@/features/users/hooks'
 import { useAuthStore } from '@/stores/authStore'
 import { RecordManageSheet } from '@/pages/record/components/RecordManageSheet'
+import { ReportRecordModal } from '@/pages/record/components/ReportRecordModal'
 import { EarnedBadgeCallout } from './components/EarnedBadgeCallout'
 import { PhotoCarousel } from './components/PhotoCarousel'
 import { RoutePreview } from './components/RoutePreview'
@@ -62,6 +64,7 @@ type DetailViewModel = {
   likeCount: number
   dislikeCount: number
   myReaction: ReactionType | null
+  authorId: number | null
   authorName: string
   authorProfileImageUrl: string | null
   visibilityLabel: string
@@ -82,6 +85,7 @@ function fromOwnRecord(record: SavedRecord, nickname: string, profileImageUrl: s
     likeCount: record.likeCount,
     dislikeCount: record.dislikeCount,
     myReaction: record.myReaction,
+    authorId: null,
     authorName: nickname,
     authorProfileImageUrl: profileImageUrl,
     visibilityLabel: record.visibility === 'public' ? '전체 공개' : '비공개',
@@ -103,6 +107,7 @@ function fromExploreRecord(record: ExploreRecord): DetailViewModel {
     likeCount: record.likeCount,
     dislikeCount: record.dislikeCount,
     myReaction: record.myReaction,
+    authorId: record.authorId,
     authorName: record.authorName,
     authorProfileImageUrl: record.authorProfileImageUrl,
     visibilityLabel: '전체 공개',
@@ -117,6 +122,7 @@ export function RecordDetailPage() {
   const navigate = useNavigate()
   const nickname = useAuthStore((state) => state.user?.nickname) ?? '나'
   const profileImageUrl = useAuthStore((state) => state.user?.profileImageUrl) ?? null
+  const [reportOpen, setReportOpen] = useState(false)
 
   const myRecordsQuery = useMyRecordsQuery()
   const exploreRecordsQuery = useExploreRecordsQuery()
@@ -134,17 +140,31 @@ export function RecordDetailPage() {
       ? fromExploreRecord(exploreRecord)
       : null
 
-  const bookmarkMutation = useToggleRecordBookmarkMutation()
   const reactMutation = useReactToRecordMutation()
   const exploreBookmarkMutation = useToggleExploreRecordBookmarkMutation()
   const exploreReactMutation = useReactToExploreRecordMutation()
+  const blockUserMutation = useBlockUserMutation()
 
-  const goBack = () => navigate(ROUTES.record)
+  const goBack = () => {
+    // 목록 탭을 URL에 남겨 두어 뒤로가기 시 내 기록/둘러보기를 복원한다
+    const listTab = ownRecord ? 'myrecord' : 'search'
+    navigate(ROUTES.recordTab(listTab))
+  }
+
+  const handleBlockAuthor = () => {
+    if (!view?.authorId) return
+    blockUserMutation.mutate(
+      { targetUserId: view.authorId, authorName: view.authorName },
+      { onSuccess: () => goBack() },
+    )
+  }
 
   const handleToggleBookmark = () => {
-    if (!view) return
-    if (view.isOwn) bookmarkMutation.mutate(view.id)
-    else exploreBookmarkMutation.mutate(view.id)
+    if (!view || view.isOwn) return
+    exploreBookmarkMutation.mutate({
+      id: view.id,
+      nextFavorite: !view.isBookmarked,
+    })
   }
 
   const handleReact = (reaction: ReactionType) => {
@@ -205,7 +225,16 @@ export function RecordDetailPage() {
           <PhotoCarousel
             photoUrls={view.photoUrls}
             isBookmarked={view.isBookmarked}
-            onToggleBookmark={handleToggleBookmark}
+            onToggleBookmark={view.isOwn ? undefined : handleToggleBookmark}
+            moderation={
+              view.isOwn
+                ? undefined
+                : {
+                    authorName: view.authorName,
+                    onReport: () => setReportOpen(true),
+                    onBlockAuthor: handleBlockAuthor,
+                  }
+            }
           />
         </div>
 
@@ -321,6 +350,14 @@ export function RecordDetailPage() {
           <RoutePreview places={view.visitedPlaces} title={view.title} />
         </div>
       </div>
+
+      {!view.isOwn ? (
+        <ReportRecordModal
+          open={reportOpen}
+          recordId={view.id}
+          onClose={() => setReportOpen(false)}
+        />
+      ) : null}
     </div>
   )
 }

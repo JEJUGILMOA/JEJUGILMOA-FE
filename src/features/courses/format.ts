@@ -89,15 +89,25 @@ export function mapRecommendedCourseToListCard(course: RecommendedCourse) {
 }
 
 export function mapSavedCourseToListCard(course: SavedCourse) {
+  const waypoints = [...course.waypoints].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
+  const themeLabel = courseThemeLabel(course.theme)
+  const imageUrl =
+    course.imageUrl ?? waypoints.find((item) => item.imageUrl)?.imageUrl
+
   return {
     title: course.title,
-    imageUrl: course.imageUrl,
-    imageTags: [],
-    placeCount: course.placeCount ?? 0,
-    previewSteps: [],
+    description: course.description,
+    imageUrl,
+    imageTags: themeLabel
+      ? [{ label: themeLabel, tone: courseThemeTone(course.theme) } satisfies CourseImageTag]
+      : [],
+    placeCount: course.placeCount ?? waypoints.length,
+    previewSteps: waypoints.map((item) => ({
+      title: item.placeName,
+      thumbnailUrl: item.imageUrl ?? '',
+    })),
     locationLabel: course.region,
     duration: formatEstimatedMinutes(course.estimatedMinutes),
-    transport: transportModeLabel(course.transportMode),
   }
 }
 
@@ -123,7 +133,7 @@ function mapStops(
 /** `SavedCourseDetail` → `CourseDetailPage`가 쓰는 것과 같은 모양 */
 export function mapSavedCourseDetail(course: SavedCourseDetail) {
   const stops = [...course.stops].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
-  const tags = course.tags
+  const tags = course.tags.length > 0 ? course.tags : course.theme ? [courseThemeLabel(course.theme) ?? course.theme] : []
 
   return {
     title: course.title,
@@ -131,7 +141,6 @@ export function mapSavedCourseDetail(course: SavedCourseDetail) {
     imageUrl: course.imageUrl ?? stops.find((stop) => stop.placeImageUrl)?.placeImageUrl,
     region: course.region,
     duration: formatEstimatedMinutes(course.estimatedMinutes),
-    transport: transportModeLabel(course.transportMode),
     placeCount: course.placeCount ?? stops.length,
     tags,
     imageTags: mapTagsToImageTags(tags),

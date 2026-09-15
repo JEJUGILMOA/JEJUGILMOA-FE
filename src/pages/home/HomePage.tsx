@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { useNavigate } from 'react-router'
 import homeHeroImage from '@/assets/images/home-hero.png'
 import { Empty } from '@/components/ui/Empty/Empty'
@@ -9,6 +9,11 @@ import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { toast } from '@/components/ui/Toast/Toast'
 import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
 import type { CourseImageTag } from '@/data/mockExplore'
+import {
+  findSavedCourseMatch,
+  useSavedCoursesQuery,
+  useToggleCourseFavoriteMutation,
+} from '@/features/courses/hooks'
 import {
   useFavoritePlaceIdsQuery,
   useToggleFavoriteMutation,
@@ -191,12 +196,15 @@ function SectionStatus({
 export function HomePage() {
   const navigate = useNavigate()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const [pendingCourseId, setPendingCourseId] = useState<string | null>(null)
 
   const picksQuery = useHomePlacesQuery()
   const coursesQuery = useHomeCoursesQuery()
   const popularQuery = usePopularPlacesQuery({ page: 0, size: HOME_POPULAR_LIMIT })
   const favoriteIdsQuery = useFavoritePlaceIdsQuery()
   const toggleFavorite = useToggleFavoriteMutation()
+  const savedCoursesQuery = useSavedCoursesQuery({ enabled: isAuthenticated })
+  const toggleCourseFavorite = useToggleCourseFavoriteMutation()
 
   const travelPicks = picksQuery.data ?? []
   const courses = coursesQuery.data ?? []
@@ -226,6 +234,32 @@ export function HomePage() {
             nextFavorite ? '즐겨찾기 추가에 실패했어요.' : '즐겨찾기 해제에 실패했어요.',
           )
         },
+      },
+    )
+  }
+
+  const handleToggleCourseFavorite = (course: HomeCourse) => {
+    if (!isAuthenticated) {
+      toast.info('즐겨찾기는 로그인 후 이용할 수 있어요.')
+      navigate(`${ROUTES.login}?returnTo=${ROUTES.home}`)
+      return
+    }
+
+    const matched = findSavedCourseMatch(savedCoursesQuery.data, {
+      sourceType: 'RECOMMENDED',
+      sourceId: course.courseId,
+      title: course.title,
+    })
+    setPendingCourseId(course.courseId)
+    toggleCourseFavorite.mutate(
+      {
+        nextFavorite: !matched,
+        saveParams: { sourceType: 'RECOMMENDED', sourceId: course.courseId },
+        savedCourseId: matched?.savedCourseId,
+        title: course.title,
+      },
+      {
+        onSettled: () => setPendingCourseId(null),
       },
     )
   }
@@ -359,10 +393,20 @@ export function HomePage() {
           >
             {courses.map((course) => {
               const card = mapHomeCourseToCard(course)
+              const matched = findSavedCourseMatch(savedCoursesQuery.data, {
+                sourceType: 'RECOMMENDED',
+                sourceId: course.courseId,
+                title: course.title,
+              })
               return (
                 <CourseRecommendCard
                   key={course.courseId}
                   {...card}
+                  bookmarked={Boolean(matched)}
+                  isBookmarkPending={
+                    toggleCourseFavorite.isPending && pendingCourseId === course.courseId
+                  }
+                  onToggleBookmark={() => handleToggleCourseFavorite(course)}
                   onClick={() => navigate(coursePath(course.courseId))}
                 />
               )

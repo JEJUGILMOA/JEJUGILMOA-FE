@@ -47,6 +47,11 @@ type ModalProps = {
   actions?: ModalAction[]
   /** 닫기 (오버레이·Esc) */
   onClose: () => void
+  /**
+   * true면 네이티브 SET_MODAL을 쓰지 않고 웹 모달을 띄운다.
+   * 입력 폼처럼 네이티브 모달로 표현할 수 없는 본문이 있을 때 사용.
+   */
+  forceWeb?: boolean
 }
 
 /**
@@ -60,6 +65,7 @@ export function Modal({
   children,
   actions,
   onClose,
+  forceWeb = false,
 }: ModalProps) {
   const titleId = useId()
   const modalId = useId()
@@ -81,7 +87,7 @@ export function Modal({
     ] satisfies ModalAction[])
   actionsRef.current = resolvedActions
 
-  const isNative = nativeBridge.isNativeWebView()
+  const isNative = !forceWeb && nativeBridge.isNativeWebView()
 
   // actions 배열 참조가 매 렌더 바뀌어도 SET_MODAL을 다시 쏘지 않도록 시그니처만 의존
   const actionSignature = resolvedActions

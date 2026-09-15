@@ -1,14 +1,19 @@
+import { Bookmark, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react'
 import { useState } from 'react'
-import { Bookmark, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ImagePlaceholder, SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
+import { Popover } from '@/components/ui/Popover/Popover'
 import { cn } from '@/utils/cn'
 import { useDragCarousel } from './useDragCarousel'
 import {
   bookmarkActiveStyle,
-  bookmarkButtonStyle,
   counterStyle,
+  menuItemDangerStyle,
+  menuItemStyle,
+  menuListStyle,
   navButtonNextStyle,
   navButtonPrevStyle,
+  overlayActionsStyle,
+  overlayButtonStyle,
   placeholderStyle,
   slideImageStyle,
   trackStyle,
@@ -17,15 +22,32 @@ import {
 
 export type PhotoCarouselProps = {
   photoUrls: string[]
-  isBookmarked: boolean
-  onToggleBookmark: () => void
+  isBookmarked?: boolean
+  /** 없으면 즐겨찾기 버튼을 숨긴다 (본인 기록 등) */
+  onToggleBookmark?: () => void
+  /** 타인의 기록일 때 신고/차단 메뉴 표시 */
+  moderation?: {
+    authorName: string
+    onReport: () => void
+    onBlockAuthor: () => void
+  }
 }
 
-/** STEP 08.3~4: 대표 사진 캐러셀 + 북마크. 드래그(스와이프)로 사진을 넘길 수 있다 */
-export function PhotoCarousel({ photoUrls, isBookmarked, onToggleBookmark }: PhotoCarouselProps) {
+/** STEP 08.3~4: 대표 사진 캐러셀 + 우측 상단 더보기/북마크. 드래그로 사진을 넘길 수 있다 */
+export function PhotoCarousel({
+  photoUrls,
+  isBookmarked = false,
+  onToggleBookmark,
+  moderation,
+}: PhotoCarouselProps) {
   const [index, setIndex] = useState(0)
+  const [menuOpen, setMenuOpen] = useState(false)
   const total = photoUrls.length
-  const { dragOffset, isDragging, trackHandlers } = useDragCarousel({ total, index, onIndexChange: setIndex })
+  const { dragOffset, isDragging, trackHandlers } = useDragCarousel({
+    total,
+    index,
+    onIndexChange: setIndex,
+  })
 
   return (
     <div className={wrapStyle}>
@@ -54,15 +76,65 @@ export function PhotoCarousel({ photoUrls, isBookmarked, onToggleBookmark }: Pho
         </div>
       )}
 
-      <button
-        type="button"
-        className={cn(bookmarkButtonStyle, isBookmarked && bookmarkActiveStyle)}
-        aria-label={isBookmarked ? '저장 취소' : '기록 저장'}
-        aria-pressed={isBookmarked}
-        onClick={onToggleBookmark}
-      >
-        <Bookmark size={18} aria-hidden fill={isBookmarked ? 'currentColor' : 'none'} />
-      </button>
+      <div className={overlayActionsStyle}>
+        {onToggleBookmark ? (
+          <button
+            type="button"
+            className={cn(overlayButtonStyle, isBookmarked && bookmarkActiveStyle)}
+            aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            aria-pressed={isBookmarked}
+            onClick={onToggleBookmark}
+          >
+            <Bookmark size={16} strokeWidth={1.75} fill={isBookmarked ? 'currentColor' : 'none'} />
+          </button>
+        ) : null}
+
+        {moderation ? (
+          <Popover
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            align="end"
+            ariaLabel="기록 더보기 메뉴"
+            trigger={
+              <button
+                type="button"
+                className={overlayButtonStyle}
+                aria-label="더보기"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((prev) => !prev)}
+              >
+                <MoreVertical size={16} aria-hidden />
+              </button>
+            }
+          >
+            <div className={menuListStyle}>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemStyle}
+                onClick={() => {
+                  setMenuOpen(false)
+                  moderation.onReport()
+                }}
+              >
+                신고하기
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemDangerStyle}
+                onClick={() => {
+                  setMenuOpen(false)
+                  moderation.onBlockAuthor()
+                }}
+              >
+                작성자 차단하기
+              </button>
+            </div>
+          </Popover>
+        ) : null}
+      </div>
 
       {total > 0 ? (
         <span className={counterStyle}>

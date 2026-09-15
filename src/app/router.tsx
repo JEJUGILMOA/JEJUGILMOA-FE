@@ -32,6 +32,7 @@ import { TripDetailPage } from '@/pages/mypage/trip-detail/TripDetailPage'
 import { FavoritesPage } from '@/pages/mypage/favorites/FavoritesPage'
 import { BadgesPage } from '@/pages/mypage/badges/BadgesPage'
 import { SharedRecordsPage } from '@/pages/mypage/shared-records/SharedRecordsPage'
+import { BlocksPage } from '@/pages/mypage/blocks/BlocksPage'
 import { NoticesPage } from '@/pages/mypage/notices/NoticesPage'
 import { NoticeDetailPage } from '@/pages/mypage/notices/NoticeDetailPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -277,6 +278,11 @@ export const router = createBrowserRouter([
             path: 'shared-records',
             Component: SharedRecordsPage,
             handle: { title: '공유한 기록', ...mySubPageHandle } satisfies RouteHandle,
+          },
+          {
+            path: 'blocks',
+            Component: BlocksPage,
+            handle: { title: '차단 관리', ...mySubPageHandle } satisfies RouteHandle,
           },
           {
             path: 'notices',
