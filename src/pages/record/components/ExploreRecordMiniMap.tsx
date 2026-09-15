@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { LEAFLET_NO_ANIMATE, LEAFLET_NO_CAMERA_ANIMATION } from '@/features/map/leafletStaticMap'
 import { colors } from '@/styles/colors.css.ts'
 import { emptyStateStyle, mapCanvasStyle, mapRootStyle } from './ExploreRecordMiniMap.css.ts'
 
@@ -26,6 +27,13 @@ function hasCoords(place: ExploreRecordMiniMapPlace): boolean {
   )
 }
 
+function placesPlotKey(places: ExploreRecordMiniMapPlace[]) {
+  return places
+    .filter(hasCoords)
+    .map((place) => `${place.id}:${place.latitude},${place.longitude}`)
+    .join('|')
+}
+
 function createMarkerIcon(label: string): L.DivIcon {
   return L.divIcon({
     className: '',
@@ -49,9 +57,12 @@ export function ExploreRecordMiniMap({ places, title }: ExploreRecordMiniMapProp
   const mapRef = useRef<L.Map | null>(null)
   const layerRef = useRef<L.LayerGroup | null>(null)
 
+  const plotKey = placesPlotKey(places)
   const plotted = useMemo(
     () => places.filter(hasCoords),
-    [places],
+    // plotKey로 좌표 내용이 바뀔 때만 갱신 (부모의 .map() 새 배열 참조 무시)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [plotKey],
   )
 
   useEffect(() => {
@@ -67,7 +78,8 @@ export function ExploreRecordMiniMap({ places, title }: ExploreRecordMiniMapProp
       boxZoom: false,
       keyboard: false,
       touchZoom: false,
-    }).setView(JEJU_CENTER, 10)
+      ...LEAFLET_NO_CAMERA_ANIMATION,
+    }).setView(JEJU_CENTER, 10, LEAFLET_NO_ANIMATE)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
@@ -78,7 +90,7 @@ export function ExploreRecordMiniMap({ places, title }: ExploreRecordMiniMapProp
     layerRef.current = layer
 
     const resizeObserver = new ResizeObserver(() => {
-      map.invalidateSize()
+      map.invalidateSize(LEAFLET_NO_ANIMATE)
     })
     resizeObserver.observe(node)
 
@@ -98,8 +110,8 @@ export function ExploreRecordMiniMap({ places, title }: ExploreRecordMiniMapProp
     layer.clearLayers()
 
     if (plotted.length === 0) {
-      map.setView(JEJU_CENTER, 10)
-      map.invalidateSize()
+      map.setView(JEJU_CENTER, 10, LEAFLET_NO_ANIMATE)
+      map.invalidateSize(LEAFLET_NO_ANIMATE)
       return
     }
 
@@ -116,11 +128,11 @@ export function ExploreRecordMiniMap({ places, title }: ExploreRecordMiniMapProp
     })
 
     if (plotted.length === 1) {
-      map.setView(bounds.getCenter(), 13)
+      map.setView(bounds.getCenter(), 13, LEAFLET_NO_ANIMATE)
     } else {
-      map.fitBounds(bounds.pad(0.2))
+      map.fitBounds(bounds.pad(0.2), LEAFLET_NO_ANIMATE)
     }
-    map.invalidateSize()
+    map.invalidateSize(LEAFLET_NO_ANIMATE)
   }, [plotted])
 
   return (
