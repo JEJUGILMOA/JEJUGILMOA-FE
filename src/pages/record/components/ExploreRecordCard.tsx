@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Popover } from '@/components/ui/Popover/Popover'
+import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import {
   useReactToExploreRecordMutation,
@@ -40,10 +41,12 @@ export type ExploreRecordCardProps = {
   record: ExploreRecord
   /** 카드형 사진 썸네일 / 지도형 Leaflet 미니맵 */
   media?: ExploreRecordCardMedia
+  /** true면 본인 기록 — 서버가 본인 기록엔 반응을 허용하지 않아 클릭 시 안내만 띄운다 */
+  isOwn?: boolean
 }
 
 /** STEP 06: 둘러보기 카드형의 카드 한 장 (STEP 07: 좋아요·싫어요 반응 포함). 클릭하면 STEP 08 상세보기로 이동한다 */
-export function ExploreRecordCard({ record, media = 'photos' }: ExploreRecordCardProps) {
+export function ExploreRecordCard({ record, media = 'photos', isOwn = false }: ExploreRecordCardProps) {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
@@ -52,6 +55,10 @@ export function ExploreRecordCard({ record, media = 'photos' }: ExploreRecordCar
   const blockUserMutation = useBlockUserMutation()
 
   const handleReact = (reaction: 'like' | 'dislike') => {
+    if (isOwn) {
+      toast.error(reaction === 'like' ? '내 기록엔 좋아요를 누를 수 없어요' : '내 기록엔 싫어요를 누를 수 없어요')
+      return
+    }
     reactMutation.mutate({ id: record.id, reaction, currentReaction: record.myReaction })
   }
 

@@ -4,7 +4,7 @@ import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Popover } from '@/components/ui/Popover/Popover'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
-import { useExploreRecordsQuery } from '@/features/records/hooks'
+import { useExploreRecordsQuery, useMyRecordsQuery } from '@/features/records/hooks'
 import type { ExploreRecord } from '@/features/records/types'
 import { ExploreRecordCard } from './ExploreRecordCard'
 import {
@@ -75,7 +75,9 @@ export function ExploreView() {
   const [sort, setSort] = useState<ExploreSort>('latest')
   const [sortOpen, setSortOpen] = useState(false)
   const { data: records = [], isLoading, isError, refetch } = useExploreRecordsQuery()
+  const { data: myRecords } = useMyRecordsQuery()
 
+  const myRecordIds = useMemo(() => new Set(myRecords?.map((record) => record.id)), [myRecords])
   const sortedRecords = useMemo(() => sortExploreRecords(records, sort), [records, sort])
   const sortLabel = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? '최신순'
 
@@ -157,6 +159,7 @@ export function ExploreView() {
               key={record.id}
               record={record}
               media={viewMode === 'map' ? 'map' : 'photos'}
+              isOwn={myRecordIds.has(record.id)}
             />
           ))}
         </div>
