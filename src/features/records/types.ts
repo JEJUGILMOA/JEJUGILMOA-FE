@@ -84,6 +84,8 @@ export type VisitedPlaceRecord = {
   photoUrls: string[]
   stayMinutes: number | null
   rating: number | null
+  /** 'yyyy-MM-dd'. Day별 일정(TripDayPlan) 재구성에 사용 */
+  visitDate: string
 }
 
 export type ReactionType = 'like' | 'dislike'
@@ -126,7 +128,7 @@ export type ExploreRecord = {
   authorName: string
   authorProfileImageUrl: string | null
   linkedPlanTitle: string | null
-  /** linkedPlanTitle이 있을 때의 일자별 일정. 작성자 본인 계획이 아니라 상세 데이터가 없으면 null */
+  /** linkedPlanTitle이 있을 때의 일자별 일정. 기록 자체의 방문 장소(visitDate)로 재구성한 것 — 남의 계획 상세는 조회 권한이 없어 기록 데이터로 대신한다 */
   linkedPlanItinerary: TripDayPlan[] | null
   path: PathPoint[]
   photoUrls: string[]

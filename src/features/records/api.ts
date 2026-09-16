@@ -212,7 +212,34 @@ function mapDetailToVisitedPlaces(places: TravelRecordPlaceResponse[]): VisitedP
     photoUrls: sortBySequenceOrder(place.images).map((image) => image.imageUrl),
     stayMinutes: place.stayMinutes,
     rating: place.rating,
+    visitDate: place.visitDate,
   }))
+}
+
+/**
+ * 방문 장소의 `visitDate`로 Day별 일정을 재구성한다. 남의 기록은 계획(Plan) 상세를
+ * 조회할 권한이 없어서(본인 것만 조회 가능) 대신 기록 자체의 방문 날짜로 만든다 —
+ * `time`이 항상 빈 문자열인 건 본인 계획 쪽(`mapPlanDetailToCompletedTrip`)도 마찬가지라
+ * (서버가 시각을 안 줌) 정보 손실은 없다.
+ */
+function buildItineraryFromVisitedPlaces(places: VisitedPlaceRecord[]): TripDayPlan[] {
+  const placesByDate = new Map<string, VisitedPlaceRecord[]>()
+  for (const place of places) {
+    const dayPlaces = placesByDate.get(place.visitDate) ?? []
+    dayPlaces.push(place)
+    placesByDate.set(place.visitDate, dayPlaces)
+  }
+
+  return Array.from(placesByDate.keys())
+    .sort()
+    .map((visitDate, index) => ({
+      day: index + 1,
+      dateLabel: visitDate.slice(5).replaceAll('-', '.'),
+      items: (placesByDate.get(visitDate) ?? []).map((place) => ({
+        time: '',
+        activity: place.placeName,
+      })),
+    }))
 }
 
 function mapDetailToPhotoUrls(images: TravelRecordImageResponse[]): string[] {
@@ -272,6 +299,7 @@ function mapDetailToExploreRecord(
 ): ExploreRecord {
   const photoUrls = mapDetailToPhotoUrls(detail.allImages)
   const id = String(detail.recordId)
+  const visitedPlaces = mapDetailToVisitedPlaces(detail.places)
   return {
     id,
     title: detail.title,
@@ -280,12 +308,12 @@ function mapDetailToExploreRecord(
     authorName: detail.author.nickname,
     authorProfileImageUrl: detail.author.profileImageUrl,
     linkedPlanTitle: detail.plan?.title ?? null,
-    // 다른 사용자의 계획 상세는 API 권한상 조회할 수 없어 보임(계획은 본인 것만 조회 가능) — null 유지
-    linkedPlanItinerary: null,
+    // 남의 계획 상세는 조회 권한이 없어서(본인 것만 조회 가능) 기록 자체의 방문 장소로 대신 만든다
+    linkedPlanItinerary: detail.plan ? buildItineraryFromVisitedPlaces(visitedPlaces) : null,
     path: [],
     photoUrls,
     tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate, detail.places.length),
-    visitedPlaces: mapDetailToVisitedPlaces(detail.places),
+    visitedPlaces,
     createdAt: detail.createdAt,
     isBookmarked: favoriteIds.has(id),
     likeCount: detail.likeCount,
