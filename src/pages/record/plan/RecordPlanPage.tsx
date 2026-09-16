@@ -2,7 +2,7 @@ import { useNavigate, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge/Badge'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
-import { ImagePlaceholder } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import {
@@ -28,6 +28,7 @@ type PlanView = {
   title: string
   dateRangeLabel: string
   itinerary: TripDayPlan[]
+  coverImageUrl: string | null
 }
 
 /** STEP 09: 연결된 여행 계획 보기 — 내 기록의 'OO 계획 보기' 또는 둘러보기의 '연결된 계획 보기' 클릭 시 진입 */
@@ -64,6 +65,7 @@ export function RecordPlanPage() {
         title: ownTrip.title,
         dateRangeLabel: ownTrip.dateRangeLabel,
         itinerary: ownTrip.itinerary,
+        coverImageUrl: ownRecord?.thumbnailUrl ?? ownRecord?.photoUrls[0] ?? null,
       }
     : exploreRecord?.linkedPlanItinerary
       ? {
@@ -71,6 +73,7 @@ export function RecordPlanPage() {
           title: exploreRecord.linkedPlanTitle ?? exploreRecord.title,
           dateRangeLabel: exploreRecord.tripDateRangeLabel,
           itinerary: exploreRecord.linkedPlanItinerary,
+          coverImageUrl: exploreRecord.photoUrls[0] ?? null,
         }
       : null
 
@@ -121,7 +124,7 @@ export function RecordPlanPage() {
 
       <div className={pageStyle}>
         <div className={coverPlaceholderStyle}>
-          <ImagePlaceholder size="lg" />
+          <SafeImage src={view.coverImageUrl} placeholderSize="lg" />
         </div>
 
         <div className={infoStyle}>
