@@ -1,6 +1,7 @@
 import { ChevronDown, LayoutGrid, ListFilter, Map as MapIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Popover } from '@/components/ui/Popover/Popover'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { useExploreRecordsQuery } from '@/features/records/hooks'
@@ -73,7 +74,7 @@ export function ExploreView() {
   const [viewMode, setViewMode] = useState<ExploreViewMode>('card')
   const [sort, setSort] = useState<ExploreSort>('latest')
   const [sortOpen, setSortOpen] = useState(false)
-  const { data: records = [], isLoading } = useExploreRecordsQuery()
+  const { data: records = [], isLoading, isError, refetch } = useExploreRecordsQuery()
 
   const sortedRecords = useMemo(() => sortExploreRecords(records, sort), [records, sort])
   const sortLabel = SORT_OPTIONS.find((option) => option.value === sort)?.label ?? '최신순'
@@ -142,6 +143,8 @@ export function ExploreView() {
 
       {isLoading ? (
         <ExploreRecordsSkeleton />
+      ) : isError ? (
+        <ErrorState onRetry={() => void refetch()} />
       ) : sortedRecords.length === 0 ? (
         <Empty
           title="아직 둘러볼 기록이 없어요"

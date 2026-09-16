@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge/Badge'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { ImagePlaceholder } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
@@ -56,6 +57,11 @@ export function RecordPlanPage() {
     (!ownRecord && exploreRecordsQuery.isLoading) ||
     (Boolean(ownRecord?.tripId) && tripsQuery.isLoading)
 
+  const isError =
+    myRecordsQuery.isError ||
+    (!ownRecord && exploreRecordsQuery.isError) ||
+    (Boolean(ownRecord?.tripId) && tripsQuery.isError)
+
   const view: PlanView | null = ownTrip
     ? {
         badgeLabel: '나의 계획',
@@ -84,6 +90,21 @@ export function RecordPlanPage() {
       <div>
         {header}
         <Loading label="여행 계획을 불러오는 중…" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div>
+        {header}
+        <ErrorState
+          onRetry={() => {
+            void myRecordsQuery.refetch()
+            void exploreRecordsQuery.refetch()
+            void tripsQuery.refetch()
+          }}
+        />
       </div>
     )
   }

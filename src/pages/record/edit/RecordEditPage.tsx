@@ -4,6 +4,7 @@ import { getErrorMessage } from '@/api/error'
 import { BottomSheet } from '@/components/ui/BottomSheet/BottomSheet'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
@@ -46,6 +47,15 @@ export function RecordEditPage() {
       <div>
         <PageHeader title="기록 수정" showBack onBack={goBack} />
         <Loading label="기록을 불러오는 중…" />
+      </div>
+    )
+  }
+
+  if (myRecordsQuery.isError) {
+    return (
+      <div>
+        <PageHeader title="기록 수정" showBack onBack={goBack} />
+        <ErrorState onRetry={() => void myRecordsQuery.refetch()} />
       </div>
     )
   }

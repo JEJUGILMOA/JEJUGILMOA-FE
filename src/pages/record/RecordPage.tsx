@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { FloatingActionButton } from '@/components/ui/FloatingActionButton/FloatingActionButton'
 import { SegmentedControl } from '@/components/ui/SegmentedControl/SegmentedControl'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
@@ -49,7 +50,7 @@ function RecordsSkeleton() {
 export function RecordPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<RecordTab>('mine')
-  const { data: records = [], isLoading } = useMyRecordsQuery()
+  const { data: records = [], isLoading, isError, refetch } = useMyRecordsQuery()
 
   const goToCreate = () => navigate(ROUTES.recordCreate)
 
@@ -68,6 +69,8 @@ export function RecordPage() {
       {tab === 'mine' ? (
         isLoading ? (
           <RecordsSkeleton />
+        ) : isError ? (
+          <ErrorState onRetry={() => void refetch()} />
         ) : records.length === 0 ? (
           <Empty
             title="기록이 비어 있어요"

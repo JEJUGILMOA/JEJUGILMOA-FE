@@ -41,7 +41,12 @@ export function RecordCreatePage() {
     buildInitialDraft(preselectedTripId, preselectedTripTitle),
   )
 
-  const { data: trips = [], isLoading: isTripsLoading } = useCompletedTripsQuery()
+  const {
+    data: trips = [],
+    isLoading: isTripsLoading,
+    isError: isTripsError,
+    refetch: refetchTrips,
+  } = useCompletedTripsQuery()
   const createRecordMutation = useCreateRecordMutation()
 
   const selectedTrip = trips.find((trip) => trip.id === draft.tripId) ?? null
@@ -99,6 +104,8 @@ export function RecordCreatePage() {
           <TripSelectStep
             trips={trips}
             isLoading={isTripsLoading}
+            isError={isTripsError}
+            onRetry={() => void refetchTrips()}
             selectedTripId={draft.tripId}
             onSelect={handleSelectTrip}
             onNext={goNext}

@@ -5,6 +5,7 @@ import { ko } from 'date-fns/locale'
 import { Badge } from '@/components/ui/Badge/Badge'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
@@ -127,6 +128,7 @@ export function RecordDetailPage() {
     : (exploreRecordsQuery.data?.find((item) => item.id === recordId) ?? null)
 
   const isLoading = myRecordsQuery.isLoading || (!ownRecord && exploreRecordsQuery.isLoading)
+  const isError = myRecordsQuery.isError || (!ownRecord && exploreRecordsQuery.isError)
 
   const view = ownRecord
     ? fromOwnRecord(ownRecord, nickname, profileImageUrl)
@@ -183,6 +185,20 @@ export function RecordDetailPage() {
       <div>
         {header}
         <Loading label="기록을 불러오는 중…" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div>
+        {header}
+        <ErrorState
+          onRetry={() => {
+            void myRecordsQuery.refetch()
+            void exploreRecordsQuery.refetch()
+          }}
+        />
       </div>
     )
   }

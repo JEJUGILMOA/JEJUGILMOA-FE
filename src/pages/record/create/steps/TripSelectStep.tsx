@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/Button/Button'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import type { CompletedTrip } from '@/features/records/types'
 import { SelectableOption } from '../components/SelectableOption'
 import {
@@ -13,6 +14,8 @@ import {
 export type TripSelectStepProps = {
   trips: CompletedTrip[]
   isLoading: boolean
+  isError?: boolean
+  onRetry?: () => void
   selectedTripId: string | null
   onSelect: (tripId: string) => void
   onNext: () => void
@@ -22,6 +25,8 @@ export type TripSelectStepProps = {
 export function TripSelectStep({
   trips,
   isLoading,
+  isError = false,
+  onRetry,
   selectedTripId,
   onSelect,
   onNext,
@@ -35,6 +40,8 @@ export function TripSelectStep({
 
       {isLoading ? (
         <Loading label="완료된 여행을 불러오는 중…" />
+      ) : isError ? (
+        <ErrorState onRetry={onRetry} />
       ) : trips.length === 0 ? (
         <Empty title="완료된 여행이 없어요" description="여행을 마치면 기록을 남길 수 있어요." />
       ) : (

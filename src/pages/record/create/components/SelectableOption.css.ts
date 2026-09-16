@@ -16,6 +16,12 @@ export const optionRecipe = recipe({
     backgroundColor: colors.surface[1],
     cursor: 'pointer',
     transition: `border-color ${vars.duration.fast}, background-color ${vars.duration.fast}`,
+    selectors: {
+      '&:disabled': {
+        opacity: 0.5,
+        cursor: 'not-allowed',
+      },
+    },
   },
   variants: {
     selected: {
