@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { ChevronLeft, ChevronRight, Share2, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
@@ -120,6 +120,8 @@ function fromExploreRecord(record: ExploreRecord): DetailViewModel {
 export function RecordDetailPage() {
   const { recordId } = useParams<{ recordId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const fromTab = (location.state as { fromTab?: 'myrecord' | 'search' } | null)?.fromTab
   const nickname = useAuthStore((state) => state.user?.nickname) ?? '나'
   const profileImageUrl = useAuthStore((state) => state.user?.profileImageUrl) ?? null
   const [reportOpen, setReportOpen] = useState(false)
@@ -147,8 +149,12 @@ export function RecordDetailPage() {
   const blockUserMutation = useBlockUserMutation()
 
   const goBack = () => {
-    // 목록 탭을 URL에 남겨 두어 뒤로가기 시 내 기록/둘러보기를 복원한다
-    const listTab = ownRecord ? 'myrecord' : 'search'
+    // 목록 탭을 URL에 남겨 두어 뒤로가기 시 내 기록/둘러보기를 복원한다. 진입한 탭을
+    // 그대로 쓰는 게 정확하다 — 전체공개된 내 기록은 둘러보기에도 뜨기 때문에
+    // ownRecord 유무만으로는 어느 탭에서 들어왔는지 구분할 수 없다(항상 내 기록으로
+    // 돌아가 버리는 문제가 있었다). 공유 링크 등 state 없이 바로 들어온 경우에만
+    // ownRecord 기준으로 추정한다.
+    const listTab = fromTab ?? (ownRecord ? 'myrecord' : 'search')
     navigate(ROUTES.recordTab(listTab))
   }
 

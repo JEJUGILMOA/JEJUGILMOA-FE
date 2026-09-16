@@ -62,7 +62,8 @@ export function ExploreRecordCard({ record, media = 'photos', isOwn = false }: E
     reactMutation.mutate({ id: record.id, reaction, currentReaction: record.myReaction })
   }
 
-  const goToDetail = () => navigate(ROUTES.recordDetail(record.id))
+  const goToDetail = () =>
+    navigate(ROUTES.recordDetail(record.id), { state: { fromTab: 'search' } })
 
   const handleReport = () => {
     setMenuOpen(false)
@@ -120,59 +121,63 @@ export function ExploreRecordCard({ record, media = 'photos', isOwn = false }: E
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          <button
-            type="button"
-            className={overlayButtonStyle}
-            aria-label={record.isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-            aria-pressed={record.isBookmarked}
-            disabled={bookmarkMutation.isPending}
-            onClick={() =>
-              bookmarkMutation.mutate({
-                id: record.id,
-                nextFavorite: !record.isBookmarked,
-              })
-            }
-          >
-            <Bookmark
-              size={16}
-              strokeWidth={1.75}
-              fill={record.isBookmarked ? 'currentColor' : 'none'}
-            />
-          </button>
+          {isOwn ? null : (
+            <button
+              type="button"
+              className={overlayButtonStyle}
+              aria-label={record.isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+              aria-pressed={record.isBookmarked}
+              disabled={bookmarkMutation.isPending}
+              onClick={() =>
+                bookmarkMutation.mutate({
+                  id: record.id,
+                  nextFavorite: !record.isBookmarked,
+                })
+              }
+            >
+              <Bookmark
+                size={16}
+                strokeWidth={1.75}
+                fill={record.isBookmarked ? 'currentColor' : 'none'}
+              />
+            </button>
+          )}
 
-          <Popover
-            open={menuOpen}
-            onOpenChange={setMenuOpen}
-            align="end"
-            ariaLabel="기록 더보기 메뉴"
-            trigger={
-              <button
-                type="button"
-                className={overlayButtonStyle}
-                aria-label="더보기"
-                aria-haspopup="menu"
-                aria-expanded={menuOpen}
-                onClick={() => setMenuOpen((prev) => !prev)}
-              >
-                <MoreVertical size={16} aria-hidden />
-              </button>
-            }
-          >
-            <div className={menuListStyle}>
-              <button type="button" role="menuitem" className={menuItemStyle} onClick={handleReport}>
-                신고하기
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className={menuItemDangerStyle}
-                disabled={blockUserMutation.isPending}
-                onClick={handleBlockAuthor}
-              >
-                작성자 차단하기
-              </button>
-            </div>
-          </Popover>
+          {isOwn ? null : (
+            <Popover
+              open={menuOpen}
+              onOpenChange={setMenuOpen}
+              align="end"
+              ariaLabel="기록 더보기 메뉴"
+              trigger={
+                <button
+                  type="button"
+                  className={overlayButtonStyle}
+                  aria-label="더보기"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen((prev) => !prev)}
+                >
+                  <MoreVertical size={16} aria-hidden />
+                </button>
+              }
+            >
+              <div className={menuListStyle}>
+                <button type="button" role="menuitem" className={menuItemStyle} onClick={handleReport}>
+                  신고하기
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={menuItemDangerStyle}
+                  disabled={blockUserMutation.isPending}
+                  onClick={handleBlockAuthor}
+                >
+                  작성자 차단하기
+                </button>
+              </div>
+            </Popover>
+          )}
         </div>
       </div>
 
