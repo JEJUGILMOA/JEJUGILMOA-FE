@@ -7,6 +7,8 @@ export type SelectableOptionProps = {
   selected: boolean
   onSelect: () => void
   className?: string
+  /** true면 선택 불가 (예: 반영 중인 요청이 있을 때 연타 방지) */
+  disabled?: boolean
 }
 
 /**
@@ -18,12 +20,14 @@ export function SelectableOption({
   selected,
   onSelect,
   className,
+  disabled = false,
 }: SelectableOptionProps) {
   return (
     <button
       type="button"
       role="radio"
       aria-checked={selected}
+      disabled={disabled}
       className={cn(optionRecipe({ selected }), className)}
       onClick={onSelect}
     >

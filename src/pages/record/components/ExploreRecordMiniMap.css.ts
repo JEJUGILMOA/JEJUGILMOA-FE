@@ -10,6 +10,9 @@ export const mapRootStyle = style({
   overflow: 'hidden',
   // 카드 클릭이 지도 제스처에 가로채이지 않도록
   pointerEvents: 'none',
+  // Leaflet 내부 z-index(타일·마커 등 최대 700)가 이 박스 밖(정렬 드롭다운 등)으로
+  // 새어나가지 않도록 여기서 별도 스택킹 컨텍스트로 가둔다
+  isolation: 'isolate',
 })
 
 export const mapCanvasStyle = style({

@@ -270,14 +270,14 @@ function useRecordReactionMutation() {
 
       return { previousMy, previousExplore }
     },
-    onError: (_error, _variables, context) => {
+    onError: (error, _variables, context) => {
       if (context?.previousMy) {
         queryClient.setQueryData(QUERY_KEYS.myRecords, context.previousMy)
       }
       if (context?.previousExplore) {
         queryClient.setQueryData(QUERY_KEYS.exploreRecords, context.previousExplore)
       }
-      toast.error('반응을 처리하지 못했어요. 다시 시도해 주세요.')
+      toast.error(getErrorMessage(error, '반응을 처리하지 못했어요. 다시 시도해 주세요.'))
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })

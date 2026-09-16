@@ -223,7 +223,7 @@ export const router = createBrowserRouter([
       {
         path: 'record/:recordId/plan',
         Component: RecordPlanPage,
-        handle: { title: '여행 계획', ...withPageHeader } satisfies RouteHandle,
+        handle: { title: '여행 계획', ...withPageHeader, flush: true } satisfies RouteHandle,
       },
       {
         path: 'record/:recordId/edit',

@@ -1,11 +1,10 @@
 import { useNavigate, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge/Badge'
-import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
-import { ImagePlaceholder } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
+import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
-import { ROUTES } from '@/constants'
 import {
   useCompletedTripsQuery,
   useExploreRecordsQuery,
@@ -29,8 +28,7 @@ type PlanView = {
   title: string
   dateRangeLabel: string
   itinerary: TripDayPlan[]
-  /** 이 계획을 기반으로 새 기록을 남길 수 있는 경우에만 채워짐 (본인 완료 여행일 때) */
-  createCta: { tripId: string; tripTitle: string } | null
+  coverImageUrl: string | null
 }
 
 /** STEP 09: 연결된 여행 계획 보기 — 내 기록의 'OO 계획 보기' 또는 둘러보기의 '연결된 계획 보기' 클릭 시 진입 */
@@ -56,13 +54,18 @@ export function RecordPlanPage() {
     (!ownRecord && exploreRecordsQuery.isLoading) ||
     (Boolean(ownRecord?.tripId) && tripsQuery.isLoading)
 
+  const isError =
+    myRecordsQuery.isError ||
+    (!ownRecord && exploreRecordsQuery.isError) ||
+    (Boolean(ownRecord?.tripId) && tripsQuery.isError)
+
   const view: PlanView | null = ownTrip
     ? {
         badgeLabel: '나의 계획',
         title: ownTrip.title,
         dateRangeLabel: ownTrip.dateRangeLabel,
         itinerary: ownTrip.itinerary,
-        createCta: { tripId: ownTrip.id, tripTitle: ownTrip.title },
+        coverImageUrl: ownRecord?.thumbnailUrl ?? ownRecord?.photoUrls[0] ?? null,
       }
     : exploreRecord?.linkedPlanItinerary
       ? {
@@ -70,7 +73,7 @@ export function RecordPlanPage() {
           title: exploreRecord.linkedPlanTitle ?? exploreRecord.title,
           dateRangeLabel: exploreRecord.tripDateRangeLabel,
           itinerary: exploreRecord.linkedPlanItinerary,
-          createCta: null,
+          coverImageUrl: exploreRecord.photoUrls[0] ?? null,
         }
       : null
 
@@ -88,6 +91,21 @@ export function RecordPlanPage() {
     )
   }
 
+  if (isError) {
+    return (
+      <div>
+        {header}
+        <ErrorState
+          onRetry={() => {
+            void myRecordsQuery.refetch()
+            void exploreRecordsQuery.refetch()
+            void tripsQuery.refetch()
+          }}
+        />
+      </div>
+    )
+  }
+
   if (!view) {
     return (
       <div>
@@ -100,15 +118,13 @@ export function RecordPlanPage() {
     )
   }
 
-  const { createCta } = view
-
   return (
     <div>
       {header}
 
       <div className={pageStyle}>
         <div className={coverPlaceholderStyle}>
-          <ImagePlaceholder size="lg" />
+          <SafeImage src={view.coverImageUrl} placeholderSize="lg" />
         </div>
 
         <div className={infoStyle}>
@@ -125,20 +141,6 @@ export function RecordPlanPage() {
           <h2 className={sectionTitleStyle}>일자별 일정</h2>
           <TripItinerary itinerary={view.itinerary} />
         </section>
-
-        {createCta ? (
-          <Button
-            fullWidth
-            size="lg"
-            onClick={() =>
-              navigate(ROUTES.recordCreate, {
-                state: { tripId: createCta.tripId, tripTitle: createCta.tripTitle },
-              })
-            }
-          >
-            이 계획으로 새 기록 남기기
-          </Button>
-        ) : null}
       </div>
     </div>
   )

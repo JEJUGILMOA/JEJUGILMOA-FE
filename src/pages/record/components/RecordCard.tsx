@@ -23,7 +23,8 @@ export type RecordCardProps = {
 /** STEP 05: 내 기록 목록의 카드 한 장. 클릭하면 STEP 08 상세보기로 이동한다 */
 export function RecordCard({ record }: RecordCardProps) {
   const navigate = useNavigate()
-  const goToDetail = () => navigate(ROUTES.recordDetail(record.id))
+  const goToDetail = () =>
+    navigate(ROUTES.recordDetail(record.id), { state: { fromTab: 'myrecord' } })
 
   return (
     <article

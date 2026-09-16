@@ -32,6 +32,8 @@ export type ModalAction = {
   variant?: ButtonVariant
   /** false면 고정 너비, 그 외(기본) 가로로 늘어남 */
   grow?: boolean
+  /** true면 로딩 중 표시(버튼 비활성 + "처리 중…") — 연타로 중복 요청되는 것 방지 */
+  isLoading?: boolean
 }
 
 type ModalProps = {
@@ -221,6 +223,7 @@ export function Modal({
               size="lg"
               className={cn(action.grow === false ? actionFixedStyle : actionGrowStyle)}
               onClick={action.onClick}
+              isLoading={action.isLoading}
             >
               {action.label}
             </Button>

@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import { ChevronLeft, ChevronRight, Share2, ThumbsDown, ThumbsUp } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Badge } from '@/components/ui/Badge/Badge'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
+import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
@@ -21,7 +22,6 @@ import { useBlockUserMutation } from '@/features/users/hooks'
 import { useAuthStore } from '@/stores/authStore'
 import { RecordManageSheet } from '@/pages/record/components/RecordManageSheet'
 import { ReportRecordModal } from '@/pages/record/components/ReportRecordModal'
-import { EarnedBadgeCallout } from './components/EarnedBadgeCallout'
 import { PhotoCarousel } from './components/PhotoCarousel'
 import { RoutePreview } from './components/RoutePreview'
 import { VisitedPlaceList } from './components/VisitedPlaceList'
@@ -120,6 +120,8 @@ function fromExploreRecord(record: ExploreRecord): DetailViewModel {
 export function RecordDetailPage() {
   const { recordId } = useParams<{ recordId: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const fromTab = (location.state as { fromTab?: 'myrecord' | 'search' } | null)?.fromTab
   const nickname = useAuthStore((state) => state.user?.nickname) ?? '나'
   const profileImageUrl = useAuthStore((state) => state.user?.profileImageUrl) ?? null
   const [reportOpen, setReportOpen] = useState(false)
@@ -133,6 +135,7 @@ export function RecordDetailPage() {
     : (exploreRecordsQuery.data?.find((item) => item.id === recordId) ?? null)
 
   const isLoading = myRecordsQuery.isLoading || (!ownRecord && exploreRecordsQuery.isLoading)
+  const isError = myRecordsQuery.isError || (!ownRecord && exploreRecordsQuery.isError)
 
   const view = ownRecord
     ? fromOwnRecord(ownRecord, nickname, profileImageUrl)
@@ -146,8 +149,12 @@ export function RecordDetailPage() {
   const blockUserMutation = useBlockUserMutation()
 
   const goBack = () => {
-    // 목록 탭을 URL에 남겨 두어 뒤로가기 시 내 기록/둘러보기를 복원한다
-    const listTab = ownRecord ? 'myrecord' : 'search'
+    // 목록 탭을 URL에 남겨 두어 뒤로가기 시 내 기록/둘러보기를 복원한다. 진입한 탭을
+    // 그대로 쓰는 게 정확하다 — 전체공개된 내 기록은 둘러보기에도 뜨기 때문에
+    // ownRecord 유무만으로는 어느 탭에서 들어왔는지 구분할 수 없다(항상 내 기록으로
+    // 돌아가 버리는 문제가 있었다). 공유 링크 등 state 없이 바로 들어온 경우에만
+    // ownRecord 기준으로 추정한다.
+    const listTab = fromTab ?? (ownRecord ? 'myrecord' : 'search')
     navigate(ROUTES.recordTab(listTab))
   }
 
@@ -207,6 +214,20 @@ export function RecordDetailPage() {
     )
   }
 
+  if (isError) {
+    return (
+      <div>
+        {header}
+        <ErrorState
+          onRetry={() => {
+            void myRecordsQuery.refetch()
+            void exploreRecordsQuery.refetch()
+          }}
+        />
+      </div>
+    )
+  }
+
   if (!view) {
     return (
       <div>
@@ -224,6 +245,7 @@ export function RecordDetailPage() {
         <div className={photoBleedStyle}>
           <PhotoCarousel
             photoUrls={view.photoUrls}
+            title={view.title}
             isBookmarked={view.isBookmarked}
             onToggleBookmark={view.isOwn ? undefined : handleToggleBookmark}
             moderation={
@@ -286,17 +308,6 @@ export function RecordDetailPage() {
             <p className={metaStyle}>
               방문 장소 {view.visitedPlaces.length}곳 · 사진 {view.photoUrls.length}장
             </p>
-
-            {view.isOwn ? (
-              // TODO: 더미 데이터 — GET /api/records/{id} 응답에 "이 기록으로 새로 딴 배지" 정보가
-              // 아직 없어서(배지는 /api/badges/me·트립 완료 응답에만 있음), 백엔드 지원 전까지는
-              // UI만 먼저 만들어둔다.
-              <EarnedBadgeCallout
-                badgeName="첫 발걸음"
-                additionalCount={1}
-                onViewAll={() => navigate(ROUTES.myBadges)}
-              />
-            ) : null}
 
             <div className={actionRowStyle}>
               {view.isOwn ? (

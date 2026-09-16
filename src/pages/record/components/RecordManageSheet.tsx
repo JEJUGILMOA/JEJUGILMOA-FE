@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MoreVertical } from 'lucide-react'
 import { useNavigate } from 'react-router'
+import { getErrorMessage } from '@/api/error'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { Popover } from '@/components/ui/Popover/Popover'
 import { toast } from '@/components/ui/Toast/Toast'
@@ -49,6 +50,7 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
   }
 
   const handleSetVisibility = (visibility: RecordVisibility) => {
+    if (updateMutation.isPending) return
     updateMutation.mutate(
       { id: record.id, original: record, patch: { visibility } },
       {
@@ -56,22 +58,23 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
           toast.success('공개 범위를 변경했어요')
           closeModal()
         },
-        onError: () => {
-          toast.error('공개 범위 변경에 실패했어요. 다시 시도해 주세요.')
+        onError: (error) => {
+          toast.error(getErrorMessage(error, '공개 범위 변경에 실패했어요. 다시 시도해 주세요.'))
         },
       },
     )
   }
 
   const handleDelete = () => {
+    if (deleteMutation.isPending) return
     deleteMutation.mutate(record.id, {
       onSuccess: () => {
         toast.success('기록을 삭제했어요')
         closeModal()
         onDeleted?.()
       },
-      onError: () => {
-        toast.error('기록 삭제에 실패했어요. 다시 시도해 주세요.')
+      onError: (error) => {
+        toast.error(getErrorMessage(error, '기록 삭제에 실패했어요. 다시 시도해 주세요.'))
       },
     })
   }
@@ -131,6 +134,7 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
 
       <Modal
         open={modalView === 'visibility'}
+        forceWeb
         title="공개 범위 설정"
         onClose={closeModal}
         actions={[]}
@@ -141,12 +145,14 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
             description="모든 사용자에게 노출됩니다"
             selected={record.visibility === 'public'}
             onSelect={() => handleSetVisibility('public')}
+            disabled={updateMutation.isPending}
           />
           <SelectableOption
             title="비공개"
             description="나만 볼 수 있습니다"
             selected={record.visibility === 'private'}
             onSelect={() => handleSetVisibility('private')}
+            disabled={updateMutation.isPending}
           />
         </div>
       </Modal>
@@ -158,7 +164,7 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
         onClose={closeModal}
         actions={[
           { label: '취소', variant: 'ghost', onClick: closeModal },
-          { label: '삭제', variant: 'danger', onClick: handleDelete },
+          { label: '삭제', variant: 'danger', onClick: handleDelete, isLoading: deleteMutation.isPending },
         ]}
       />
     </>

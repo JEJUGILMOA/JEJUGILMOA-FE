@@ -18,13 +18,20 @@ export type PlacePhotoModalProps = {
   photoUrls: string[]
   placeName: string
   onClose: () => void
+  /** 팝업을 열 때 시작할 사진 인덱스. 기본값 0 */
+  initialIndex?: number
 }
 
 /** 방문 장소 썸네일 클릭 시 그 장소의 사진 전체를 드래그로 넘겨보는 전체화면 팝업 */
-export function PlacePhotoModal({ photoUrls, placeName, onClose }: PlacePhotoModalProps) {
-  const [index, setIndex] = useState(0)
+export function PlacePhotoModal({ photoUrls, placeName, onClose, initialIndex = 0 }: PlacePhotoModalProps) {
+  const [index, setIndex] = useState(initialIndex)
   const total = photoUrls.length
-  const { dragOffset, isDragging, trackHandlers } = useDragCarousel({ total, index, onIndexChange: setIndex })
+  const { dragOffset, isDragging, trackHandlers } = useDragCarousel({
+    total,
+    index,
+    onIndexChange: setIndex,
+    onTap: onClose,
+  })
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
