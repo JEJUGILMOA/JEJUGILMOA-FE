@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { getErrorMessage } from '@/api/error'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
-import { useCompletedTripsQuery, useCreateRecordMutation } from '@/features/records/hooks'
+import { useCompletedTripsQuery, useCreateRecordMutation, useMyRecordsQuery } from '@/features/records/hooks'
 import type { PlaceMemo, RecordDraft } from '@/features/records/types'
 import { DetailsStep } from './steps/DetailsStep'
 import { PhotosStep } from './steps/PhotosStep'
@@ -48,6 +48,23 @@ export function RecordCreatePage() {
     refetch: refetchTrips,
   } = useCompletedTripsQuery()
   const createRecordMutation = useCreateRecordMutation()
+  const { data: myRecords } = useMyRecordsQuery()
+
+  // 여행 하나당 기록은 하나만 남길 수 있어서(RECORD409_1), 이미 기록이 있는 여행은
+  // STEP01에서부터 선택 못 하게 막는다.
+  const recordedTripIds = useMemo(
+    () => new Set(myRecords?.flatMap((record) => (record.tripId ? [record.tripId] : []))),
+    [myRecords],
+  )
+
+  // 선택 가능한(기록 없는) 여행이 위로, 이미 기록한 여행이 아래로 오도록 정렬
+  const sortedTrips = useMemo(
+    () =>
+      [...trips].sort(
+        (a, b) => Number(recordedTripIds.has(a.id)) - Number(recordedTripIds.has(b.id)),
+      ),
+    [trips, recordedTripIds],
+  )
 
   const selectedTrip = trips.find((trip) => trip.id === draft.tripId) ?? null
 
@@ -102,10 +119,11 @@ export function RecordCreatePage() {
       <div className={pageStyle}>
         {step === 1 ? (
           <TripSelectStep
-            trips={trips}
+            trips={sortedTrips}
             isLoading={isTripsLoading}
             isError={isTripsError}
             onRetry={() => void refetchTrips()}
+            recordedTripIds={recordedTripIds}
             selectedTripId={draft.tripId}
             onSelect={handleSelectTrip}
             onNext={goNext}

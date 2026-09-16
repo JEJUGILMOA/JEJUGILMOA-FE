@@ -134,6 +134,7 @@ export function RecordManageSheet({ record, inline = false, onDeleted }: RecordM
 
       <Modal
         open={modalView === 'visibility'}
+        forceWeb
         title="공개 범위 설정"
         onClose={closeModal}
         actions={[]}
