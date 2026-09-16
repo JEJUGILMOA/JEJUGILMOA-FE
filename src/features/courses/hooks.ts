@@ -65,6 +65,10 @@ export function findSavedCourseMatch(
   )
 }
 
+function optimisticSavedCourseId(params: SaveCourseParams) {
+  return `optimistic-${params.sourceType}-${params.sourceId}`
+}
+
 export function useSaveCourseMutation() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -93,32 +97,100 @@ export function useDeleteSavedCourseMutation() {
   })
 }
 
-/** 추천 코스 상세용 즐겨찾기 토글 (POST /courses/saved ↔ DELETE /courses/saved/{id}) */
+type ToggleCourseFavoriteInput = {
+  nextFavorite: boolean
+  saveParams: SaveCourseParams
+  /** 해제 시 서버 savedCourseId. 낙관적 추가분 해제는 sourceId로도 매칭한다 */
+  savedCourseId?: string
+  /** 낙관적 추가 시 카드 매칭용 제목 */
+  title?: string
+}
+
+/** 코스 즐겨찾기 토글 — savedCourses 캐시 낙관적 업데이트 */
 export function useToggleCourseFavoriteMutation() {
   const queryClient = useQueryClient()
-  const saveMutation = useSaveCourseMutation()
-  const deleteMutation = useDeleteSavedCourseMutation()
 
-  return {
-    isPending: saveMutation.isPending || deleteMutation.isPending,
-    mutate: (
-      input: {
-        nextFavorite: boolean
-        saveParams: SaveCourseParams
-        savedCourseId?: string
-      },
-      options?: { onSuccess?: () => void },
-    ) => {
+  return useMutation({
+    mutationFn: async (input: ToggleCourseFavoriteInput) => {
       if (input.nextFavorite) {
-        saveMutation.mutate(input.saveParams, { onSuccess: options?.onSuccess })
+        await saveCourse(input.saveParams)
         return
       }
-      if (!input.savedCourseId) {
-        toast.error('즐겨찾기 정보를 찾지 못했어요. 잠시 후 다시 시도해 주세요.')
-        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.savedCourses })
-        return
+      const savedCourseId = input.savedCourseId
+      if (!savedCourseId || savedCourseId.startsWith('optimistic-')) {
+        throw new Error('MISSING_SAVED_COURSE_ID')
       }
-      deleteMutation.mutate(input.savedCourseId, { onSuccess: options?.onSuccess })
+      await deleteSavedCourse(savedCourseId)
     },
-  }
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.savedCourses })
+      const previous = queryClient.getQueryData<SavedCourse[]>(QUERY_KEYS.savedCourses)
+      const current = previous ? [...previous] : []
+
+      if (input.nextFavorite) {
+        const stub: SavedCourse = {
+          savedCourseId: optimisticSavedCourseId(input.saveParams),
+          sourceType: input.saveParams.sourceType,
+          sourceId: input.saveParams.sourceId,
+          title: input.title ?? '',
+          imageUrl: undefined,
+          region: undefined,
+          placeCount: undefined,
+          estimatedMinutes: undefined,
+          theme: undefined,
+          description: undefined,
+          copyCount: undefined,
+          waypoints: [],
+        }
+        queryClient.setQueryData<SavedCourse[]>(QUERY_KEYS.savedCourses, [
+          stub,
+          ...current.filter(
+            (course) =>
+              !(
+                course.sourceType === input.saveParams.sourceType &&
+                course.sourceId === input.saveParams.sourceId
+              ),
+          ),
+        ])
+      } else {
+        queryClient.setQueryData<SavedCourse[]>(
+          QUERY_KEYS.savedCourses,
+          current.filter((course) => {
+            if (input.savedCourseId && course.savedCourseId === input.savedCourseId) return false
+            if (
+              course.sourceType === input.saveParams.sourceType &&
+              course.sourceId === input.saveParams.sourceId
+            ) {
+              return false
+            }
+            return true
+          }),
+        )
+      }
+
+      return { previous }
+    },
+    onError: (error, input, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(QUERY_KEYS.savedCourses, context.previous)
+      }
+      if (error instanceof Error && error.message === 'MISSING_SAVED_COURSE_ID') {
+        toast.error('즐겨찾기 정보를 찾지 못했어요. 잠시 후 다시 시도해 주세요.')
+        return
+      }
+      toast.error(
+        input.nextFavorite
+          ? '즐겨찾기 추가에 실패했어요. 다시 시도해 주세요.'
+          : '즐겨찾기 해제에 실패했어요. 다시 시도해 주세요.',
+      )
+    },
+    onSuccess: (_data, input) => {
+      toast.success(
+        input.nextFavorite ? '코스를 즐겨찾기에 추가했어요' : '코스 즐겨찾기를 해제했어요',
+      )
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.savedCourses })
+    },
+  })
 }

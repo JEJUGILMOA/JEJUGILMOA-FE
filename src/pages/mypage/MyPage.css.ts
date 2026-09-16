@@ -97,3 +97,12 @@ export const menuListStyle = style({
   overflow: 'hidden',
   paddingInline: vars.space[1],
 })
+
+export const menuDividerStyle = style({
+  display: 'block',
+  width: '100%',
+  height: 0,
+  margin: 0,
+  border: 'none',
+  borderTop: `1px solid ${colors.border[1]}`,
+})

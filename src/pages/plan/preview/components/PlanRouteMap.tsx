@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { Chip } from '@/components/ui/Chip/Chip'
+import { LEAFLET_NO_ANIMATE, LEAFLET_NO_CAMERA_ANIMATION } from '@/features/map/leafletStaticMap'
 import { colors } from '@/styles/colors.css.ts'
 import {
   dayTabRowStyle,
@@ -142,7 +143,8 @@ export function PlanRouteMap({ days, dayRoutes = [] }: PlanRouteMapProps) {
       attributionControl: false,
       dragging: true,
       scrollWheelZoom: false,
-    }).setView(JEJU_CENTER, 10)
+      ...LEAFLET_NO_CAMERA_ANIMATION,
+    }).setView(JEJU_CENTER, 10, LEAFLET_NO_ANIMATE)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
@@ -155,7 +157,7 @@ export function PlanRouteMap({ days, dayRoutes = [] }: PlanRouteMapProps) {
     layerRef.current = layer
 
     const resizeObserver = new ResizeObserver(() => {
-      map.invalidateSize()
+      map.invalidateSize(LEAFLET_NO_ANIMATE)
     })
     resizeObserver.observe(node)
 
@@ -208,16 +210,16 @@ export function PlanRouteMap({ days, dayRoutes = [] }: PlanRouteMapProps) {
     }
 
     if (!hasGeometry) {
-      map.setView(JEJU_CENTER, 10)
+      map.setView(JEJU_CENTER, 10, LEAFLET_NO_ANIMATE)
       return
     }
 
     if (plotted.length === 1 && visibleRoutes.length === 0) {
-      map.setView(bounds.getCenter(), 13)
+      map.setView(bounds.getCenter(), 13, LEAFLET_NO_ANIMATE)
     } else {
-      map.fitBounds(bounds.pad(0.18))
+      map.fitBounds(bounds.pad(0.18), LEAFLET_NO_ANIMATE)
     }
-    map.invalidateSize()
+    map.invalidateSize(LEAFLET_NO_ANIMATE)
   }, [plotted, visibleRoutes])
 
   return (

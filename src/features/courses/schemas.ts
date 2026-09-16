@@ -60,31 +60,39 @@ export const recommendedCourseDetailSchema = z.object({
 
 export const courseSourceTypeSchema = z.enum(['RECOMMENDED', 'RECORD'])
 
-/** `GET /api/courses/saved` 목록 아이템. RECORD 출처는 estimatedMinutes/transportMode가 없다 */
+/**
+ * `GET /api/courses/saved` 목록 아이템 (`SavedCourseListItemResponse`).
+ * RECORD 출처는 estimatedMinutes / theme / copyCount 가 null일 수 있다.
+ */
 export const savedCourseSchema = z.object({
   savedCourseId: z.coerce.string(),
   sourceType: courseSourceTypeSchema,
-  /** 서버가 내려주면 추천/기록 원본 ID로 즐겨찾기 매칭에 사용 */
+  /** RECOMMENDED → 추천 코스 ID, RECORD → 여행 기록 ID */
   sourceId: z.coerce.string().optional(),
   title: z.string(),
   imageUrl: optionalString,
   region: optionalString,
   placeCount: optionalNumber,
   estimatedMinutes: optionalNumber,
-  transportMode: optionalString,
+  theme: z.string().nullish().transform((value) => value ?? undefined),
+  description: optionalString,
+  copyCount: optionalNumber,
+  waypoints: z.array(courseWaypointSchema).nullish().transform((value) => value ?? []),
 })
 
-/** `GET /api/courses/saved/{savedCourseId}/detail` 응답. RECORD 출처는 description도 없다 */
+/**
+ * `GET /api/courses/saved/{savedCourseId}/detail` (`SavedCourseDetailResponse`).
+ * RECORD 출처는 region / theme / tags / estimatedMinutes / description 이 null일 수 있다.
+ */
 export const savedCourseDetailSchema = z.object({
   savedCourseId: z.coerce.string(),
   sourceType: courseSourceTypeSchema,
-  sourceId: z.coerce.string().optional(),
   title: z.string(),
   imageUrl: optionalString,
   region: optionalString,
+  theme: z.string().nullish().transform((value) => value ?? undefined),
   placeCount: optionalNumber,
   estimatedMinutes: optionalNumber,
-  transportMode: optionalString,
   description: optionalString,
   tags: z.array(z.string()).nullish().transform((value) => value ?? []),
   stops: z.array(courseStopSchema).nullish().transform((value) => value ?? []),

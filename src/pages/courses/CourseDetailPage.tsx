@@ -97,6 +97,7 @@ export function CourseDetailPage() {
       nextFavorite: !isFavorite,
       saveParams: { sourceType: 'RECOMMENDED', sourceId: courseId },
       savedCourseId: matchedSaved?.savedCourseId,
+      title: courseQuery.data.title,
     })
   }
 

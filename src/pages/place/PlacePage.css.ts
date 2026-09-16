@@ -194,46 +194,6 @@ export const photoImgStyle = style({
   height: '100%',
 })
 
-export const reviewListStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[4],
-  margin: 0,
-  padding: 0,
-  listStyle: 'none',
-})
-
-export const reviewItemStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[2],
-})
-
-export const reviewHeaderStyle = style({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: vars.space[3],
-})
-
-export const reviewUserStyle = style({
-  fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.semibold,
-  color: colors.text[1],
-})
-
-export const reviewDateStyle = style({
-  fontSize: '12px',
-  color: colors.text[4],
-})
-
-export const reviewContentStyle = style({
-  margin: 0,
-  fontSize: vars.fontSize.sm,
-  lineHeight: vars.lineHeight.relaxed,
-  color: colors.text[2],
-})
-
 export const footerStyle = style({
   position: 'fixed',
   left: 0,

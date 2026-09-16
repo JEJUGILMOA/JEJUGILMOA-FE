@@ -1,10 +1,11 @@
-import { Clock, Heart, MapPin, Waves } from 'lucide-react'
+import { Bookmark, Clock, Heart, MapPin, Waves } from 'lucide-react'
 import { type KeyboardEvent } from 'react'
 import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import type { CourseImageTag } from '@/data/mockExplore'
 import { cn } from '@/utils/cn'
 import {
   bodyStyle,
+  bookmarkStyle,
   cardStyle,
   descStyle,
   imageTagListStyle,
@@ -27,7 +28,6 @@ import {
 const VISIBLE_PREVIEWS = 3
 const VISIBLE_TAGS = 3
 
-
 export type CoursePreviewStep = {
   title: string
   thumbnailUrl: string
@@ -42,6 +42,11 @@ export type CourseRecommendCardProps = {
   duration?: string
   placeCount: number
   previewSteps: CoursePreviewStep[]
+  /** 즐겨찾기 여부 */
+  bookmarked?: boolean
+  /** 즐겨찾기 토글 중 */
+  isBookmarkPending?: boolean
+  onToggleBookmark?: () => void
   onClick?: () => void
   className?: string
 }
@@ -63,6 +68,9 @@ export function CourseRecommendCard({
   duration,
   placeCount,
   previewSteps,
+  bookmarked = false,
+  isBookmarkPending = false,
+  onToggleBookmark,
   onClick,
   className,
 }: CourseRecommendCardProps) {
@@ -72,10 +80,20 @@ export function CourseRecommendCard({
   const visibleTags = imageTags.slice(0, VISIBLE_TAGS)
   const extraTagCount = Math.max(0, imageTags.length - VISIBLE_TAGS)
 
-
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (!onClick) return
     if (event.key !== 'Enter' && event.key !== ' ') return
+
+    const target = event.target
+    if (target instanceof Element) {
+      const interactive = target.closest(
+        'a, button, input, select, textarea, [role="button"]',
+      )
+      if (interactive && interactive !== event.currentTarget) {
+        return
+      }
+    }
+
     event.preventDefault()
     onClick()
   }
@@ -103,6 +121,25 @@ export function CourseRecommendCard({
               <span className={imageTagMoreStyle}>+{extraTagCount}개</span>
             ) : null}
           </div>
+        ) : null}
+        {onToggleBookmark ? (
+          <button
+            type="button"
+            className={bookmarkStyle}
+            aria-label={bookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            aria-pressed={bookmarked}
+            disabled={isBookmarkPending}
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggleBookmark()
+            }}
+          >
+            <Bookmark
+              size={16}
+              strokeWidth={1.75}
+              fill={bookmarked ? 'currentColor' : 'none'}
+            />
+          </button>
         ) : null}
       </div>
 

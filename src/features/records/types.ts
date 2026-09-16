@@ -121,6 +121,8 @@ export type ExploreRecord = {
   id: string
   title: string
   summary: string
+  /** 작성자 사용자 ID — 차단 API(`POST /users/{targetUserId}/block`)에 사용 */
+  authorId: number
   authorName: string
   authorProfileImageUrl: string | null
   linkedPlanTitle: string | null
@@ -153,6 +155,14 @@ export type ImageUploadResponse = {
 }
 
 export type RecordReactionApi = 'LIKE' | 'DISLIKE'
+
+/** `POST /api/records/{recordId}/reports` 요청 body */
+export type ReportCreateRequest = {
+  /** 신고 사유 요약 (최대 200자) */
+  reasonSummary: string
+  /** 신고 사유 상세 (선택, 최대 500자) */
+  reasonDetail?: string
+}
 
 export type TravelRecordAuthorResponse = {
   authorId: number

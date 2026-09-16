@@ -2,6 +2,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '@/api/http'
 import { fetchPlans } from '@/features/plans/api'
 import type { TravelPlan, TravelPlanDetailResponse } from '@/features/plans/types'
 import { uploadImageAndGetObjectKey } from './imageUpload'
+import { recordPageSchema, type RecordPage } from './schemas'
 import type {
   CompletedTrip,
   ExploreRecord,
@@ -14,6 +15,7 @@ import type {
   RecordUpdatePatch,
   RecordVisibility,
   RecordVisibilityApi,
+  ReportCreateRequest,
   SavedRecord,
   TravelRecordCreateRequest,
   TravelRecordCreateResponse,
@@ -258,18 +260,23 @@ function mapDetailToSavedRecord(detail: TravelRecordDetailResponse): SavedRecord
     likeCount: detail.likeCount,
     dislikeCount: detail.dislikeCount,
     myReaction: detail.myReaction === 'LIKE' ? 'like' : detail.myReaction === 'DISLIKE' ? 'dislike' : null,
-    // 서버에 북마크 API가 없어 로컬 전용으로 남겨둔다 (hooks.ts의 캐시 토글 참고)
+    // 본인 기록은 즐겨찾기 API가 403이라 항상 false
     isBookmarked: false,
     createdAt: detail.createdAt,
   }
 }
 
-function mapDetailToExploreRecord(detail: TravelRecordDetailResponse): ExploreRecord {
+function mapDetailToExploreRecord(
+  detail: TravelRecordDetailResponse,
+  favoriteIds: Set<string>,
+): ExploreRecord {
   const photoUrls = mapDetailToPhotoUrls(detail.allImages)
+  const id = String(detail.recordId)
   return {
-    id: String(detail.recordId),
+    id,
     title: detail.title,
     summary: detail.description ?? '',
+    authorId: detail.author.authorId,
     authorName: detail.author.nickname,
     authorProfileImageUrl: detail.author.profileImageUrl,
     linkedPlanTitle: detail.plan?.title ?? null,
@@ -280,7 +287,7 @@ function mapDetailToExploreRecord(detail: TravelRecordDetailResponse): ExploreRe
     tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate, detail.places.length),
     visitedPlaces: mapDetailToVisitedPlaces(detail.places),
     createdAt: detail.createdAt,
-    isBookmarked: false,
+    isBookmarked: favoriteIds.has(id),
     likeCount: detail.likeCount,
     dislikeCount: detail.dislikeCount,
     myReaction: detail.myReaction === 'LIKE' ? 'like' : detail.myReaction === 'DISLIKE' ? 'dislike' : null,
@@ -293,8 +300,51 @@ export async function fetchMyRecords(): Promise<SavedRecord[]> {
 }
 
 export async function fetchExploreRecords(): Promise<ExploreRecord[]> {
-  const details = await fetchRecordDetails(false)
-  return details.map(mapDetailToExploreRecord).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const [details, favoriteIds] = await Promise.all([
+    fetchRecordDetails(false),
+    fetchFavoriteRecordIds().catch(() => new Set<string>()),
+  ])
+  return details
+    .map((detail) => mapDetailToExploreRecord(detail, favoriteIds))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
+function toRecordIdNumber(recordId: string | number) {
+  const value = typeof recordId === 'number' ? recordId : Number(recordId)
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new Error('유효하지 않은 기록 ID예요.')
+  }
+  return value
+}
+
+/** GET /records/favorites — 내가 즐겨찾기한 기록 카드 목록 */
+export async function fetchFavoriteRecords(params?: {
+  page?: number
+  size?: number
+}): Promise<RecordPage> {
+  const data = await apiGet<unknown>('/records/favorites', {
+    params: {
+      page: params?.page ?? 0,
+      size: params?.size ?? 20,
+    },
+  })
+  return recordPageSchema.parse(data)
+}
+
+/** GET /records/favorites — 내가 즐겨찾기한 기록 ID 집합 */
+export async function fetchFavoriteRecordIds(size = 100): Promise<Set<string>> {
+  const page = await fetchFavoriteRecords({ page: 0, size })
+  return new Set(page.content.map((item) => item.recordId))
+}
+
+/** POST /records/{recordId}/favorites — 기록 즐겨찾기 추가 */
+export async function addRecordFavorite(recordId: string | number): Promise<void> {
+  await apiPost<void>(`/records/${toRecordIdNumber(recordId)}/favorites`)
+}
+
+/** DELETE /records/{recordId}/favorites — 기록 즐겨찾기 해제 */
+export async function removeRecordFavorite(recordId: string | number): Promise<void> {
+  await apiDelete<void>(`/records/${toRecordIdNumber(recordId)}/favorites`)
 }
 
 /** `updateRecord`에서 새로 첨부된 File을 딱 한 번씩만 업로드하려고 patch 전체를 훑어 모은다 */
@@ -430,4 +480,16 @@ export async function toggleRecordReaction(
     return
   }
   await apiPost(`/records/${id}/reactions`, { reactionType: toApiReaction(reaction) })
+}
+
+/** POST /records/{recordId}/reports — 여행 기록 신고 */
+export async function reportRecord(recordId: string, body: ReportCreateRequest): Promise<void> {
+  const id = Number(recordId)
+  if (!Number.isFinite(id) || id <= 0) {
+    throw new Error('유효하지 않은 기록 ID예요.')
+  }
+  await apiPost<void>(`/records/${id}/reports`, {
+    reasonSummary: body.reasonSummary.trim(),
+    ...(body.reasonDetail?.trim() ? { reasonDetail: body.reasonDetail.trim() } : {}),
+  })
 }

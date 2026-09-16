@@ -240,11 +240,6 @@ export function PlacePage() {
             </div>
           </section>
         ) : null}
-
-        <section>
-          <h2 className={sectionTitleStyle}>리뷰</h2>
-          <Empty title="아직 리뷰가 없어요" description="이 장소의 첫 리뷰를 남겨보세요." />
-        </section>
       </div>
     </div>
   )

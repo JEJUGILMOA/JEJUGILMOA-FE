@@ -13,12 +13,68 @@ export const cardStyle = style({
 })
 
 export const thumbnailWrapStyle = style({
+  position: 'relative',
   display: 'flex',
   width: '100%',
   aspectRatio: '6 / 3',
   overflow: 'hidden',
   backgroundColor: colors.surface[5],
 })
+
+export const overlayActionsStyle = style({
+  position: 'absolute',
+  top: vars.space[3],
+  right: vars.space[3],
+  zIndex: 2,
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[2],
+})
+
+export const overlayButtonStyle = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '36px',
+  height: '36px',
+  padding: 0,
+  border: 'none',
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.surface[1],
+  color: colors.text[1],
+  cursor: 'pointer',
+  boxShadow: '0 1px 4px rgba(37, 37, 45, 0.12)',
+})
+
+export const menuListStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+  minWidth: '148px',
+})
+
+export const menuItemStyle = style({
+  padding: `${vars.space[2]} ${vars.space[3]}`,
+  borderRadius: vars.radius.sm,
+  textAlign: 'left',
+  fontSize: vars.fontSize.sm,
+  color: colors.text[1],
+  backgroundColor: 'transparent',
+  border: 'none',
+  cursor: 'pointer',
+  selectors: {
+    '&:hover': {
+      backgroundColor: colors.surface[3],
+    },
+  },
+})
+
+export const menuItemDangerStyle = style([
+  menuItemStyle,
+  {
+    color: colors.error[100],
+  },
+])
 
 export const thumbnailImageStyle = style({
   width: '100%',

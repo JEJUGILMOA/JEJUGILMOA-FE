@@ -1,11 +1,18 @@
-import { ChevronRight, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { Bookmark, ChevronRight, MoreVertical, ThumbsDown, ThumbsUp } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
+import { Popover } from '@/components/ui/Popover/Popover'
 import { ROUTES } from '@/constants'
-import { useReactToExploreRecordMutation } from '@/features/records/hooks'
+import {
+  useReactToExploreRecordMutation,
+  useToggleExploreRecordBookmarkMutation,
+} from '@/features/records/hooks'
 import type { ExploreRecord } from '@/features/records/types'
+import { useBlockUserMutation } from '@/features/users/hooks'
 import { ExploreRecordMiniMap } from './ExploreRecordMiniMap'
+import { ReportRecordModal } from './ReportRecordModal'
 import {
   authorNameStyle,
   authorRowStyle,
@@ -14,6 +21,11 @@ import {
   bodyStyle,
   cardStyle,
   linkedPlanButtonStyle,
+  menuItemDangerStyle,
+  menuItemStyle,
+  menuListStyle,
+  overlayActionsStyle,
+  overlayButtonStyle,
   reactionButtonRecipe,
   reactionRowStyle,
   summaryStyle,
@@ -33,7 +45,11 @@ export type ExploreRecordCardProps = {
 /** STEP 06: 둘러보기 카드형의 카드 한 장 (STEP 07: 좋아요·싫어요 반응 포함). 클릭하면 STEP 08 상세보기로 이동한다 */
 export function ExploreRecordCard({ record, media = 'photos' }: ExploreRecordCardProps) {
   const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
   const reactMutation = useReactToExploreRecordMutation()
+  const bookmarkMutation = useToggleExploreRecordBookmarkMutation()
+  const blockUserMutation = useBlockUserMutation()
 
   const handleReact = (reaction: 'like' | 'dislike') => {
     reactMutation.mutate({ id: record.id, reaction, currentReaction: record.myReaction })
@@ -41,7 +57,21 @@ export function ExploreRecordCard({ record, media = 'photos' }: ExploreRecordCar
 
   const goToDetail = () => navigate(ROUTES.recordDetail(record.id))
 
+  const handleReport = () => {
+    setMenuOpen(false)
+    setReportOpen(true)
+  }
+
+  const handleBlockAuthor = () => {
+    setMenuOpen(false)
+    blockUserMutation.mutate({
+      targetUserId: record.authorId,
+      authorName: record.authorName,
+    })
+  }
+
   return (
+    <>
     <article
       className={cardStyle}
       role="link"
@@ -49,6 +79,13 @@ export function ExploreRecordCard({ record, media = 'photos' }: ExploreRecordCar
       onClick={goToDetail}
       onKeyDown={(event) => {
         if (event.key !== 'Enter' && event.key !== ' ') return
+        const target = event.target
+        if (target instanceof Element) {
+          const interactive = target.closest(
+            'a, button, input, select, textarea, [role="button"], [role="menu"]',
+          )
+          if (interactive && interactive !== event.currentTarget) return
+        }
         event.preventDefault()
         goToDetail()
       }}
@@ -70,6 +107,66 @@ export function ExploreRecordCard({ record, media = 'photos' }: ExploreRecordCar
             placeholderSize="lg"
           />
         )}
+
+        <div
+          className={overlayActionsStyle}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className={overlayButtonStyle}
+            aria-label={record.isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            aria-pressed={record.isBookmarked}
+            disabled={bookmarkMutation.isPending}
+            onClick={() =>
+              bookmarkMutation.mutate({
+                id: record.id,
+                nextFavorite: !record.isBookmarked,
+              })
+            }
+          >
+            <Bookmark
+              size={16}
+              strokeWidth={1.75}
+              fill={record.isBookmarked ? 'currentColor' : 'none'}
+            />
+          </button>
+
+          <Popover
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            align="end"
+            ariaLabel="기록 더보기 메뉴"
+            trigger={
+              <button
+                type="button"
+                className={overlayButtonStyle}
+                aria-label="더보기"
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((prev) => !prev)}
+              >
+                <MoreVertical size={16} aria-hidden />
+              </button>
+            }
+          >
+            <div className={menuListStyle}>
+              <button type="button" role="menuitem" className={menuItemStyle} onClick={handleReport}>
+                신고하기
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={menuItemDangerStyle}
+                disabled={blockUserMutation.isPending}
+                onClick={handleBlockAuthor}
+              >
+                작성자 차단하기
+              </button>
+            </div>
+          </Popover>
+        </div>
       </div>
 
       <div className={bodyStyle}>
@@ -130,5 +227,11 @@ export function ExploreRecordCard({ record, media = 'photos' }: ExploreRecordCar
         </div>
       </div>
     </article>
+    <ReportRecordModal
+      open={reportOpen}
+      recordId={record.id}
+      onClose={() => setReportOpen(false)}
+    />
+    </>
   )
 }

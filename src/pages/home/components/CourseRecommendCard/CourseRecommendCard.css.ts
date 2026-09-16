@@ -34,6 +34,25 @@ export const mediaStyle = style({
   backgroundColor: colors.surface[5],
 })
 
+export const bookmarkStyle = style({
+  position: 'absolute',
+  top: vars.space[3],
+  right: vars.space[3],
+  zIndex: 3,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '36px',
+  height: '36px',
+  padding: 0,
+  border: 'none',
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.surface[1],
+  color: colors.text[1],
+  cursor: 'pointer',
+  boxShadow: '0 1px 4px rgba(37, 37, 45, 0.12)',
+})
+
 export const mediaImageStyle = style({
   width: '100%',
   height: '100%',

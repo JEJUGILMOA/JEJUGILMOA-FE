@@ -170,11 +170,19 @@ export function SettingsPage() {
   const handleWithdraw = async () => {
     try {
       await withdrawMutation.mutateAsync()
+      setWithdrawOpen(false)
       clearClientAuthSession()
       clearAuth()
-      setWithdrawOpen(false)
       toast.success('회원 탈퇴가 완료되었어요.')
-      navigate(ROUTES.my)
+
+      // 탈퇴 토스트를 보여 준 뒤 로그인 화면으로 이동 (네이티브 LOGOUT 토스트와 겹치지 않게)
+      window.setTimeout(() => {
+        if (nativeBridge.isNativeWebView()) {
+          nativeBridge.postToNative({ type: 'LOGOUT' })
+          return
+        }
+        navigate(ROUTES.login, { replace: true })
+      }, 1500)
     } catch {
       toast.error('회원 탈퇴에 실패했어요.')
     }
