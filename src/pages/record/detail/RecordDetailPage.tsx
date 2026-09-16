@@ -245,6 +245,7 @@ export function RecordDetailPage() {
         <div className={photoBleedStyle}>
           <PhotoCarousel
             photoUrls={view.photoUrls}
+            title={view.title}
             isBookmarked={view.isBookmarked}
             onToggleBookmark={view.isOwn ? undefined : handleToggleBookmark}
             moderation={

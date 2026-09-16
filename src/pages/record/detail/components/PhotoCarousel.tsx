@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { ImagePlaceholder, SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Popover } from '@/components/ui/Popover/Popover'
 import { cn } from '@/utils/cn'
+import { PlacePhotoModal } from './PlacePhotoModal'
 import { useDragCarousel } from './useDragCarousel'
 import {
   bookmarkActiveStyle,
@@ -22,6 +23,8 @@ import {
 
 export type PhotoCarouselProps = {
   photoUrls: string[]
+  /** 사진 전체보기 팝업의 aria-label에 쓰는 기록 제목 */
+  title: string
   isBookmarked?: boolean
   /** 없으면 즐겨찾기 버튼을 숨긴다 (본인 기록 등) */
   onToggleBookmark?: () => void
@@ -33,20 +36,23 @@ export type PhotoCarouselProps = {
   }
 }
 
-/** STEP 08.3~4: 대표 사진 캐러셀 + 우측 상단 더보기/북마크. 드래그로 사진을 넘길 수 있다 */
+/** STEP 08.3~4: 대표 사진 캐러셀 + 우측 상단 더보기/북마크. 드래그로 사진을 넘기고, 탭하면 전체화면으로 본다 */
 export function PhotoCarousel({
   photoUrls,
+  title,
   isBookmarked = false,
   onToggleBookmark,
   moderation,
 }: PhotoCarouselProps) {
   const [index, setIndex] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [viewerOpen, setViewerOpen] = useState(false)
   const total = photoUrls.length
   const { dragOffset, isDragging, trackHandlers } = useDragCarousel({
     total,
     index,
     onIndexChange: setIndex,
+    onTap: () => setViewerOpen(true),
   })
 
   return (
@@ -162,6 +168,15 @@ export function PhotoCarousel({
         >
           <ChevronRight size={18} aria-hidden />
         </button>
+      ) : null}
+
+      {viewerOpen ? (
+        <PlacePhotoModal
+          photoUrls={photoUrls}
+          placeName={title}
+          initialIndex={index}
+          onClose={() => setViewerOpen(false)}
+        />
       ) : null}
     </div>
   )
