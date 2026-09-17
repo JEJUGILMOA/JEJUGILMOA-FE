@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
@@ -5,8 +6,13 @@ import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { ROUTES, placePath } from '@/constants'
+import { enrichCourseImportSteps } from '@/features/courses/enrichCourseImportSteps'
 import { mapSavedCourseDetail } from '@/features/courses/format'
-import { useDeleteSavedCourseMutation, useSavedCourseDetailQuery } from '@/features/courses/hooks'
+import {
+  useDeleteSavedCourseMutation,
+  useSavedCourseDetailQuery,
+  useSavedCoursesQuery,
+} from '@/features/courses/hooks'
 import { CourseDetailView } from '@/pages/courses/components/CourseDetailView/CourseDetailView'
 import { pageStyle } from '@/pages/courses/components/CourseDetailView/CourseDetailView.css.ts'
 import type { PlanCourseNavigationState } from '@/pages/plan/courses/PlanCourseRecommendPage'
@@ -17,9 +23,11 @@ export function SavedCourseDetailPage() {
   const location = useLocation()
   const { savedCourseId = '' } = useParams()
   const courseQuery = useSavedCourseDetailQuery(savedCourseId)
+  const savedListQuery = useSavedCoursesQuery()
   const deleteMutation = useDeleteSavedCourseMutation()
   const goBack = () => navigate(-1)
   const navState = location.state as PlanCourseNavigationState | null
+  const [isStarting, setIsStarting] = useState(false)
 
   if (courseQuery.isLoading) {
     return (
@@ -59,13 +67,23 @@ export function SavedCourseDetailPage() {
   const course = mapSavedCourseDetail(courseQuery.data)
 
   const handleStart = () => {
-    if (!navState?.planId) return
-    navigate(ROUTES.planItinerary(navState.planId), {
-      state: {
-        day: navState.day,
-        importCourse: { title: course.title, summary: course.description, steps: course.steps },
-      },
-    })
+    if (!navState?.planId || isStarting) return
+    setIsStarting(true)
+    const listCourse = savedListQuery.data?.find((item) => item.savedCourseId === savedCourseId)
+    void enrichCourseImportSteps(course.steps, listCourse?.waypoints)
+      .then((steps) => {
+        navigate(ROUTES.planItinerary(navState.planId!), {
+          state: {
+            day: navState.day,
+            importCourse: {
+              title: course.title,
+              summary: course.description,
+              steps,
+            },
+          },
+        })
+      })
+      .finally(() => setIsStarting(false))
   }
 
   return (
@@ -74,6 +92,7 @@ export function SavedCourseDetailPage() {
       onBack={goBack}
       onStepClick={(placeId) => navigate(placePath(placeId))}
       onStart={navState?.planId ? handleStart : undefined}
+      startPending={isStarting}
       saveAction={{
         saved: true,
         isLoading: deleteMutation.isPending,

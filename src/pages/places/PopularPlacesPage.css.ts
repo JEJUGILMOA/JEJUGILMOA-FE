@@ -32,3 +32,16 @@ export const listStyle = style({
   gap: 0,
   width: '100%',
 })
+
+export const loadMoreSentinelStyle = style({
+  width: '100%',
+  height: 1,
+})
+
+export const loadMoreStatusStyle = style({
+  margin: 0,
+  padding: `${vars.space[3]} 0 ${vars.space[6]}`,
+  textAlign: 'center',
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})

@@ -21,70 +21,25 @@ export const heroStyle = style({
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
-  justifyContent: 'flex-end',
-  minHeight: '220px',
   margin: vars.space[2],
   borderRadius: vars.radius.sm,
   overflow: 'hidden',
   backgroundColor: colors.surface[5],
 })
 
-export const heroImageStyle = style({
-  position: 'absolute',
-  inset: 0,
-  width: '100%',
-  height: '100%',
-})
-
-export const heroOverlayStyle = style({
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'linear-gradient(180deg, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.35) 45%, rgba(15, 23, 42, 0.72) 100%)',
-  pointerEvents: 'none',
-})
-
-export const heroActionsStyle = style({
-  position: 'absolute',
-  insetInline: vars.space[4],
-  top: vars.space[4],
-  zIndex: 2,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'flex-end',
-  gap: vars.space[2],
-})
-
-export const heroIconButtonStyle = style({
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: '40px',
-  height: '40px',
-  border: 'none',
-  borderRadius: vars.radius.full,
-  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-  color: colors.text[1],
-  cursor: 'pointer',
-  selectors: {
-    '&:disabled': {
-      opacity: 0.6,
-      cursor: 'default',
-    },
-    '&[aria-pressed="true"]': {
-      color: colors.primary[500],
-    },
-  },
-})
-
 export const heroCopyStyle = style({
-  position: 'relative',
-  zIndex: 1,
+  position: 'absolute',
+  insetInline: 0,
+  bottom: 0,
+  zIndex: 2,
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space[2],
-  padding: vars.space[3],
+  padding: `${vars.space[6]} ${vars.space[3]} ${vars.space[3]}`,
   minWidth: 0,
+  backgroundImage:
+    'linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.55) 55%, rgba(15, 23, 42, 0.78) 100%)',
+  pointerEvents: 'none',
 })
 
 export const heroTitleStyle = style({
@@ -98,6 +53,7 @@ export const heroTitleStyle = style({
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+  textShadow: '0 1px 2px rgba(0, 0, 0, 0.18)',
 })
 
 export const bodyStyle = style({

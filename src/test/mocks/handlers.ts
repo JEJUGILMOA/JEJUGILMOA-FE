@@ -385,15 +385,20 @@ export const handlers = [
   http.get('*/home/courses', () => HttpResponse.json(envelope(mockHomeCourses))),
   http.get('*/places/popular', ({ request }) => {
     const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? '0')
     const size = Number(url.searchParams.get('size') ?? '20')
+    const start = Math.max(0, page) * size
+    const content = mockPopularPlaces.slice(start, start + size)
+    const totalElements = mockPopularPlaces.length
+    const totalPages = Math.max(1, Math.ceil(totalElements / size))
     return HttpResponse.json(
       envelope({
-        content: mockPopularPlaces.slice(0, size),
-        page: 0,
+        content,
+        page: Math.max(0, page),
         size,
-        totalElements: mockPopularPlaces.length,
-        totalPages: 1,
-        last: true,
+        totalElements,
+        totalPages,
+        last: start + content.length >= totalElements,
       }),
     )
   }),
@@ -409,30 +414,36 @@ export const handlers = [
   }),
   http.get('*/places', ({ request }) => {
     const url = new URL(request.url)
+    const page = Number(url.searchParams.get('page') ?? '0')
     const size = Number(url.searchParams.get('size') ?? '20')
     const category = url.searchParams.get('category')
     const keyword = url.searchParams.get('keyword')?.trim().toLowerCase() ?? ''
 
-    let content = mockPlaces
+    let filtered = mockPlaces
     if (category) {
-      content = content.filter((place) => place.categoryName === category)
+      filtered = filtered.filter((place) => place.categoryName === category)
     }
     if (keyword) {
-      content = content.filter(
+      filtered = filtered.filter(
         (place) =>
           place.name.toLowerCase().includes(keyword) ||
           place.address.toLowerCase().includes(keyword),
       )
     }
 
+    const start = Math.max(0, page) * size
+    const content = filtered.slice(start, start + size)
+    const totalElements = filtered.length
+    const totalPages = Math.max(1, Math.ceil(totalElements / size) || 1)
+
     return HttpResponse.json(
       envelope({
-        content: content.slice(0, size),
-        page: 0,
+        content,
+        page: Math.max(0, page),
         size,
-        totalElements: content.length,
-        totalPages: 1,
-        last: true,
+        totalElements,
+        totalPages,
+        last: start + content.length >= totalElements,
       }),
     )
   }),

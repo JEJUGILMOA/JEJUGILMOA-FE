@@ -6,6 +6,7 @@ import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Popover } from '@/components/ui/Popover/Popover'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
+import { requireLogin } from '@/features/auth/requireLogin'
 import {
   useReactToExploreRecordMutation,
   useToggleExploreRecordBookmarkMutation,
@@ -59,18 +60,57 @@ export function ExploreRecordCard({ record, media = 'photos', isOwn = false }: E
       toast.error(reaction === 'like' ? '내 기록엔 좋아요를 누를 수 없어요' : '내 기록엔 싫어요를 누를 수 없어요')
       return
     }
+    if (
+      !requireLogin({
+        returnTo: ROUTES.recordTab('search'),
+        description: '좋아요·싫어요는 로그인 후 이용할 수 있어요.',
+      })
+    ) {
+      return
+    }
     reactMutation.mutate({ id: record.id, reaction, currentReaction: record.myReaction })
   }
 
   const goToDetail = () =>
     navigate(ROUTES.recordDetail(record.id), { state: { fromTab: 'search' } })
 
+  const handleToggleBookmark = () => {
+    if (
+      !requireLogin({
+        returnTo: ROUTES.recordTab('search'),
+        description: '즐겨찾기는 로그인 후 이용할 수 있어요.',
+      })
+    ) {
+      return
+    }
+    bookmarkMutation.mutate({
+      id: record.id,
+      nextFavorite: !record.isBookmarked,
+    })
+  }
+
   const handleReport = () => {
+    if (
+      !requireLogin({
+        returnTo: ROUTES.recordTab('search'),
+        description: '신고하려면 로그인해 주세요.',
+      })
+    ) {
+      return
+    }
     setMenuOpen(false)
     setReportOpen(true)
   }
 
   const handleBlockAuthor = () => {
+    if (
+      !requireLogin({
+        returnTo: ROUTES.recordTab('search'),
+        description: '사용자를 차단하려면 로그인해 주세요.',
+      })
+    ) {
+      return
+    }
     setMenuOpen(false)
     blockUserMutation.mutate({
       targetUserId: record.authorId,
@@ -128,12 +168,7 @@ export function ExploreRecordCard({ record, media = 'photos', isOwn = false }: E
               aria-label={record.isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               aria-pressed={record.isBookmarked}
               disabled={bookmarkMutation.isPending}
-              onClick={() =>
-                bookmarkMutation.mutate({
-                  id: record.id,
-                  nextFavorite: !record.isBookmarked,
-                })
-              }
+              onClick={handleToggleBookmark}
             >
               <Bookmark
                 size={16}

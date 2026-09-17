@@ -30,6 +30,7 @@ import { SettingsPage } from '@/pages/mypage/settings/SettingsPage'
 import { TripsPage } from '@/pages/mypage/trips/TripsPage'
 import { TripDetailPage } from '@/pages/mypage/trip-detail/TripDetailPage'
 import { FavoritesPage } from '@/pages/mypage/favorites/FavoritesPage'
+import { FavoriteRecordDetailPage } from '@/pages/mypage/favorites/FavoriteRecordDetailPage'
 import { BadgesPage } from '@/pages/mypage/badges/BadgesPage'
 import { SharedRecordsPage } from '@/pages/mypage/shared-records/SharedRecordsPage'
 import { BlocksPage } from '@/pages/mypage/blocks/BlocksPage'
@@ -268,6 +269,11 @@ export const router = createBrowserRouter([
             path: 'favorites',
             Component: FavoritesPage,
             handle: { title: '즐겨찾기 장소', ...mySubPageHandle } satisfies RouteHandle,
+          },
+          {
+            path: 'favorites/records/:recordId',
+            Component: FavoriteRecordDetailPage,
+            handle: { title: '즐겨찾기 기록', ...mySubPageHandle } satisfies RouteHandle,
           },
           {
             path: 'badges',

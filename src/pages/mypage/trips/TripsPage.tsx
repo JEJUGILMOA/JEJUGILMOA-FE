@@ -28,7 +28,10 @@ const FILTERS = [
 
 type FilterValue = (typeof FILTERS)[number]['value']
 
-const API_STATUS_BY_FILTER: Record<Exclude<FilterValue, 'all'>, PlanApiStatus> = {
+const API_STATUS_BY_FILTER: Record<
+  Exclude<FilterValue, 'all'>,
+  Exclude<PlanApiStatus, 'CANCELLED'>
+> = {
   ongoing: 'IN_PROGRESS',
   planned: 'DRAFT',
   completed: 'COMPLETED',

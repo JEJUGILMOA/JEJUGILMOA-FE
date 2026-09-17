@@ -49,6 +49,10 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     path: z.string().optional(),
   }),
   z.object({
+    type: z.literal('OPEN_NATIVE_LOGIN'),
+    returnTo: z.string().optional(),
+  }),
+  z.object({
     type: z.literal('SET_HEADER'),
     title: z.string().optional(),
     showBack: z.boolean().optional(),
@@ -141,7 +145,7 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
           title: z.string(),
           startDate: z.string(),
           endDate: z.string(),
-          status: z.enum(['DRAFT', 'IN_PROGRESS', 'COMPLETED']),
+          status: z.enum(['DRAFT', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED']),
           waypointCount: z.number(),
           nights: z.number(),
           days: z.number(),

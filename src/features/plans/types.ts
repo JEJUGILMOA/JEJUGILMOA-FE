@@ -106,7 +106,7 @@ export type TravelTheme = 'FOOD' | 'NATURE' | 'ACTIVITY' | 'CAFE' | 'CULTURE' | 
 
 export type TravelCompanion = 'SOLO' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'COLLEAGUES'
 
-export type TravelPlanStatus = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED'
+export type TravelPlanStatus = 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
 
 export type WaypointCreateRequest = {
   placeId: number

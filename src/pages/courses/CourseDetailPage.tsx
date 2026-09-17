@@ -1,15 +1,18 @@
+import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
-import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES, placePath } from '@/constants'
+import { requireLogin } from '@/features/auth/requireLogin'
+import { enrichCourseImportSteps } from '@/features/courses/enrichCourseImportSteps'
 import { mapRecommendedCourseDetail } from '@/features/courses/format'
 import {
   findSavedCourseMatch,
   useRecommendedCourseDetailQuery,
+  useRecommendedCoursesQuery,
   useSavedCoursesQuery,
   useToggleCourseFavoriteMutation,
 } from '@/features/courses/hooks'
@@ -24,10 +27,12 @@ export function CourseDetailPage() {
   const { courseId = '' } = useParams()
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const courseQuery = useRecommendedCourseDetailQuery(courseId)
+  const recommendedListQuery = useRecommendedCoursesQuery()
   const savedCoursesQuery = useSavedCoursesQuery({ enabled: isAuthenticated })
   const toggleFavorite = useToggleCourseFavoriteMutation()
   const goBack = () => navigate(-1)
   const navState = location.state as PlanCourseNavigationState | null
+  const [isStarting, setIsStarting] = useState(false)
 
   if (courseQuery.isLoading) {
     return (
@@ -73,23 +78,32 @@ export function CourseDetailPage() {
   const isFavorite = Boolean(matchedSaved)
 
   const handleStart = () => {
-    if (!navState?.planId) return
-    navigate(ROUTES.planItinerary(navState.planId), {
-      state: {
-        day: navState.day,
-        importCourse: {
-          title: course.title,
-          summary: course.description,
-          steps: course.steps,
-        },
-      },
-    })
+    if (!navState?.planId || isStarting) return
+    setIsStarting(true)
+    const listCourse = recommendedListQuery.data?.find((item) => item.courseId === courseId)
+    void enrichCourseImportSteps(course.steps, listCourse?.waypoints)
+      .then((steps) => {
+        navigate(ROUTES.planItinerary(navState.planId!), {
+          state: {
+            day: navState.day,
+            importCourse: {
+              title: course.title,
+              summary: course.description,
+              steps,
+            },
+          },
+        })
+      })
+      .finally(() => setIsStarting(false))
   }
 
   const handleToggleFavorite = () => {
-    if (!isAuthenticated) {
-      toast.info('즐겨찾기는 로그인 후 이용할 수 있어요.')
-      navigate(`${ROUTES.login}?returnTo=${encodeURIComponent(location.pathname)}`)
+    if (
+      !requireLogin({
+        returnTo: location.pathname,
+        description: '즐겨찾기는 로그인 후 이용할 수 있어요.',
+      })
+    ) {
       return
     }
 
@@ -107,6 +121,7 @@ export function CourseDetailPage() {
       onBack={goBack}
       onStepClick={(placeId) => navigate(placePath(placeId))}
       onStart={navState?.planId ? handleStart : undefined}
+      startPending={isStarting}
       saveAction={{
         saved: isFavorite,
         isLoading: toggleFavorite.isPending || savedCoursesQuery.isLoading,

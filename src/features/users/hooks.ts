@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getErrorMessage } from '@/api/error'
 import { toast } from '@/components/ui/Toast/Toast'
-import { QUERY_KEYS } from '@/constants'
+import { QUERY_KEYS, ROUTES } from '@/constants'
+import { promptLoginOnUnauthorized } from '@/features/auth/requireLogin'
 import type { ExploreRecord } from '@/features/records/types'
 import { useAuthStore } from '@/stores/authStore'
 import { blockUser, fetchBlockedUsers, unblockUser, type BlockedUser } from './api'
@@ -27,9 +28,13 @@ export function useBlockUserMutation() {
 
   return useMutation({
     mutationFn: ({ targetUserId }: BlockUserInput) => blockUser(targetUserId),
-    onMutate: async ({ targetUserId }) => {
-      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.exploreRecords })
+    onMutate: async ({ targetUserId, authorName }) => {
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: QUERY_KEYS.exploreRecords }),
+        queryClient.cancelQueries({ queryKey: QUERY_KEYS.blockedUsers }),
+      ])
       const previousExplore = queryClient.getQueryData<ExploreRecord[]>(QUERY_KEYS.exploreRecords)
+      const previousBlocked = queryClient.getQueryData<BlockedUser[]>(QUERY_KEYS.blockedUsers)
 
       if (previousExplore) {
         queryClient.setQueryData<ExploreRecord[]>(
@@ -38,16 +43,35 @@ export function useBlockUserMutation() {
         )
       }
 
-      return { previousExplore }
+      if (previousBlocked && !previousBlocked.some((user) => user.userId === targetUserId)) {
+        queryClient.setQueryData<BlockedUser[]>(QUERY_KEYS.blockedUsers, [
+          { userId: targetUserId, nickname: authorName, profileImageUrl: null },
+          ...previousBlocked,
+        ])
+      }
+
+      return { previousExplore, previousBlocked }
     },
     onError: (error, _input, context) => {
       if (context?.previousExplore) {
         queryClient.setQueryData(QUERY_KEYS.exploreRecords, context.previousExplore)
       }
+      if (context?.previousBlocked) {
+        queryClient.setQueryData(QUERY_KEYS.blockedUsers, context.previousBlocked)
+      }
+      if (
+        promptLoginOnUnauthorized(error, {
+          returnTo: ROUTES.recordTab('search'),
+          description: '사용자를 차단하려면 로그인해 주세요.',
+        })
+      ) {
+        return
+      }
       toast.error(getErrorMessage(error, '사용자를 차단하지 못했어요. 다시 시도해 주세요.'))
     },
     onSuccess: (_data, { authorName }) => {
       toast.success(`${authorName} 님을 차단했어요.`)
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.blockedUsers })
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exploreRecords })

@@ -33,23 +33,21 @@ export function PlanDetailPage() {
     navigate(mapPath({ mode: 'activeTrip' }))
   }
 
-  const handleStartTrip = () => {
+  const handleStartTrip = async () => {
     const numericId = Number(planId)
     if (!Number.isFinite(numericId) || numericId <= 0) {
       toast.error('유효하지 않은 계획이에요.')
       return
     }
 
-    startTripMutation.mutate(numericId, {
-      onSuccess: () => {
-        toast.success('여행을 시작했어요')
-        refreshTabsOnNative(['plan', 'map'])
-        goToActiveTripMap()
-      },
-      onError: (error) => {
-        toast.error(getErrorMessage(error, '여행 시작에 실패했어요. 다시 시도해 주세요.'))
-      },
-    })
+    try {
+      await startTripMutation.mutateAsync(numericId)
+      toast.success('여행을 시작했어요')
+      refreshTabsOnNative(['plan', 'map'])
+      goToActiveTripMap()
+    } catch (error) {
+      toast.error(getErrorMessage(error, '여행 시작에 실패했어요. 다시 시도해 주세요.'))
+    }
   }
 
   const closeCancelConfirm = useCallback(() => {

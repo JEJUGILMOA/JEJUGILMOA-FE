@@ -4,14 +4,21 @@ import { nativeBridge } from '@/bridge/nativeBridge'
 import { buildMapPlanDetail, toBridgePlanSummary } from '@/features/map/buildMapPlanDetail'
 import { fetchMapHeatmap, fetchMapPlaces } from '@/features/map/api'
 import type { MapBounds } from '@/features/map/schemas'
+import { pushCurrentTripToNative } from '@/features/map/pushCurrentTripToNative'
 import { fetchPlanSummaries } from '@/features/plans/summariesApi'
 import { fetchPlaceById } from '@/features/places/api'
 import { checkTripVisit, completeTrip, fetchCurrentTrip, skipTripWaypoint } from '@/features/trips/api'
-import { buildTripDayRoutes, TripWaypointParseError, type TripWaypoint } from '@/features/trips/schemas'
+import { TripWaypointParseError, type TripWaypoint } from '@/features/trips/schemas'
+import { authStore } from '@/stores/authStore'
 import { ZodError } from 'zod'
 
 const MAP_PLACES_LIMIT = 25
 const MAP_HEATMAP_GRID = 10
+const LOGIN_REQUIRED_MESSAGE = '로그인 후 확인할 수 있습니다.'
+
+function isLoggedIn() {
+  return authStore.getState().isAuthenticated
+}
 
 function tripActionErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof TripWaypointParseError) {
@@ -77,6 +84,14 @@ async function pushMapSearch(bounds: MapBounds, category?: string) {
 }
 
 async function pushPlanSummaries() {
+  if (!isLoggedIn()) {
+    nativeBridge.postToNative({
+      type: 'SET_PLAN_SUMMARIES',
+      plans: [],
+      error: LOGIN_REQUIRED_MESSAGE,
+    })
+    return
+  }
   try {
     const plans = await fetchPlanSummaries()
     nativeBridge.postToNative({
@@ -94,6 +109,19 @@ async function pushPlanSummaries() {
 }
 
 async function pushPlanDetail(planId: number) {
+  if (!isLoggedIn()) {
+    nativeBridge.postToNative({
+      type: 'MAP_PLAN_DETAIL',
+      planId,
+      title: '',
+      nights: 0,
+      days: 0,
+      durationLabel: '',
+      waypoints: [],
+      error: LOGIN_REQUIRED_MESSAGE,
+    })
+    return
+  }
   try {
     const detail = await buildMapPlanDetail(planId)
     nativeBridge.postToNative({
@@ -116,18 +144,17 @@ async function pushPlanDetail(planId: number) {
 }
 
 async function pushCurrentTrip() {
-  try {
-    const trip = await fetchCurrentTrip()
-    if (!trip) {
-      nativeBridge.postToNative({ type: 'MAP_CURRENT_TRIP', trip: null })
-      return
-    }
-    const waypoints = await enrichTripWaypoints(trip.waypoints)
-    const dayRoutes = buildTripDayRoutes(waypoints, trip.routes)
+  if (!isLoggedIn()) {
     nativeBridge.postToNative({
       type: 'MAP_CURRENT_TRIP',
-      trip: { ...trip, waypoints, dayRoutes },
+      trip: null,
+      error: LOGIN_REQUIRED_MESSAGE,
     })
+    return
+  }
+  try {
+    const trip = await fetchCurrentTrip()
+    await pushCurrentTripToNative(trip ?? null)
   } catch (error) {
     const message = error instanceof Error ? error.message : '진행중 여행을 불러오지 못했어요'
     nativeBridge.postToNative({

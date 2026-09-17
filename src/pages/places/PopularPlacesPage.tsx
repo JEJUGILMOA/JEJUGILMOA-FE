@@ -12,10 +12,17 @@ import {
   placePath,
   type PlaceCategoryLabel,
 } from '@/constants'
-import { usePlacesQuery, usePopularPlacesQuery } from '@/features/places/hooks'
+import { usePlacesInfiniteQuery, usePopularPlacesInfiniteQuery } from '@/features/places/hooks'
 import type { PlaceListItem, PopularPlace } from '@/features/places/types'
+import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel'
 import { PopularPlaceListCard } from './components/PopularPlaceListCard/PopularPlaceListCard'
-import { chipRowStyle, listStyle, pageStyle } from './PopularPlacesPage.css.ts'
+import {
+  chipRowStyle,
+  listStyle,
+  loadMoreSentinelStyle,
+  loadMoreStatusStyle,
+  pageStyle,
+} from './PopularPlacesPage.css.ts'
 
 const FILTERS = ['전체', ...PLACE_CATEGORY_LABELS] as const
 const POPULAR_PAGE_LIMIT = 20
@@ -84,12 +91,12 @@ export function PopularPlacesPage() {
     : getPlaceCategoryApiName(filter as PlaceCategoryLabel)
   const isUnsupportedCategory = !isAllFilter && !apiCategoryName
 
-  const popularQuery = usePopularPlacesQuery(
-    { page: 0, size: POPULAR_PAGE_LIMIT },
+  const popularQuery = usePopularPlacesInfiniteQuery(
+    { size: POPULAR_PAGE_LIMIT },
     { enabled: isAllFilter },
   )
-  const placesQuery = usePlacesQuery(
-    { category: apiCategoryName, page: 0, size: POPULAR_PAGE_LIMIT },
+  const placesQuery = usePlacesInfiniteQuery(
+    { category: apiCategoryName, size: POPULAR_PAGE_LIMIT },
     { enabled: !isAllFilter && Boolean(apiCategoryName) },
   )
 
@@ -99,11 +106,20 @@ export function PopularPlacesPage() {
     if (isUnsupportedCategory) return []
 
     if (isAllFilter) {
-      return (popularQuery.data ?? []).map(mapPopularPlace)
+      return (popularQuery.data?.pages.flatMap((page) => page.content) ?? []).map(mapPopularPlace)
     }
 
-    return (placesQuery.data ?? []).map(mapBrowsePlace)
+    return (placesQuery.data?.pages.flatMap((page) => page.content) ?? []).map(mapBrowsePlace)
   }, [isAllFilter, isUnsupportedCategory, placesQuery.data, popularQuery.data])
+
+  const sentinelRef = useLoadMoreSentinel({
+    enabled: !isUnsupportedCategory && places.length > 0,
+    hasNextPage: Boolean(activeQuery.hasNextPage),
+    isFetchingNextPage: activeQuery.isFetchingNextPage,
+    onLoadMore: () => {
+      void activeQuery.fetchNextPage()
+    },
+  })
 
   const emptyTitle = isUnsupportedCategory
     ? '아직 지원하지 않는 카테고리예요'
@@ -111,6 +127,8 @@ export function PopularPlacesPage() {
   const emptyDescription = isUnsupportedCategory
     ? '다른 카테고리를 선택해 보세요.'
     : '다른 카테고리를 선택하거나 전체를 눌러 보세요.'
+
+  const showInitialLoading = !isUnsupportedCategory && activeQuery.isPending && places.length === 0
 
   return (
     <div className={pageStyle}>
@@ -134,29 +152,33 @@ export function PopularPlacesPage() {
         ))}
       </HorizontalScrollArea>
 
-      {!isUnsupportedCategory && activeQuery.isLoading ? (
-        <Loading label="인기 관광지 불러오는 중" />
-      ) : null}
+      {showInitialLoading ? <Loading label="인기 관광지 불러오는 중" /> : null}
 
-      {!isUnsupportedCategory && activeQuery.isError ? (
+      {!isUnsupportedCategory && activeQuery.isError && places.length === 0 ? (
         <ErrorState onRetry={() => void activeQuery.refetch()} />
       ) : null}
 
-      {!isUnsupportedCategory && !activeQuery.isLoading && !activeQuery.isError ? (
+      {!isUnsupportedCategory && !showInitialLoading && !activeQuery.isError ? (
         places.length > 0 ? (
-          <div className={listStyle} role="list" aria-label="인기 관광지 목록">
-            {places.map((place) => (
-              <PopularPlaceListCard
-                key={place.id}
-                title={place.title}
-                category={place.category ?? '인기'}
-                distance={place.distance}
-                address={place.address ?? ''}
-                imageUrls={place.imageUrls}
-                onClick={() => navigate(placePath(place.id))}
-              />
-            ))}
-          </div>
+          <>
+            <div className={listStyle} role="list" aria-label="인기 관광지 목록">
+              {places.map((place) => (
+                <PopularPlaceListCard
+                  key={place.id}
+                  title={place.title}
+                  category={place.category ?? '인기'}
+                  distance={place.distance}
+                  address={place.address ?? ''}
+                  imageUrls={place.imageUrls}
+                  onClick={() => navigate(placePath(place.id))}
+                />
+              ))}
+            </div>
+            <div ref={sentinelRef} className={loadMoreSentinelStyle} aria-hidden />
+            {activeQuery.isFetchingNextPage ? (
+              <p className={loadMoreStatusStyle}>더 불러오는 중…</p>
+            ) : null}
+          </>
         ) : (
           <Empty title={emptyTitle} description={emptyDescription} />
         )

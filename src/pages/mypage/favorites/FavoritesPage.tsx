@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { SegmentedControl, type SegmentedControlItem } from '@/components/ui/SegmentedControl/SegmentedControl'
@@ -39,6 +39,11 @@ const TABS: SegmentedControlItem[] = [
   { value: 'records', label: '기록' },
 ]
 
+function tabFromSearchParam(value: string | null): FavoritesTab {
+  if (value === 'courses' || value === 'records') return value
+  return 'places'
+}
+
 function FavoritesSkeleton() {
   return (
     <ul className={listStyle} aria-hidden>
@@ -57,11 +62,19 @@ function FavoritesSkeleton() {
 
 export function FavoritesPage() {
   const navigate = useNavigate()
-  const [tab, setTab] = useState<FavoritesTab>('places')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const tab = tabFromSearchParam(tabParam)
   const [query, setQuery] = useState('')
   const favoritesQuery = useFavoritesQuery({ page: 0, size: 50 })
   const savedCoursesQuery = useSavedCoursesQuery()
   const favoriteRecordsQuery = useFavoriteRecordsQuery({ page: 0, size: 50 })
+
+  // /my/favorites 진입 시 탭을 URL에 남겨 뒤로가기에도 복원한다
+  useEffect(() => {
+    if (tabParam === 'places' || tabParam === 'courses' || tabParam === 'records') return
+    setSearchParams({ tab: 'places' }, { replace: true })
+  }, [tabParam, setSearchParams])
 
   const favorites = favoritesQuery.data?.content ?? []
   const filteredFavorites = useMemo(() => {
@@ -82,6 +95,11 @@ export function FavoritesPage() {
     return favoriteRecords.filter((record) => record.title.toLowerCase().includes(q))
   }, [favoriteRecords, query])
 
+  const setTab = (next: FavoritesTab) => {
+    setSearchParams({ tab: next }, { replace: true })
+    setQuery('')
+  }
+
   return (
     <div className={pageStyle}>
       <PageHeader title="즐겨찾기" showBack onBack={() => navigate(ROUTES.my)} />
@@ -89,10 +107,7 @@ export function FavoritesPage() {
       <SegmentedControl
         items={TABS}
         value={tab}
-        onChange={(value) => {
-          setTab(value as FavoritesTab)
-          setQuery('')
-        }}
+        onChange={(value) => setTab(value as FavoritesTab)}
         aria-label="즐겨찾기 보기 전환"
         fullWidth
       />
@@ -212,7 +227,7 @@ export function FavoritesPage() {
                       <button
                         type="button"
                         className={itemStyle}
-                        onClick={() => navigate(ROUTES.recordDetail(record.recordId))}
+                        onClick={() => navigate(ROUTES.myFavoriteRecord(record.recordId))}
                       >
                         <div className={metaStyle}>
                           <div className={titleRowStyle}>

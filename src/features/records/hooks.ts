@@ -1,13 +1,15 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { getErrorMessage } from '@/api/error'
 import { toast } from '@/components/ui/Toast/Toast'
-import { QUERY_KEYS } from '@/constants'
+import { QUERY_KEYS, ROUTES } from '@/constants'
+import { promptLoginOnUnauthorized } from '@/features/auth/requireLogin'
 import { useAuthStore } from '@/stores/authStore'
 import {
   addRecordFavorite,
   createRecord,
   deleteRecord,
   fetchCompletedTrips,
+  fetchExploreRecordById,
   fetchExploreRecords,
   fetchFavoriteRecordIds,
   fetchFavoriteRecords,
@@ -28,9 +30,12 @@ export function useCompletedTripsQuery() {
 }
 
 export function useMyRecordsQuery() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
   return useQuery({
     queryKey: QUERY_KEYS.myRecords,
     queryFn: fetchMyRecords,
+    enabled: isAuthenticated,
   })
 }
 
@@ -49,6 +54,14 @@ export function useExploreRecordsQuery() {
   return useQuery({
     queryKey: QUERY_KEYS.exploreRecords,
     queryFn: fetchExploreRecords,
+  })
+}
+
+export function useRecordDetailQuery(recordId: string | undefined) {
+  return useQuery({
+    queryKey: QUERY_KEYS.recordDetail(recordId ?? ''),
+    queryFn: () => fetchExploreRecordById(recordId!),
+    enabled: Boolean(recordId),
   })
 }
 
@@ -117,6 +130,9 @@ function setBookmarkInCaches(queryClient: QueryClient, id: string, isBookmarked:
   const apply = <T extends ReactableRecord>(record: T): T => ({ ...record, isBookmarked })
   updateCachedRecord<SavedRecord>(queryClient, QUERY_KEYS.myRecords, id, apply)
   updateCachedRecord<ExploreRecord>(queryClient, QUERY_KEYS.exploreRecords, id, apply)
+  queryClient.setQueryData<ExploreRecord>(QUERY_KEYS.recordDetail(id), (current) =>
+    current ? { ...current, isBookmarked } : current,
+  )
 }
 
 export type ToggleRecordBookmarkInput = {
@@ -137,11 +153,14 @@ function useToggleRecordBookmarkMutationBase() {
         queryClient.cancelQueries({ queryKey: QUERY_KEYS.myRecords }),
         queryClient.cancelQueries({ queryKey: QUERY_KEYS.exploreRecords }),
         queryClient.cancelQueries({ queryKey: QUERY_KEYS.favoriteRecordIds }),
+        queryClient.cancelQueries({ queryKey: QUERY_KEYS.recordDetail(id) }),
+        queryClient.cancelQueries({ queryKey: ['records', 'favorites', 'list'] }),
       ])
 
       const previousMy = queryClient.getQueryData<SavedRecord[]>(QUERY_KEYS.myRecords)
       const previousExplore = queryClient.getQueryData<ExploreRecord[]>(QUERY_KEYS.exploreRecords)
       const previousFavoriteIds = queryClient.getQueryData<Set<string>>(QUERY_KEYS.favoriteRecordIds)
+      const previousDetail = queryClient.getQueryData<ExploreRecord>(QUERY_KEYS.recordDetail(id))
 
       setBookmarkInCaches(queryClient, id, nextFavorite)
 
@@ -150,7 +169,7 @@ function useToggleRecordBookmarkMutationBase() {
       else nextIds.delete(id)
       queryClient.setQueryData(QUERY_KEYS.favoriteRecordIds, nextIds)
 
-      return { previousMy, previousExplore, previousFavoriteIds }
+      return { previousMy, previousExplore, previousFavoriteIds, previousDetail }
     },
     onError: (error, input, context) => {
       if (context?.previousMy) {
@@ -161,6 +180,17 @@ function useToggleRecordBookmarkMutationBase() {
       }
       if (context?.previousFavoriteIds) {
         queryClient.setQueryData(QUERY_KEYS.favoriteRecordIds, context.previousFavoriteIds)
+      }
+      if (context?.previousDetail) {
+        queryClient.setQueryData(QUERY_KEYS.recordDetail(input.id), context.previousDetail)
+      }
+      if (
+        promptLoginOnUnauthorized(error, {
+          returnTo: ROUTES.recordTab('search'),
+          description: '즐겨찾기는 로그인 후 이용할 수 있어요.',
+        })
+      ) {
+        return
       }
       toast.error(
         getErrorMessage(
@@ -176,10 +206,13 @@ function useToggleRecordBookmarkMutationBase() {
         input.nextFavorite ? '기록을 즐겨찾기에 추가했어요' : '기록 즐겨찾기를 해제했어요',
       )
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exploreRecords })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.favoriteRecordIds })
-      void queryClient.invalidateQueries({ queryKey: ['records', 'favorites', 'list'] })
+      void queryClient.invalidateQueries({ queryKey: ['records', 'favorites'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.recordDetail(variables.id) })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile })
     },
   })
 }
@@ -256,10 +289,12 @@ function useRecordReactionMutation() {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: QUERY_KEYS.myRecords }),
         queryClient.cancelQueries({ queryKey: QUERY_KEYS.exploreRecords }),
+        queryClient.cancelQueries({ queryKey: QUERY_KEYS.recordDetail(id) }),
       ])
 
       const previousMy = queryClient.getQueryData<SavedRecord[]>(QUERY_KEYS.myRecords)
       const previousExplore = queryClient.getQueryData<ExploreRecord[]>(QUERY_KEYS.exploreRecords)
+      const previousDetail = queryClient.getQueryData<ExploreRecord>(QUERY_KEYS.recordDetail(id))
 
       updateCachedRecord<SavedRecord>(queryClient, QUERY_KEYS.myRecords, id, (record) =>
         applyReactionOptimistic(record, reaction),
@@ -267,21 +302,36 @@ function useRecordReactionMutation() {
       updateCachedRecord<ExploreRecord>(queryClient, QUERY_KEYS.exploreRecords, id, (record) =>
         applyReactionOptimistic(record, reaction),
       )
+      queryClient.setQueryData<ExploreRecord>(QUERY_KEYS.recordDetail(id), (current) =>
+        current ? applyReactionOptimistic(current, reaction) : current,
+      )
 
-      return { previousMy, previousExplore }
+      return { previousMy, previousExplore, previousDetail }
     },
-    onError: (error, _variables, context) => {
+    onError: (error, variables, context) => {
       if (context?.previousMy) {
         queryClient.setQueryData(QUERY_KEYS.myRecords, context.previousMy)
       }
       if (context?.previousExplore) {
         queryClient.setQueryData(QUERY_KEYS.exploreRecords, context.previousExplore)
       }
+      if (context?.previousDetail) {
+        queryClient.setQueryData(QUERY_KEYS.recordDetail(variables.id), context.previousDetail)
+      }
+      if (
+        promptLoginOnUnauthorized(error, {
+          returnTo: ROUTES.recordTab('search'),
+          description: '좋아요·싫어요는 로그인 후 이용할 수 있어요.',
+        })
+      ) {
+        return
+      }
       toast.error(getErrorMessage(error, '반응을 처리하지 못했어요. 다시 시도해 주세요.'))
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myRecords })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exploreRecords })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.recordDetail(variables.id) })
     },
   })
 }
@@ -307,6 +357,14 @@ export function useReportRecordMutation() {
       toast.success('신고가 접수되었어요. 검토 후 조치할게요.')
     },
     onError: (error) => {
+      if (
+        promptLoginOnUnauthorized(error, {
+          returnTo: ROUTES.recordTab('search'),
+          description: '신고하려면 로그인해 주세요.',
+        })
+      ) {
+        return
+      }
       toast.error(getErrorMessage(error, '신고를 접수하지 못했어요. 다시 시도해 주세요.'))
     },
   })

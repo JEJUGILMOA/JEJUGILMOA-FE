@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bookmark, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronRight, ChevronUp } from 'lucide-react'
 import courseIntroBackground from '@/assets/icons/course/course-intro-background.svg'
 import keywordHashIcon from '@/assets/icons/course/keyword-hash.svg'
 import { Button } from '@/components/ui/Button/Button'
@@ -7,17 +7,14 @@ import { Empty } from '@/components/ui/Empty/Empty'
 import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import type { CourseImageTag } from '@/data/mockExplore'
+import { PhotoCarousel } from '@/pages/record/detail/components/PhotoCarousel'
 import { cn } from '@/utils/cn'
 import {
   bodyStyle,
   descriptionCollapsedStyle,
   descriptionStyle,
   footerStyle,
-  heroActionsStyle,
   heroCopyStyle,
-  heroIconButtonStyle,
-  heroImageStyle,
-  heroOverlayStyle,
   heroStyle,
   heroTitleStyle,
   introBackgroundStyle,
@@ -67,6 +64,8 @@ export type CourseDetailViewData = {
   title: string
   description?: string
   imageUrl?: string
+  /** 커버 + 경유지 이미지. 없으면 imageUrl 하나만 사용 */
+  imageUrls?: string[]
   region?: string
   duration?: string
   transport?: string
@@ -89,13 +88,22 @@ export type CourseDetailViewProps = {
   onStepClick: (placeId: string) => void
   /** 일정 편집 등에서 넘어온 경우에만 전달 — 없으면 CTA 숨김 */
   onStart?: () => void
+  /** CTA 좌표 보강 중 */
+  startPending?: boolean
   /** 없으면 즐겨찾기 버튼 자체를 안 보여준다 */
   saveAction?: CourseSaveAction
 }
 
 /** 코스 상세 화면 본문. 추천 코스(`CourseDetailPage`)·저장한 코스(`SavedCourseDetailPage`)가
  * 같은 데이터 모양(`mapRecommendedCourseDetail`/`mapSavedCourseDetail`)으로 공유한다 */
-export function CourseDetailView({ course, onBack, onStepClick, onStart, saveAction }: CourseDetailViewProps) {
+export function CourseDetailView({
+  course,
+  onBack,
+  onStepClick,
+  onStart,
+  startPending = false,
+  saveAction,
+}: CourseDetailViewProps) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false)
   const canToggleDescription =
     Boolean(course.description) && course.description!.length > DESCRIPTION_COLLAPSE_LENGTH
@@ -129,22 +137,25 @@ export function CourseDetailView({ course, onBack, onStepClick, onStart, saveAct
       <PageHeader title="코스 상세" showBack onBack={onBack} />
 
       <section className={heroStyle} aria-label="코스 이미지">
-        <SafeImage src={course.imageUrl} className={heroImageStyle} placeholderSize="lg" />
-        <div className={heroOverlayStyle} aria-hidden />
-        <div className={heroActionsStyle}>
-          {saveAction ? (
-            <button
-              type="button"
-              className={heroIconButtonStyle}
-              aria-label={saveAction.saved ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-              aria-pressed={saveAction.saved}
-              disabled={saveAction.isLoading}
-              onClick={saveAction.onClick}
-            >
-              <Bookmark size={18} fill={saveAction.saved ? 'currentColor' : 'none'} />
-            </button>
-          ) : null}
-        </div>
+        <PhotoCarousel
+          photoUrls={
+            course.imageUrls?.length
+              ? course.imageUrls
+              : course.imageUrl
+                ? [course.imageUrl]
+                : []
+          }
+          title={course.title}
+          isBookmarked={saveAction?.saved}
+          onToggleBookmark={
+            saveAction
+              ? () => {
+                  if (saveAction.isLoading) return
+                  saveAction.onClick()
+                }
+              : undefined
+          }
+        />
         <div className={heroCopyStyle}>
           <h1 className={heroTitleStyle}>{course.title}</h1>
         </div>
@@ -265,7 +276,7 @@ export function CourseDetailView({ course, onBack, onStepClick, onStart, saveAct
 
       {onStart ? (
         <div className={footerStyle}>
-          <Button fullWidth size="lg" onClick={onStart}>
+          <Button fullWidth size="lg" onClick={onStart} disabled={startPending}>
             이 코스로 여행 계획 만들기
           </Button>
         </div>

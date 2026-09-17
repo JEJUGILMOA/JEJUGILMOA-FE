@@ -6,7 +6,7 @@ import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { SearchBar } from '@/components/ui/SearchBar/SearchBar'
 import { placePath } from '@/constants'
-import { usePlacesQuery } from '@/features/places/hooks'
+import { usePlacesInfiniteQuery } from '@/features/places/hooks'
 import type { PlaceListItem } from '@/features/places/types'
 import {
   addRecentSearch,
@@ -14,9 +14,12 @@ import {
   saveRecentSearches,
 } from '@/features/search/recentSearches'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel'
 import {
   bodyStyle,
   cancelButtonStyle,
+  loadMoreSentinelStyle,
+  loadMoreStatusStyle,
   matchStyle,
   pageStyle,
   recentButtonStyle,
@@ -81,12 +84,24 @@ export function SearchPage() {
   const showResults = trimmedQuery.length > 0
   const isDebouncing = trimmedQuery !== debouncedKeyword
 
-  const placesQuery = usePlacesQuery(
-    { keyword: debouncedKeyword, page: 0, size: SEARCH_PAGE_SIZE },
+  const placesQuery = usePlacesInfiniteQuery(
+    { keyword: debouncedKeyword, size: SEARCH_PAGE_SIZE },
     { enabled: debouncedKeyword.length > 0 },
   )
 
-  const results = useMemo(() => placesQuery.data ?? [], [placesQuery.data])
+  const results = useMemo(
+    () => placesQuery.data?.pages.flatMap((page) => page.content) ?? [],
+    [placesQuery.data],
+  )
+
+  const sentinelRef = useLoadMoreSentinel({
+    enabled: debouncedKeyword.length > 0 && results.length > 0,
+    hasNextPage: Boolean(placesQuery.hasNextPage),
+    isFetchingNextPage: placesQuery.isFetchingNextPage,
+    onLoadMore: () => {
+      void placesQuery.fetchNextPage()
+    },
+  })
 
   const pushRecent = (term: string) => {
     setRecentSearches((prev) => {
@@ -118,48 +133,53 @@ export function SearchPage() {
     })
   }
 
-  const isLoadingResults =
-    debouncedKeyword.length > 0 && (placesQuery.isLoading || placesQuery.isFetching)
-  const showLoading = showResults && (isDebouncing || isLoadingResults)
+  const showInitialLoading =
+    showResults && (isDebouncing || (placesQuery.isPending && results.length === 0))
 
   const renderSearchResults = () => {
-    if (showLoading) {
+    if (showInitialLoading) {
       return <Loading label="검색 중" />
     }
 
-    if (debouncedKeyword.length > 0 && placesQuery.isError) {
+    if (debouncedKeyword.length > 0 && placesQuery.isError && results.length === 0) {
       return <ErrorState onRetry={() => void placesQuery.refetch()} />
     }
 
     if (debouncedKeyword.length > 0 && results.length > 0) {
       return (
-        <ul className={resultListStyle}>
-          {results.map((place) => {
-            const Icon = getResultIcon(place.categoryName)
-            const location = shortAddress(place.address)
-            const meta = [place.categoryName, location].filter(Boolean).join(' · ')
+        <>
+          <ul className={resultListStyle}>
+            {results.map((place) => {
+              const Icon = getResultIcon(place.categoryName)
+              const location = shortAddress(place.address)
+              const meta = [place.categoryName, location].filter(Boolean).join(' · ')
 
-            return (
-              <li key={place.id}>
-                <button
-                  type="button"
-                  className={resultItemStyle}
-                  onClick={() => handleSelectResult(place)}
-                >
-                  <span className={resultIconStyle} aria-hidden>
-                    <Icon size={18} strokeWidth={1.75} />
-                  </span>
-                  <span className={resultContentStyle}>
-                    <span className={resultTitleStyle}>
-                      {highlightMatch(place.name, trimmedQuery)}
+              return (
+                <li key={place.id}>
+                  <button
+                    type="button"
+                    className={resultItemStyle}
+                    onClick={() => handleSelectResult(place)}
+                  >
+                    <span className={resultIconStyle} aria-hidden>
+                      <Icon size={18} strokeWidth={1.75} />
                     </span>
-                    {meta ? <span className={resultMetaStyle}>{meta}</span> : null}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+                    <span className={resultContentStyle}>
+                      <span className={resultTitleStyle}>
+                        {highlightMatch(place.name, trimmedQuery)}
+                      </span>
+                      {meta ? <span className={resultMetaStyle}>{meta}</span> : null}
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+          <div ref={sentinelRef} className={loadMoreSentinelStyle} aria-hidden />
+          {placesQuery.isFetchingNextPage ? (
+            <p className={loadMoreStatusStyle}>더 불러오는 중…</p>
+          ) : null}
+        </>
       )
     }
 

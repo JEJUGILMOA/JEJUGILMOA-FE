@@ -1,6 +1,12 @@
 import { useEffect, useId, useMemo, useState, type ChangeEvent } from 'react'
 import { Check, Plus, X } from 'lucide-react'
+import { toast } from '@/components/ui/Toast/Toast'
 import type { CompletedTrip, PlaceMemo } from '@/features/records/types'
+import {
+  IMAGE_FILE_ACCEPT,
+  IMAGE_FILE_ACCEPT_HINT,
+  partitionImageFiles,
+} from '@/utils/imageFile'
 import {
   addTileStyle,
   checkBadgeStyle,
@@ -82,7 +88,11 @@ export function CoverPhotoPicker({
 
   const handleAdd = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files ? Array.from(event.target.files) : []
-    if (files.length > 0) onAddExtraPhotos(files)
+    const { accepted, rejected } = partitionImageFiles(files)
+    if (rejected.length > 0) {
+      toast.error(`${IMAGE_FILE_ACCEPT_HINT} 형식의 이미지만 첨부할 수 있어요`)
+    }
+    if (accepted.length > 0) onAddExtraPhotos(accepted)
     event.target.value = ''
   }
 
@@ -138,7 +148,7 @@ export function CoverPhotoPicker({
         <input
           id={inputId}
           type="file"
-          accept="image/*"
+          accept={IMAGE_FILE_ACCEPT}
           multiple
           className={hiddenInput}
           onChange={handleAdd}

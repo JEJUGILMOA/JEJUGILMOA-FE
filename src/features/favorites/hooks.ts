@@ -60,9 +60,11 @@ export function useToggleFavoriteMutation() {
         queryClient.setQueryData(QUERY_KEYS.favoritePlaceIds, context.previous)
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.favoritePlaceIds })
       void queryClient.invalidateQueries({ queryKey: ['favorites'] })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.place(variables.placeId) })
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.homePlaces })
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile })
     },
   })

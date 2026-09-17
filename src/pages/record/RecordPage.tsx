@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
@@ -6,7 +7,10 @@ import { FloatingActionButton } from '@/components/ui/FloatingActionButton/Float
 import { SegmentedControl } from '@/components/ui/SegmentedControl/SegmentedControl'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { ROUTES } from '@/constants'
+import { openLogin } from '@/features/auth/openLogin'
+import { requireLogin } from '@/features/auth/requireLogin'
 import { useMyRecordsQuery } from '@/features/records/hooks'
+import { useAuthStore } from '@/stores/authStore'
 import { ExploreView } from './components/ExploreView'
 import { RecordCard } from './components/RecordCard'
 import {
@@ -22,12 +26,12 @@ import {
 type RecordTab = 'mine' | 'explore'
 
 const TABS = [
-  { value: 'mine', label: '내 기록' },
   { value: 'explore', label: '둘러보기' },
+  { value: 'mine', label: '내 기록' },
 ]
 
 function tabFromSearchParam(value: string | null): RecordTab {
-  return value === 'search' ? 'explore' : 'mine'
+  return value === 'myrecord' ? 'mine' : 'explore'
 }
 
 function RecordsSkeleton() {
@@ -53,16 +57,44 @@ function RecordsSkeleton() {
 export function RecordPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab = tabFromSearchParam(searchParams.get('tab'))
+  const tabParam = searchParams.get('tab')
+  const tab = tabFromSearchParam(tabParam)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { data: records = [], isLoading, isError, refetch } = useMyRecordsQuery()
 
-  const goToCreate = () => navigate(ROUTES.recordCreate)
+  // /record 진입 시 기본 탭을 둘러보기(search)로 맞춘다
+  useEffect(() => {
+    if (tabParam === 'search' || tabParam === 'myrecord') return
+    setSearchParams({ tab: 'search' }, { replace: true })
+  }, [tabParam, setSearchParams])
+
+  const goToCreate = () => {
+    if (
+      !requireLogin({
+        returnTo: ROUTES.recordCreate,
+        description: '기록을 작성하려면 로그인해 주세요.',
+      })
+    ) {
+      return
+    }
+    navigate(ROUTES.recordCreate)
+  }
 
   const handleTabChange = (value: string) => {
-    setSearchParams(
-      (value as RecordTab) === 'explore' ? { tab: 'search' } : { tab: 'myrecord' },
-      { replace: true },
-    )
+    const next = value as RecordTab
+    if (next === 'mine') {
+      if (
+        !requireLogin({
+          returnTo: ROUTES.recordTab('myrecord'),
+          description: '내 기록은 로그인 후 확인할 수 있어요.',
+        })
+      ) {
+        return
+      }
+    }
+    setSearchParams(next === 'explore' ? { tab: 'search' } : { tab: 'myrecord' }, {
+      replace: true,
+    })
   }
 
   return (
@@ -78,7 +110,21 @@ export function RecordPage() {
       </div>
 
       {tab === 'mine' ? (
-        isLoading ? (
+        !isAuthenticated ? (
+          <Empty
+            title="로그인이 필요해요"
+            description="내 기록은 로그인 후 확인할 수 있습니다."
+            action={
+              <Button
+                onClick={() =>
+                  openLogin(navigate, { returnTo: ROUTES.recordTab('myrecord') })
+                }
+              >
+                로그인하기
+              </Button>
+            }
+          />
+        ) : isLoading ? (
           <RecordsSkeleton />
         ) : isError ? (
           <ErrorState onRetry={() => void refetch()} />

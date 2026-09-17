@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import '@/pages/plan/itinerary/nativeMapPassThrough.css.ts'
 import { Chip } from '@/components/ui/Chip/Chip'
+import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { HorizontalScrollArea } from '@/components/ui/HorizontalScrollArea/HorizontalScrollArea'
@@ -9,6 +10,7 @@ import { Loading } from '@/components/ui/Loading/Loading'
 import { nativeBridge } from '@/bridge/nativeBridge'
 import {
   PLACE_CATEGORIES,
+  ROUTES,
   getPlaceCategoryApiName,
   placePath,
   type PlaceCategoryLabel,
@@ -23,8 +25,10 @@ import {
 import { useMapHeatmapQuery, useMapPlacesQuery } from '@/features/map/hooks'
 import type { MapBounds } from '@/features/map/schemas'
 import { useMapNativeDataLayer } from '@/features/map/useMapNativeDataLayer'
+import { openLogin } from '@/features/auth/openLogin'
 import { useCurrentTripQuery } from '@/features/trips/hooks'
 import { useAppStore } from '@/stores/appStore'
+import { useAuthStore } from '@/stores/authStore'
 import {
   chipRowStyle,
   heatmapDotStyle,
@@ -75,6 +79,7 @@ export function MapPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useAppStore((s) => s.nativeLocation)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isNative = nativeBridge.isNativeWebView()
 
   const mapModeParam = searchParams.get('mode')
@@ -94,7 +99,9 @@ export function MapPage() {
   /** 실제 API에 사용하는 검색 영역 (버튼/초기 로드 시에만 커밋) */
   const [searchBounds, setSearchBounds] = useState<MapBounds | null>(null)
 
-  const currentTripQuery = useCurrentTripQuery(!isNative && mapMode === 'activeTrip')
+  const currentTripQuery = useCurrentTripQuery(
+    !isNative && isAuthenticated && mapMode === 'activeTrip',
+  )
 
   const fallbackBounds = useMemo(() => {
     if (location) return boundsAround(location.latitude, location.longitude)
@@ -235,6 +242,21 @@ export function MapPage() {
       </HorizontalScrollArea>
 
       {mapMode === 'activeTrip' ? (
+        !isAuthenticated ? (
+          <Empty
+            title="로그인이 필요해요"
+            description="진행중인 여행은 로그인 후 확인할 수 있습니다."
+            action={
+              <Button
+                onClick={() =>
+                  openLogin(navigate, { returnTo: `${ROUTES.map}?mode=activeTrip` })
+                }
+              >
+                로그인하기
+              </Button>
+            }
+          />
+        ) : (
         <>
           {currentTripQuery.isLoading ? <Loading label="진행중 여행을 불러오는 중" /> : null}
           {currentTripQuery.isError ? (
@@ -278,6 +300,7 @@ export function MapPage() {
             )
           ) : null}
         </>
+        )
       ) : (
         <>
       <HorizontalScrollArea className={chipRowStyle} role="tablist" aria-label="카테고리 필터">

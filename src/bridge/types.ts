@@ -28,6 +28,11 @@ export type WebToNativeMessage =
       path?: string
     }
   | {
+      /** 탭 WebView와 분리된 네이티브 로그인 스택 화면 */
+      type: 'OPEN_NATIVE_LOGIN'
+      returnTo?: string
+    }
+  | {
       type: 'SET_HEADER'
       title?: string
       showBack?: boolean
@@ -90,7 +95,7 @@ export type WebToNativeMessage =
         title: string
         startDate: string
         endDate: string
-        status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED'
+        status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
         waypointCount: number
         nights: number
         days: number

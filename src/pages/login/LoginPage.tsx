@@ -94,6 +94,7 @@ export function LoginPage() {
               returnTo,
               user: toBridgeAuthUser(result),
             })
+            setLoadingProvider(null)
           } else {
             navigate(returnTo, { replace: true })
           }
@@ -164,6 +165,7 @@ export function LoginPage() {
             nickname: result.nickname,
           },
         })
+        setLoadingProvider(null)
         return
       }
       toast.success(`${result.nickname}님, 개발 로그인되었어요.`)

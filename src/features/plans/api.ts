@@ -21,6 +21,7 @@ import type {
   Waypoint,
   WaypointCreateRequest,
 } from './types'
+import { planSummarySchema } from './schemas'
 
 const DESTINATION = '제주도'
 const DATE_FORMAT = 'yyyy.MM.dd'
@@ -93,12 +94,14 @@ const DEFAULT_TRAVELER_COUNT = 1
 
 /** `yyyy-MM-dd` -> `yyyy.MM.dd` (`toApiDate`의 반대 방향) */
 function fromApiDate(date: string): string {
+  if (!date) return ''
   return date.replaceAll('-', '.')
 }
 
-function fromApiPlanStatus(status: TravelPlanStatus): PlanStatus {
-  if (status === 'DRAFT') return 'draft'
+function fromApiPlanStatus(status: TravelPlanStatus | undefined): PlanStatus {
+  if (status === 'DRAFT' || status == null) return 'draft'
   if (status === 'IN_PROGRESS') return 'ongoing'
+  // COMPLETED · CANCELLED
   return 'completed'
 }
 
@@ -175,8 +178,21 @@ export function mapPlanDetailToTravelPlan(detail: TravelPlanDetailResponse): Tra
 }
 
 export async function fetchPlans(params?: { status?: TravelPlanStatus }): Promise<TravelPlan[]> {
-  const summaries = await apiGet<TravelPlanSummary[]>('/plans', { params })
-  return summaries.map(mapPlanSummaryToTravelPlan)
+  const data = await apiGet<unknown>('/plans', { params })
+  const summaries = planSummarySchema.array().parse(data)
+  return summaries.map((summary) =>
+    mapPlanSummaryToTravelPlan({
+      planId: Number(summary.planId),
+      title: summary.title,
+      startDate: summary.startDate,
+      endDate: summary.endDate,
+      status: summary.status,
+      waypointCount: summary.waypointCount ?? 0,
+      nights: summary.nights ?? 0,
+      days: summary.days ?? 0,
+      dDay: summary.dDay ?? 0,
+    }),
+  )
 }
 
 export async function fetchPlanById(planId: string): Promise<TravelPlan | undefined> {

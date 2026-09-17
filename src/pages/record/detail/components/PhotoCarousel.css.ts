@@ -57,6 +57,12 @@ export const overlayButtonStyle = style({
   color: colors.text[1],
   cursor: 'pointer',
   boxShadow: '0 1px 4px rgba(37, 37, 45, 0.12)',
+  selectors: {
+    '&:disabled': {
+      opacity: 0.6,
+      cursor: 'default',
+    },
+  },
 })
 
 export const bookmarkActiveStyle = style({

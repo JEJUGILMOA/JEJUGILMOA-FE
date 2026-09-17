@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { toast } from '@/components/ui/Toast/Toast'
 import { PLACE_CATEGORIES, ROUTES, coursePath, placePath } from '@/constants'
 import type { CourseImageTag } from '@/data/mockExplore'
+import { requireLogin } from '@/features/auth/requireLogin'
 import {
   findSavedCourseMatch,
   useSavedCoursesQuery,
@@ -219,9 +220,12 @@ export function HomePage() {
   const showPopularPlaces = !popularLoading && popularPlaces.length > 0
 
   const handleToggleFavorite = (placeId: string) => {
-    if (!isAuthenticated) {
-      toast.info('즐겨찾기는 로그인 후 이용할 수 있어요.')
-      navigate(`${ROUTES.login}?returnTo=${ROUTES.home}`)
+    if (
+      !requireLogin({
+        returnTo: ROUTES.home,
+        description: '즐겨찾기는 로그인 후 이용할 수 있어요.',
+      })
+    ) {
       return
     }
 
@@ -239,9 +243,12 @@ export function HomePage() {
   }
 
   const handleToggleCourseFavorite = (course: HomeCourse) => {
-    if (!isAuthenticated) {
-      toast.info('즐겨찾기는 로그인 후 이용할 수 있어요.')
-      navigate(`${ROUTES.login}?returnTo=${ROUTES.home}`)
+    if (
+      !requireLogin({
+        returnTo: ROUTES.home,
+        description: '즐겨찾기는 로그인 후 이용할 수 있어요.',
+      })
+    ) {
       return
     }
 

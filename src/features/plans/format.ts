@@ -36,8 +36,11 @@ function formatStayLabel(nights?: number, days?: number) {
 }
 
 function formatDateLine(plan: PlanSummary) {
-  const range = formatDateRangeDisplay(plan.startDate, plan.endDate)
   const stay = formatStayLabel(plan.nights, plan.days)
+  if (!plan.startDate || !plan.endDate) {
+    return stay ?? '일정 미정'
+  }
+  const range = formatDateRangeDisplay(plan.startDate, plan.endDate)
   return stay ? `${range} · ${stay}` : range
 }
 
@@ -73,8 +76,9 @@ function resolveDayProgress(plan: PlanSummary) {
 
 function toCardStatus(status: PlanSummary['status']): PlanTripCardStatus {
   if (status === 'IN_PROGRESS') return 'ongoing'
-  if (status === 'DRAFT') return 'planned'
-  return 'completed'
+  if (status === 'COMPLETED' || status === 'CANCELLED') return 'completed'
+  // DRAFT이거나 status가 비어 있으면 계획중으로 본다
+  return 'planned'
 }
 
 export function mapPlanSummaryToTrip(plan: PlanSummary): PlanTripCardModel {
@@ -112,7 +116,7 @@ export function mapPlanSummaryToTrip(plan: PlanSummary): PlanTripCardModel {
     id: plan.planId,
     title: plan.title,
     status,
-    statusBadge: '완료',
+    statusBadge: plan.status === 'CANCELLED' ? '취소' : '완료',
     dateLine,
     waypointLabel,
   }

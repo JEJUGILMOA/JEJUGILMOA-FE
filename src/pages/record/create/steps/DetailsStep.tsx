@@ -5,7 +5,14 @@ import { BottomSheet } from '@/components/ui/BottomSheet/BottomSheet'
 import type { CompletedTrip, PlaceMemo } from '@/features/records/types'
 import { PlaceMemoRow } from '../components/PlaceMemoRow'
 import { PlaceMemoSheet } from '../components/PlaceMemoSheet'
-import { fieldGroupStyle, placeMemoListStyle, sectionLabelStyle } from '../RecordCreatePage.css.ts'
+import {
+  fieldGroupStyle,
+  placeMemoListStyle,
+  sectionLabelStyle,
+  stepFooterStyle,
+  stepScrollStyle,
+  stepShellStyle,
+} from '../RecordCreatePage.css.ts'
 
 const EMPTY_MEMO: PlaceMemo = { note: '', photos: [] }
 
@@ -43,36 +50,40 @@ export function DetailsStep({
   const canProceed = title.trim().length > 0 && summary.trim().length > 0
 
   return (
-    <>
-      <div className={fieldGroupStyle}>
-        <TextField label="기록 제목" value={title} onChange={onTitleChange} maxLength={30} showCount />
-        <TextField
-          label="한줄 소개"
-          value={summary}
-          onChange={onSummaryChange}
-          placeholder="이 여행을 한 줄로 표현해보세요"
-          maxLength={50}
-          showCount
-        />
+    <div className={stepShellStyle}>
+      <div className={stepScrollStyle}>
+        <div className={fieldGroupStyle}>
+          <TextField label="기록 제목" value={title} onChange={onTitleChange} maxLength={30} showCount />
+          <TextField
+            label="한줄 소개"
+            value={summary}
+            onChange={onSummaryChange}
+            placeholder="이 여행을 한 줄로 표현해보세요"
+            maxLength={50}
+            showCount
+          />
 
-        <div>
-          <span className={sectionLabelStyle}>방문 장소별 메모</span>
-          <div className={placeMemoListStyle}>
-            {trip.places.map((place) => (
-              <PlaceMemoRow
-                key={place.id}
-                placeName={place.name}
-                done={Boolean(placeMemos[place.id]?.note || placeMemos[place.id]?.photos.length)}
-                onClick={() => setActivePlaceId(place.id)}
-              />
-            ))}
+          <div>
+            <span className={sectionLabelStyle}>방문 장소별 메모</span>
+            <div className={placeMemoListStyle}>
+              {trip.places.map((place) => (
+                <PlaceMemoRow
+                  key={place.id}
+                  placeName={place.name}
+                  done={Boolean(placeMemos[place.id]?.note || placeMemos[place.id]?.photos.length)}
+                  onClick={() => setActivePlaceId(place.id)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      <Button fullWidth size="lg" disabled={!canProceed} onClick={onNext}>
-        다음
-      </Button>
+      <div className={stepFooterStyle}>
+        <Button fullWidth size="lg" disabled={!canProceed} onClick={onNext}>
+          다음
+        </Button>
+      </div>
 
       <BottomSheet
         open={activePlaceId !== null}
@@ -95,6 +106,6 @@ export function DetailsStep({
           />
         ) : null}
       </BottomSheet>
-    </>
+    </div>
   )
 }

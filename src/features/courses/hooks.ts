@@ -189,8 +189,14 @@ export function useToggleCourseFavoriteMutation() {
         input.nextFavorite ? '코스를 즐겨찾기에 추가했어요' : '코스 즐겨찾기를 해제했어요',
       )
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.savedCourses })
+      if (variables.savedCourseId && !variables.savedCourseId.startsWith('optimistic-')) {
+        void queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.savedCourse(variables.savedCourseId),
+        })
+      }
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile })
     },
   })
 }

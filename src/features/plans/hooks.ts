@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants'
+import { useAuthStore } from '@/stores/authStore'
 import {
   createPlan,
   deletePlan,
@@ -15,9 +16,12 @@ import { NEW_PLAN_ID, planDraftStore, usePlanDraftStore } from './planDraftStore
 import type { PlanCreateRequest, PlanPlaceSearchParams, RecommendationRequest } from './types'
 
 export function usePlansQuery() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+
   return useQuery({
     queryKey: QUERY_KEYS.plans,
     queryFn: () => fetchPlans(),
+    enabled: isAuthenticated,
   })
 }
 

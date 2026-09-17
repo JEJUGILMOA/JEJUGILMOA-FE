@@ -1,9 +1,11 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery, type UseQueryOptions } from '@tanstack/react-query'
 import { QUERY_KEYS } from '@/constants'
 import {
   fetchPlaceById,
   fetchPlaces,
+  fetchPlacesPage,
   fetchPopularPlaces,
+  fetchPopularPlacesPage,
   type BrowsePlacesParams,
   type FetchPopularPlacesParams,
 } from './api'
@@ -15,6 +17,35 @@ export function usePlacesQuery(params?: BrowsePlacesParams, options?: PlacesQuer
   return useQuery({
     queryKey: QUERY_KEYS.placesList(params),
     queryFn: () => fetchPlaces(params),
+    enabled: options?.enabled ?? true,
+  })
+}
+
+type PlacesInfiniteParams = {
+  keyword?: string
+  category?: string
+  size?: number
+}
+
+export function usePlacesInfiniteQuery(
+  params?: PlacesInfiniteParams,
+  options?: { enabled?: boolean },
+) {
+  const size = params?.size ?? 20
+  const keyword = params?.keyword?.trim() || undefined
+  const category = params?.category
+
+  return useInfiniteQuery({
+    queryKey: QUERY_KEYS.placesInfinite({ keyword, category, size }),
+    queryFn: ({ pageParam }) =>
+      fetchPlacesPage({
+        keyword,
+        category,
+        page: pageParam,
+        size,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (lastPage.last ? undefined : lastPage.page + 1),
     enabled: options?.enabled ?? true,
   })
 }
@@ -36,6 +67,32 @@ export function usePopularPlacesQuery(
   return useQuery({
     queryKey: QUERY_KEYS.popularPlaces(params),
     queryFn: () => fetchPopularPlaces(params),
+    enabled: options?.enabled ?? true,
+  })
+}
+
+type PopularPlacesInfiniteParams = {
+  category?: string
+  size?: number
+}
+
+export function usePopularPlacesInfiniteQuery(
+  params?: PopularPlacesInfiniteParams,
+  options?: { enabled?: boolean },
+) {
+  const size = params?.size ?? 20
+  const category = params?.category
+
+  return useInfiniteQuery({
+    queryKey: QUERY_KEYS.popularPlacesInfinite({ category, size }),
+    queryFn: ({ pageParam }) =>
+      fetchPopularPlacesPage({
+        category,
+        page: pageParam,
+        size,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => (lastPage.last ? undefined : lastPage.page + 1),
     enabled: options?.enabled ?? true,
   })
 }

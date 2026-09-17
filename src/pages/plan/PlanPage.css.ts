@@ -39,3 +39,34 @@ export const sectionHintStyle = style({
   color: colors.text[3],
   lineHeight: 1.3,
 })
+
+export const skeletonSectionStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[3],
+})
+
+export const skeletonCardsStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[3],
+})
+
+export const skeletonCardStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space[2],
+  padding: vars.space[4],
+  borderRadius: vars.radius.lg,
+  border: `1px solid ${colors.border[1]}`,
+  backgroundColor: colors.surface[1],
+  boxShadow: vars.shadow.sm,
+})
+
+export const skeletonTitleRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space[2],
+  marginBottom: vars.space[1],
+})

@@ -1,13 +1,45 @@
-import { style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
+import { style } from '@vanilla-extract/css'
+
+/** AppLayout main 높이를 채워 본문만 스크롤, CTA는 하단에 고정 */
+export const pageShellStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  minHeight: 0,
+})
 
 export const pageStyle = style({
   display: 'flex',
   flexDirection: 'column',
-  gap: vars.space[6],
+  flex: 1,
+  minHeight: 0,
   paddingInline: vars.space[2],
-  paddingBottom: vars.space[8],
+})
+
+export const stepShellStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0,
+})
+
+export const stepScrollStyle = style({
+  display: 'flex',
+  flexDirection: 'column',
+  flex: 1,
+  minHeight: 0,
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  gap: vars.space[6],
+  WebkitOverflowScrolling: 'touch',
+})
+
+/** 스크롤과 분리된 CTA — 그림자/별도 배경 없이 본문과 같은 면으로 */
+export const stepFooterStyle = style({
+  flexShrink: 0,
+  padding: `${vars.space[4]} 0`,
 })
 
 export const stepHeaderStyle = style({

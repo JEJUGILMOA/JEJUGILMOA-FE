@@ -5,11 +5,11 @@ import { isApiError } from '@/api/error'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
-import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
+import { requireLogin } from '@/features/auth/requireLogin'
 import {
   useFavoritePlaceIdsQuery,
   useToggleFavoriteMutation,
@@ -17,28 +17,27 @@ import {
 import { usePlaceQuery } from '@/features/places/hooks'
 import { openNaverMapPlace } from '@/features/places/openNaverMap'
 import type { Place } from '@/features/places/types'
-import { useAuthStore } from '@/stores/authStore'
+import { PhotoCarousel } from '@/pages/record/detail/components/PhotoCarousel'
+import { overlayButtonStyle } from '@/pages/record/detail/components/PhotoCarousel.css.ts'
 import {
+  addressIconStyle,
+  addressTextStyle,
   bodyStyle,
+  categoryTagStyle,
+  contactIconStyle,
+  contactItemStyle,
+  contactLinkStyle,
+  contactListStyle,
   descriptionStyle,
-  heroActionsStyle,
-  heroIconButtonStyle,
-  heroImageStyle,
-  heroOverlayStyle,
+  dividerStyle,
+  footerMapButtonStyle,
+  footerSaveButtonStyle,
+  footerStyle,
   heroStyle,
-  heroTitleStyle,
-  infoIconStyle,
-  infoItemStyle,
-  infoLabelStyle,
-  infoListStyle,
-  infoValueStyle,
-  metaRowStyle,
-  metaTextStyle,
   pageStyle,
-  photoImgStyle,
-  photoItemStyle,
-  photoListStyle,
+  sectionStyle,
   sectionTitleStyle,
+  titleStyle,
 } from './PlacePage.css.ts'
 
 function getPlaceDescription(place: Place) {
@@ -58,7 +57,6 @@ export function PlacePage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { placeId = '' } = useParams()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const { data: place, isPending, isError, error, refetch } = usePlaceQuery(placeId)
   const favoriteIdsQuery = useFavoritePlaceIdsQuery()
   const toggleFavorite = useToggleFavoriteMutation()
@@ -66,19 +64,30 @@ export function PlacePage() {
   const photos = useMemo(() => (place ? getPlacePhotos(place) : []), [place])
   const description = place ? getPlaceDescription(place) : ''
   const categoryLabel = place?.categoryName?.trim()
-  const locationLabel = place?.address?.trim()
-  const metaLabel = [categoryLabel, locationLabel].filter(Boolean).join(' · ')
+  const addressLabel = place?.address?.trim()
   const hasContactInfo = Boolean(place?.tel || place?.homepage)
   const headerTitle = place?.name ?? '장소'
   const goBack = () => navigate(-1)
   const favoriteIds = favoriteIdsQuery.data ?? new Set<string>()
   const isFavorite = placeId ? favoriteIds.has(placeId) : false
 
+  const openMap = () => {
+    if (!place) return
+    openNaverMapPlace({
+      name: place.name,
+      latitude: place.latitude,
+      longitude: place.longitude,
+    })
+  }
+
   const handleToggleFavorite = () => {
     if (!placeId) return
-    if (!isAuthenticated) {
-      toast.info('즐겨찾기는 로그인 후 이용할 수 있어요.')
-      navigate(`${ROUTES.login}?returnTo=${encodeURIComponent(location.pathname)}`)
+    if (
+      !requireLogin({
+        returnTo: location.pathname,
+        description: '즐겨찾기는 로그인 후 이용할 수 있어요.',
+      })
+    ) {
       return
     }
 
@@ -156,90 +165,94 @@ export function PlacePage() {
       <PageHeader title={headerTitle} showBack onBack={goBack} />
 
       <section className={heroStyle} aria-label="장소 이미지">
-        <SafeImage src={place.imageUrl} className={heroImageStyle} placeholderSize="lg" />
-        <div className={heroOverlayStyle} aria-hidden />
-        <div className={heroActionsStyle}>
-          <button
-            type="button"
-            className={heroIconButtonStyle}
-            aria-label={isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-            aria-pressed={isFavorite}
-            disabled={toggleFavorite.isPending}
-            onClick={handleToggleFavorite}
-          >
-            <Bookmark size={18} fill={isFavorite ? 'currentColor' : 'none'} />
-          </button>
-          <button
-            type="button"
-            className={heroIconButtonStyle}
-            aria-label="네이버 지도에서 보기"
-            onClick={() =>
-              openNaverMapPlace({
-                name: place.name,
-                latitude: place.latitude,
-                longitude: place.longitude,
-              })
-            }
-          >
-            <MapPin size={18} />
-          </button>
-        </div>
-        <h1 className={heroTitleStyle}>{place.name}</h1>
+        <PhotoCarousel
+          photoUrls={photos}
+          title={place.name}
+          isBookmarked={isFavorite}
+          onToggleBookmark={handleToggleFavorite}
+          extraActions={
+            <button
+              type="button"
+              className={overlayButtonStyle}
+              aria-label="네이버 지도에서 보기"
+              onClick={openMap}
+            >
+              <MapPin size={16} strokeWidth={1.75} />
+            </button>
+          }
+        />
       </section>
 
       <div className={bodyStyle}>
-        {metaLabel ? (
-          <div className={metaRowStyle}>
-            <p className={metaTextStyle}>{metaLabel}</p>
-          </div>
+        <h1 className={titleStyle}>{place.name}</h1>
+
+        {addressLabel ? (
+          <p className={addressTextStyle}>
+            <MapPin size={20} strokeWidth={2} className={addressIconStyle} aria-hidden />
+            <span>{addressLabel}</span>
+          </p>
         ) : null}
 
-        {description ? <p className={descriptionStyle}>{description}</p> : null}
+        {categoryLabel ? <span className={categoryTagStyle}>{categoryLabel}</span> : null}
+
+        <hr className={dividerStyle} />
+
+        {description ? (
+          <section className={sectionStyle} aria-labelledby="place-intro-title">
+            <h2 id="place-intro-title" className={sectionTitleStyle}>
+              장소 소개
+            </h2>
+            <p className={descriptionStyle}>{description}</p>
+          </section>
+        ) : null}
 
         {hasContactInfo ? (
-          <ul className={infoListStyle}>
+          <ul className={contactListStyle}>
             {place.tel ? (
-              <li className={infoItemStyle}>
-                <span className={infoIconStyle} aria-hidden>
-                  <Phone size={18} />
+              <li className={contactItemStyle}>
+                <span className={contactIconStyle} aria-hidden>
+                  <Phone size={16} />
                 </span>
-                <a href={`tel:${place.tel}`} className={infoValueStyle}>
+                <a href={`tel:${place.tel}`} className={contactLinkStyle}>
                   {place.tel}
                 </a>
-                <span className={infoLabelStyle}>전화번호</span>
               </li>
             ) : null}
             {place.homepage ? (
-              <li className={infoItemStyle}>
-                <span className={infoIconStyle} aria-hidden>
-                  <Globe size={18} />
+              <li className={contactItemStyle}>
+                <span className={contactIconStyle} aria-hidden>
+                  <Globe size={16} />
                 </span>
                 <a
                   href={place.homepage}
-                  className={infoValueStyle}
+                  className={contactLinkStyle}
                   target="_blank"
                   rel="noreferrer noopener"
                 >
                   홈페이지
                 </a>
-                <span className={infoLabelStyle}>웹사이트</span>
               </li>
             ) : null}
           </ul>
         ) : null}
+      </div>
 
-        {photos.length > 0 ? (
-          <section>
-            <h2 className={sectionTitleStyle}>사진</h2>
-            <div className={photoListStyle}>
-              {photos.map((url) => (
-                <div key={url} className={photoItemStyle}>
-                  <SafeImage src={url} className={photoImgStyle} placeholderSize="sm" showPlaceholderLabel={false} />
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
+      <div className={footerStyle}>
+        <button
+          type="button"
+          className={footerSaveButtonStyle}
+          aria-label={isFavorite ? '즐겨찾기 해제' : '저장하기'}
+          aria-pressed={isFavorite}
+          disabled={toggleFavorite.isPending}
+          onClick={handleToggleFavorite}
+        >
+          <Bookmark size={18} strokeWidth={2} fill={isFavorite ? 'currentColor' : 'none'} />
+          {isFavorite ? '저장됨' : '저장하기'}
+        </button>
+        <button type="button" className={footerMapButtonStyle} onClick={openMap}>
+          <MapPin size={18} strokeWidth={2} aria-hidden />
+          지도에서 보기
+        </button>
       </div>
     </div>
   )

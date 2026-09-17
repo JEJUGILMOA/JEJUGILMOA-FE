@@ -9,6 +9,7 @@ import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { useDeletePlanMutation } from '@/features/plans/hooks'
 import type { PlanStatus, TravelPlan } from '@/features/plans/types'
+import { cn } from '@/utils/cn'
 import {
   clickableCardStyle,
   dateRangeStyle,
@@ -18,6 +19,7 @@ import {
   menuListStyle,
   metaStyle,
   titleRowStyle,
+  titleRowWithMenuStyle,
   titleTextStyle,
   triggerWrapStyle,
 } from './PlanListItem.css.ts'
@@ -75,7 +77,7 @@ export function PlanListItem({ plan, status }: PlanListItemProps) {
       onClick={goToDetail}
       onKeyDown={handleKeyDown}
     >
-      <div className={titleRowStyle}>
+      <div className={cn(titleRowStyle, status === 'draft' && titleRowWithMenuStyle)}>
         <h3 className={titleTextStyle}>{plan.title}</h3>
         {status === 'ongoing' ? <Badge status="info">진행중</Badge> : null}
         {status === 'draft' ? <Badge status="neutral">예정된 여행</Badge> : null}

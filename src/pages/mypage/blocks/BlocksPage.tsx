@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/Button/Button'
 import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
+import { Modal } from '@/components/ui/Modal/Modal'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { ROUTES } from '@/constants'
 import { useBlockedUsersQuery, useUnblockUserMutation } from '@/features/users/hooks'
+import type { BlockedUser } from '@/features/users/api'
 import { ProfileAvatar } from '@/pages/mypage/components/ProfileAvatar/ProfileAvatar'
 import {
   itemStyle,
@@ -36,11 +39,31 @@ export function BlocksPage() {
   const navigate = useNavigate()
   const blockedUsersQuery = useBlockedUsersQuery()
   const unblockMutation = useUnblockUserMutation()
+  const [pendingUnblock, setPendingUnblock] = useState<BlockedUser | null>(null)
 
   const users = blockedUsersQuery.data ?? []
   const unblockingId = unblockMutation.isPending
     ? unblockMutation.variables?.targetUserId
     : undefined
+
+  const closeConfirm = () => {
+    if (unblockMutation.isPending) return
+    setPendingUnblock(null)
+  }
+
+  const confirmUnblock = () => {
+    if (!pendingUnblock) return
+    const target = pendingUnblock
+    unblockMutation.mutate(
+      {
+        targetUserId: target.userId,
+        nickname: target.nickname,
+      },
+      {
+        onSettled: () => setPendingUnblock(null),
+      },
+    )
+  }
 
   return (
     <div className={pageStyle}>
@@ -75,12 +98,7 @@ export function BlocksPage() {
                 size="sm"
                 disabled={unblockingId === user.userId}
                 isLoading={unblockingId === user.userId}
-                onClick={() =>
-                  unblockMutation.mutate({
-                    targetUserId: user.userId,
-                    nickname: user.nickname,
-                  })
-                }
+                onClick={() => setPendingUnblock(user)}
               >
                 차단 해제
               </Button>
@@ -88,6 +106,26 @@ export function BlocksPage() {
           ))}
         </ul>
       )}
+
+      <Modal
+        open={pendingUnblock != null}
+        title="차단을 해제할까요?"
+        description={
+          pendingUnblock
+            ? `${pendingUnblock.nickname} 님의 차단을 해제하면 해당 사용자의 기록이 다시 보일 수 있어요.`
+            : undefined
+        }
+        onClose={closeConfirm}
+        actions={[
+          { label: '취소', variant: 'ghost', onClick: closeConfirm },
+          {
+            label: '차단 해제',
+            variant: 'primary',
+            isLoading: unblockMutation.isPending,
+            onClick: confirmUnblock,
+          },
+        ]}
+      />
     </div>
   )
 }

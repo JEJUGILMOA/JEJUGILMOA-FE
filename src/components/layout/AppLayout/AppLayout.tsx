@@ -1,4 +1,5 @@
 import { Outlet, useMatches } from 'react-router'
+import { LoginRequiredModal } from '@/components/auth/LoginRequiredModal'
 import { BottomNavigation } from '@/components/layout/BottomNavigation/BottomNavigation'
 import { NativeHeaderProvider } from '@/bridge/NativeHeaderProvider'
 import { nativeBridge } from '@/bridge/nativeBridge'
@@ -49,6 +50,7 @@ export function AppLayout() {
           <Outlet />
         </main>
         {!hideNav ? <BottomNavigation /> : null}
+        <LoginRequiredModal />
       </div>
     </NativeHeaderProvider>
   )

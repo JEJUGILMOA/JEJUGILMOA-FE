@@ -7,6 +7,7 @@ import { Empty } from '@/components/ui/Empty/Empty'
 import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Modal } from '@/components/ui/Modal/Modal'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
+import { openLogin } from '@/features/auth/openLogin'
 import { ROUTES } from '@/constants'
 import { BADGE_GROUP_THEME } from '@/features/badges/format'
 import { useMyBadgesQuery } from '@/features/badges/hooks'
@@ -143,7 +144,7 @@ export function BadgesPage() {
           title="로그인이 필요해요"
           description="배지 현황을 보려면 로그인해 주세요."
           action={
-            <Button onClick={() => navigate(`${ROUTES.login}?returnTo=${ROUTES.myBadges}`)}>
+            <Button onClick={() => openLogin(navigate, { returnTo: ROUTES.myBadges })}>
               로그인
             </Button>
           }

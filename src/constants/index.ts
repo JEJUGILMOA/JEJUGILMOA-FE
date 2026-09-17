@@ -30,8 +30,8 @@ export const ROUTES = {
   planBudget: (id: string) => `/plan/${id}/budget`,
   planPreview: (id: string) => `/plan/${id}/preview`,
   record: '/record',
-  /** 기록 탭 — `myrecord`(내 기록) | `search`(둘러보기) */
-  recordTab: (tab: 'myrecord' | 'search' = 'myrecord') =>
+  /** 기록 탭 — `search`(둘러보기) | `myrecord`(내 기록). 기본은 둘러보기 */
+  recordTab: (tab: 'myrecord' | 'search' = 'search') =>
     tab === 'myrecord' ? '/record?tab=myrecord' : '/record?tab=search',
   recordCreate: '/record/new',
   recordDetail: (id: string) => `/record/${id}`,
@@ -44,6 +44,10 @@ export const ROUTES = {
   myTrips: '/my/trips',
   myTripDetail: '/my/trips/:tripId',
   myFavorites: '/my/favorites',
+  /** 즐겨찾기 탭 — `places` | `courses` | `records` */
+  myFavoritesTab: (tab: 'places' | 'courses' | 'records' = 'places') =>
+    `/my/favorites?tab=${tab}`,
+  myFavoriteRecord: (recordId: string) => `/my/favorites/records/${recordId}`,
   myBadges: '/my/badges',
   mySharedRecords: '/my/shared-records',
   myBlocks: '/my/blocks',
@@ -76,12 +80,16 @@ export const QUERY_KEYS = {
     page?: number
     size?: number
   }) => ['places', 'list', params] as const,
+  placesInfinite: (params?: { keyword?: string; category?: string; size?: number }) =>
+    ['places', 'list', 'infinite', params] as const,
   popularPlaces: (params?: {
     category?: string
     page?: number
     size?: number
     limit?: number
   }) => ['places', 'popular', params] as const,
+  popularPlacesInfinite: (params?: { category?: string; size?: number }) =>
+    ['places', 'popular', 'infinite', params] as const,
   place: (id: string) => ['places', id] as const,
   homePlaces: ['home', 'places'] as const,
   homeCourses: ['home', 'courses'] as const,
@@ -99,6 +107,7 @@ export const QUERY_KEYS = {
   favoriteRecordIds: ['records', 'favorites', 'ids'] as const,
   favoriteRecords: (page?: number, size?: number) =>
     ['records', 'favorites', 'list', page, size] as const,
+  recordDetail: (recordId: string) => ['records', 'detail', recordId] as const,
   blockedUsers: ['users', 'blocks'] as const,
   myProfile: ['users', 'me'] as const,
   mySettings: ['users', 'me', 'settings'] as const,

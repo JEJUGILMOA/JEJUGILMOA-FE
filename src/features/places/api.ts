@@ -9,6 +9,7 @@ import {
   type PlaceListItem,
   type PlacePage,
   type PopularPlace,
+  type PopularPlacePage,
 } from './schemas'
 
 export type BrowsePlacesParams = {
@@ -73,10 +74,10 @@ export async function fetchPlaceById(placeId: string): Promise<Place> {
   return placeDetailSchema.parse(data)
 }
 
-/** 인기 관광지 (방문 수 상위) — 페이지 content 반환 */
-export async function fetchPopularPlaces(
+/** 인기 관광지 — 페이지 메타 포함 */
+export async function fetchPopularPlacesPage(
   params?: FetchPopularPlacesParams,
-): Promise<PopularPlace[]> {
+): Promise<PopularPlacePage> {
   const page = params?.page ?? 0
   const size = params?.size ?? params?.limit ?? 20
   const data = await apiGet<unknown>('/places/popular', {
@@ -88,8 +89,24 @@ export async function fetchPopularPlaces(
   })
 
   if (Array.isArray(data)) {
-    return popularPlaceSchema.array().parse(data)
+    const content = popularPlaceSchema.array().parse(data)
+    return {
+      content,
+      page: 0,
+      size: content.length,
+      totalElements: content.length,
+      totalPages: 1,
+      last: true,
+    }
   }
 
-  return popularPlacePageSchema.parse(data).content
+  return popularPlacePageSchema.parse(data)
+}
+
+/** 인기 관광지 (방문 수 상위) — 페이지 content 반환 */
+export async function fetchPopularPlaces(
+  params?: FetchPopularPlacesParams,
+): Promise<PopularPlace[]> {
+  const page = await fetchPopularPlacesPage(params)
+  return page.content
 }

@@ -69,9 +69,16 @@ function handleNativeMessage(data: unknown) {
         user: message.user,
       })
       break
-    case 'AUTH_GUEST':
+    case 'AUTH_GUEST': {
+      const wasAuthenticated = authStore.getState().isAuthenticated
       authStore.getState().clearAuth()
+      // 콜드 스타트 게스트(이미 비로그인)에서 clear하면 홈 등 진행 중 쿼리가
+      // 취소된 채 isFetching에 남아 스켈레톤에 고정될 수 있다. 로그아웃 직후에만 캐시를 리셋한다.
+      if (wasAuthenticated) {
+        void queryClient.resetQueries()
+      }
       break
+    }
     case 'ANDROID_BACK':
     case 'HEADER_BACK': {
       const headerBack = new CustomEvent('gilmoa:header-back', { cancelable: true })

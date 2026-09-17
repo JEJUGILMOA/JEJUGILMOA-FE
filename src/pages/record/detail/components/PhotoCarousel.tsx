@@ -1,5 +1,5 @@
 import { Bookmark, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ImagePlaceholder, SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Popover } from '@/components/ui/Popover/Popover'
 import { cn } from '@/utils/cn'
@@ -23,11 +23,13 @@ import {
 
 export type PhotoCarouselProps = {
   photoUrls: string[]
-  /** 사진 전체보기 팝업의 aria-label에 쓰는 기록 제목 */
+  /** 사진 전체보기 팝업의 aria-label에 쓰는 제목 */
   title: string
   isBookmarked?: boolean
   /** 없으면 즐겨찾기 버튼을 숨긴다 (본인 기록 등) */
   onToggleBookmark?: () => void
+  /** 즐겨찾기 옆에 붙는 추가 액션 (지도 버튼 등) */
+  extraActions?: ReactNode
   /** 타인의 기록일 때 신고/차단 메뉴 표시 */
   moderation?: {
     authorName: string
@@ -36,12 +38,13 @@ export type PhotoCarouselProps = {
   }
 }
 
-/** STEP 08.3~4: 대표 사진 캐러셀 + 우측 상단 더보기/북마크. 드래그로 사진을 넘기고, 탭하면 전체화면으로 본다 */
+/** 대표 사진 캐러셀 + 우측 상단 액션. 드래그로 사진을 넘기고, 탭하면 전체화면으로 본다 */
 export function PhotoCarousel({
   photoUrls,
   title,
   isBookmarked = false,
   onToggleBookmark,
+  extraActions,
   moderation,
 }: PhotoCarouselProps) {
   const [index, setIndex] = useState(0)
@@ -52,7 +55,9 @@ export function PhotoCarousel({
     total,
     index,
     onIndexChange: setIndex,
-    onTap: () => setViewerOpen(true),
+    onTap: () => {
+      if (total > 0) setViewerOpen(true)
+    },
   })
 
   return (
@@ -94,6 +99,8 @@ export function PhotoCarousel({
             <Bookmark size={16} strokeWidth={1.75} fill={isBookmarked ? 'currentColor' : 'none'} />
           </button>
         ) : null}
+
+        {extraActions}
 
         {moderation ? (
           <Popover

@@ -149,14 +149,24 @@ type PlaceInfo = {
 type PendingCourse = {
   title: string
   summary?: string
-  steps: { placeId: string; title: string }[]
+  steps: {
+    placeId: string
+    title: string
+    latitude?: number
+    longitude?: number
+  }[]
 }
 
-/** 코스 추천 화면(`PlanCourseRecommendPage`)에서 "이 코스로 계획 시작하기"를 누르면
- * 이 화면으로 돌아오면서 location.state에 실어 보내는 데이터 */
-type ImportCourseState = {
+/** 일정 화면 history state. 코스 추천 왕복·미리보기 진입 시 Day/출처를 복원하는 데 쓴다. */
+type ItineraryLocationState = {
   day?: number
+  fromPreview?: boolean
   importCourse?: PendingCourse
+}
+
+function readSelectedDay(state: unknown, fallback = 1): number {
+  const day = (state as ItineraryLocationState | null)?.day
+  return typeof day === 'number' && day > 0 ? day : fallback
 }
 
 export function PlanItineraryPage() {
@@ -165,7 +175,8 @@ export function PlanItineraryPage() {
   const location = useLocation()
   const { plan, isPending, isError, refetch } = usePlanDraft(planId)
 
-  const [selectedDay, setSelectedDay] = useState(1)
+  // 코스 추천 등에서 뒤로 오면 컴포넌트가 다시 마운트되므로, history state의 day로 복원한다.
+  const [selectedDay, setSelectedDay] = useState(() => readSelectedDay(location.state))
   const [customTimes, setCustomTimes] = useState<Record<string, string>>({})
   const [sheetTab, setSheetTab] = useState<SheetTab>('schedule')
   const [recommendQuery, setRecommendQuery] = useState('')
@@ -185,14 +196,15 @@ export function PlanItineraryPage() {
 
   // 미리보기의 연필 아이콘으로 들어왔으면 저장 후 다음 STEP(예산입력)으로 이어가지 않고
   // 미리보기로 바로 돌아간다 — 이 화면만 고쳐달라고 들어온 거라 나머지 단계를 강제로 거칠 필요가 없다.
-  const fromPreview = Boolean((location.state as { fromPreview?: boolean } | null)?.fromPreview)
+  const itineraryState = (location.state as ItineraryLocationState | null) ?? null
+  const fromPreview = Boolean(itineraryState?.fromPreview)
 
   // 코스 상세에서 "이 코스로 계획 시작하기"로 돌아오면 확인 모달 없이 바로 Day에 담는다.
   // day가 함께 오면 그 Day로 맞춘 뒤, draft를 그 Day 기준으로 갱신한다(selectedDay setState는 비동기라
   // persist에 selectedDay를 그대로 쓰면 이전 Day에 들어갈 수 있음).
   const importedCourseRef = useRef(false)
   useEffect(() => {
-    const state = location.state as ImportCourseState | null
+    const state = location.state as ItineraryLocationState | null
     if (!state?.importCourse || importedCourseRef.current) return
     importedCourseRef.current = true
 
@@ -218,8 +230,8 @@ export function PlanItineraryPage() {
       const addedPlaceIds = coursePlaceIds.slice(0, remainingSlots)
       addedCount = addedPlaceIds.length
       truncated = addedPlaceIds.length < coursePlaceIds.length
-      const titleByPlaceId = new Map(
-        course.steps.map((step) => [String(step.placeId), step.title] as const),
+      const stepByPlaceId = new Map(
+        course.steps.map((step) => [String(step.placeId), step] as const),
       )
 
       return {
@@ -230,11 +242,22 @@ export function PlanItineraryPage() {
             ...dayEntry,
             waypoints: [
               ...dayEntry.waypoints,
-              ...addedPlaceIds.map((placeId) => ({
-                placeId,
-                title: titleByPlaceId.get(placeId) ?? placeId,
-                isPreferred: true as const,
-              })),
+              ...addedPlaceIds.map((placeId) => {
+                const step = stepByPlaceId.get(placeId)
+                const latitude = step?.latitude
+                const longitude = step?.longitude
+                const hasCoords =
+                  typeof latitude === 'number' &&
+                  typeof longitude === 'number' &&
+                  Number.isFinite(latitude) &&
+                  Number.isFinite(longitude)
+                return {
+                  placeId,
+                  title: step?.title ?? placeId,
+                  isPreferred: true as const,
+                  ...(hasCoords ? { latitude, longitude } : {}),
+                }
+              }),
             ],
           },
         },
@@ -247,7 +270,20 @@ export function PlanItineraryPage() {
         const placeId = String(step.placeId)
         if (!placeId) continue
         const existing = next[placeId]
-        if (existing) {
+        const hasCoords =
+          typeof step.latitude === 'number' &&
+          typeof step.longitude === 'number' &&
+          Number.isFinite(step.latitude) &&
+          Number.isFinite(step.longitude) &&
+          !(step.latitude === 0 && step.longitude === 0)
+        if (hasCoords) {
+          next[placeId] = {
+            title: step.title,
+            categoryLabel: existing?.categoryLabel ?? '',
+            latitude: step.latitude!,
+            longitude: step.longitude!,
+          }
+        } else if (existing) {
           next[placeId] = { ...existing, title: step.title }
         }
       }
@@ -268,13 +304,32 @@ export function PlanItineraryPage() {
       )
     }
 
-    navigate(location.pathname, { replace: true, state: null })
+    // importCourse만 비우고 day/fromPreview는 남겨, 이후 재마운트·뒤로가기에도 Day가 유지되게 한다.
+    navigate(location.pathname, {
+      replace: true,
+      state: {
+        day: targetDay,
+        ...(state.fromPreview ? { fromPreview: true } : {}),
+      } satisfies ItineraryLocationState,
+    })
   }, [location.state, location.pathname, navigate, selectedDay])
 
   const goBack = () => navigate(-1)
 
-  const placeTitle = (placeId: string) =>
-    placeInfoCache[placeId]?.title ?? MOCK_PLACES.find((place) => place.id === placeId)?.title ?? placeId
+  // 캐시/목데이터에 없어도 draft waypoint에 저장된 title을 우선 쓴다.
+  // (코스 import·서버 복원 장소는 placeInfoCache에 없을 수 있음)
+  const placeTitle = (placeId: string) => {
+    const cached = placeInfoCache[placeId]?.title
+    if (cached) return cached
+    const mock = MOCK_PLACES.find((place) => place.id === placeId)?.title
+    if (mock) return mock
+    for (const day of Object.values(plan?.itinerary ?? {})) {
+      if (day.departure?.placeId === placeId && day.departure.title) return day.departure.title
+      const waypoint = day.waypoints.find((entry) => entry.placeId === placeId)
+      if (waypoint?.title) return waypoint.title
+    }
+    return placeId
+  }
 
   const makeWaypoint = (placeId: string, isPreferred: boolean, title?: string): Waypoint => {
     const info = placeInfoCache[placeId]
@@ -721,6 +776,17 @@ export function PlanItineraryPage() {
       setShowDepartureRequired(true)
       return
     }
+    // 추천 화면으로 나가기 전에 현재 history에 day를 남겨, 뒤로 왔을 때 Day가 복원되게 한다.
+    navigate(
+      { pathname: location.pathname, search: location.search },
+      {
+        replace: true,
+        state: {
+          ...(itineraryState ?? {}),
+          day: selectedDay,
+        } satisfies ItineraryLocationState,
+      },
+    )
     navigate(ROUTES.planCourseRecommend, { state: { planId, day: selectedDay } })
   }
 
@@ -753,9 +819,24 @@ export function PlanItineraryPage() {
 
   // Day를 옮길 때는 이전 Day에서 "가까운 장소"(주변 추천) 단계까지 갔었더라도, 새 Day는
   // 아직 앵커(꼭 가고 싶은 장소)를 안 정한 상태이니 "유명한 장소"(전역 추천) 단계로 되돌린다.
+  // 장소추가 탭에 머문 채로 Day만 바뀌지 않도록 일정 탭으로 되돌린다.
+  // history state에도 day를 동기화해, 화면이 다시 마운트돼도 선택 Day가 유지되게 한다.
   const changeDay = (day: number) => {
     setSelectedDay(day)
     setRecommendMode('popular')
+    setSheetTab('schedule')
+    setIsSelectingDeparture(false)
+    setRecommendQuery('')
+    navigate(
+      { pathname: location.pathname, search: location.search },
+      {
+        replace: true,
+        state: {
+          ...(itineraryState ?? {}),
+          day,
+        } satisfies ItineraryLocationState,
+      },
+    )
   }
 
   // 마지막 Day가 아니면 '다음'은 이 화면 안에서 다음 Day로만 넘기고,

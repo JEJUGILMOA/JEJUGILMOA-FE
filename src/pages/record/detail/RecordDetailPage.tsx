@@ -10,6 +10,7 @@ import { ErrorState } from '@/components/ui/ErrorState/ErrorState'
 import { Loading } from '@/components/ui/Loading/Loading'
 import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
+import { requireLogin } from '@/features/auth/requireLogin'
 import {
   useExploreRecordsQuery,
   useMyRecordsQuery,
@@ -160,6 +161,14 @@ export function RecordDetailPage() {
 
   const handleBlockAuthor = () => {
     if (!view?.authorId) return
+    if (
+      !requireLogin({
+        returnTo: ROUTES.recordDetail(view.id),
+        description: '사용자를 차단하려면 로그인해 주세요.',
+      })
+    ) {
+      return
+    }
     blockUserMutation.mutate(
       { targetUserId: view.authorId, authorName: view.authorName },
       { onSuccess: () => goBack() },
@@ -168,6 +177,14 @@ export function RecordDetailPage() {
 
   const handleToggleBookmark = () => {
     if (!view || view.isOwn) return
+    if (
+      !requireLogin({
+        returnTo: ROUTES.recordDetail(view.id),
+        description: '즐겨찾기는 로그인 후 이용할 수 있어요.',
+      })
+    ) {
+      return
+    }
     exploreBookmarkMutation.mutate({
       id: view.id,
       nextFavorite: !view.isBookmarked,
@@ -176,6 +193,16 @@ export function RecordDetailPage() {
 
   const handleReact = (reaction: ReactionType) => {
     if (!view) return
+    if (!view.isOwn) {
+      if (
+        !requireLogin({
+          returnTo: ROUTES.recordDetail(view.id),
+          description: '좋아요·싫어요는 로그인 후 이용할 수 있어요.',
+        })
+      ) {
+        return
+      }
+    }
     const payload = { id: view.id, reaction, currentReaction: view.myReaction }
     if (view.isOwn) reactMutation.mutate(payload)
     else exploreReactMutation.mutate(payload)
@@ -253,7 +280,17 @@ export function RecordDetailPage() {
                 ? undefined
                 : {
                     authorName: view.authorName,
-                    onReport: () => setReportOpen(true),
+                    onReport: () => {
+                      if (
+                        !requireLogin({
+                          returnTo: ROUTES.recordDetail(view.id),
+                          description: '신고하려면 로그인해 주세요.',
+                        })
+                      ) {
+                        return
+                      }
+                      setReportOpen(true)
+                    },
                     onBlockAuthor: handleBlockAuthor,
                   }
             }

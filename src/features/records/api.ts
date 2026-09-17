@@ -337,6 +337,16 @@ export async function fetchExploreRecords(): Promise<ExploreRecord[]> {
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 }
 
+/** GET /records/{recordId} — 즐겨찾기 상세 등 단일 조회 */
+export async function fetchExploreRecordById(recordId: string): Promise<ExploreRecord> {
+  const id = toRecordIdNumber(recordId)
+  const [detail, favoriteIds] = await Promise.all([
+    fetchRecordDetail(id),
+    fetchFavoriteRecordIds().catch(() => new Set<string>()),
+  ])
+  return mapDetailToExploreRecord(detail, favoriteIds)
+}
+
 function toRecordIdNumber(recordId: string | number) {
   const value = typeof recordId === 'number' ? recordId : Number(recordId)
   if (!Number.isFinite(value) || value <= 0) {

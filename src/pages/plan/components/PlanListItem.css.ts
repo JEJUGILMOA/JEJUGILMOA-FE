@@ -17,6 +17,10 @@ export const titleRowStyle = style({
   justifyContent: 'space-between',
   gap: vars.space[2],
   marginBottom: vars.space[2],
+})
+
+/** draft 카드만 ⋯ 메뉴 자리 확보 — 진행중/완료 뱃지가 우측으로 밀리지 않게 */
+export const titleRowWithMenuStyle = style({
   paddingRight: vars.space[8],
 })
 

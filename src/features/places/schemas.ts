@@ -1,7 +1,15 @@
 import { z } from 'zod'
 
 const optionalString = z.string().nullish().transform((value) => value ?? undefined)
-const optionalNumber = z.number().nullish().transform((value) => value ?? undefined)
+/** number|숫자문자열 모두 허용 (좌표 JSON이 문자열로 오는 경우 대비) */
+const optionalNumber = z
+  .union([z.number(), z.string()])
+  .nullish()
+  .transform((value) => {
+    if (value == null || value === '') return undefined
+    const n = typeof value === 'number' ? value : Number(value)
+    return Number.isFinite(n) ? n : undefined
+  })
 
 /** GET /places 목록 아이템 */
 export const placeListItemSchema = z.object({

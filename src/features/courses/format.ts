@@ -119,6 +119,8 @@ function mapStops(
     placeDescription?: string
     description?: string
     travelTimeToNext?: number
+    latitude?: number
+    longitude?: number
   }[],
 ) {
   return stops.map((stop) => ({
@@ -127,6 +129,8 @@ function mapStops(
     imageUrl: stop.placeImageUrl,
     description: stop.placeDescription ?? stop.description,
     travelLabel: formatTravelMinutes(stop.travelTimeToNext),
+    latitude: stop.latitude,
+    longitude: stop.longitude,
   }))
 }
 
@@ -134,11 +138,16 @@ function mapStops(
 export function mapSavedCourseDetail(course: SavedCourseDetail) {
   const stops = [...course.stops].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
   const tags = course.tags.length > 0 ? course.tags : course.theme ? [courseThemeLabel(course.theme) ?? course.theme] : []
+  const imageUrls = collectCourseImageUrls(
+    course.imageUrl,
+    stops.map((stop) => stop.placeImageUrl),
+  )
 
   return {
     title: course.title,
     description: course.description,
-    imageUrl: course.imageUrl ?? stops.find((stop) => stop.placeImageUrl)?.placeImageUrl,
+    imageUrl: imageUrls[0],
+    imageUrls,
     region: course.region,
     duration: formatEstimatedMinutes(course.estimatedMinutes),
     placeCount: course.placeCount ?? stops.length,
@@ -151,11 +160,16 @@ export function mapSavedCourseDetail(course: SavedCourseDetail) {
 export function mapRecommendedCourseDetail(course: RecommendedCourseDetail) {
   const stops = [...course.stops].sort((a, b) => a.sequenceOrder - b.sequenceOrder)
   const tags = course.tags
+  const imageUrls = collectCourseImageUrls(
+    course.imageUrl,
+    stops.map((stop) => stop.placeImageUrl),
+  )
 
   return {
     title: course.title,
     description: course.description,
-    imageUrl: course.imageUrl ?? stops.find((stop) => stop.placeImageUrl)?.placeImageUrl,
+    imageUrl: imageUrls[0],
+    imageUrls,
     region: course.region,
     duration: formatEstimatedMinutes(course.estimatedMinutes),
     transport: transportModeLabel(course.transportMode),
@@ -164,4 +178,18 @@ export function mapRecommendedCourseDetail(course: RecommendedCourseDetail) {
     imageTags: mapTagsToImageTags(tags),
     steps: mapStops(stops),
   }
+}
+
+function collectCourseImageUrls(coverUrl: string | undefined, stopUrls: (string | undefined)[]) {
+  const urls: string[] = []
+  const seen = new Set<string>()
+  const add = (url?: string) => {
+    const trimmed = url?.trim()
+    if (!trimmed || seen.has(trimmed)) return
+    seen.add(trimmed)
+    urls.push(trimmed)
+  }
+  add(coverUrl)
+  stopUrls.forEach(add)
+  return urls
 }

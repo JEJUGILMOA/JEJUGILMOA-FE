@@ -224,3 +224,16 @@ export const resultDistanceStyle = style({
   color: colors.text[4],
   whiteSpace: 'nowrap',
 })
+
+export const loadMoreSentinelStyle = style({
+  width: '100%',
+  height: 1,
+})
+
+export const loadMoreStatusStyle = style({
+  margin: 0,
+  padding: `${vars.space[3]} 0 ${vars.space[6]}`,
+  textAlign: 'center',
+  fontSize: vars.fontSize.xs,
+  color: colors.text[4],
+})

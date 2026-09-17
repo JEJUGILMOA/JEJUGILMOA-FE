@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router'
 import { BookOpen, ChevronRight, MapPin, Settings, Share2, Sparkles, UserX } from 'lucide-react'
 import { getErrorMessage } from '@/api/error'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
+import { openLogin } from '@/features/auth/openLogin'
 import { useMyProfileQuery } from '@/features/auth/hooks'
 import { useAuthStore } from '@/stores/authStore'
 import { ROUTES } from '@/constants'
@@ -52,7 +53,11 @@ export function MyPage() {
         className={profileButtonStyle}
         onClick={() => {
           if (!isAuthResolved) return
-          navigate(isAuthenticated ? ROUTES.myProfile : `${ROUTES.login}?returnTo=${ROUTES.my}`)
+          if (isAuthenticated) {
+            navigate(ROUTES.myProfile)
+            return
+          }
+          openLogin(navigate, { returnTo: ROUTES.my })
         }}
         aria-label={
           !isAuthResolved ? '프로필 불러오는 중' : isAuthenticated ? '프로필 보기' : '로그인'
@@ -95,20 +100,22 @@ export function MyPage() {
         </div>
       </button>
 
-      <div className={menuListStyle}>
-        {MENU_ITEMS.flatMap(({ label, to, icon: Icon }, index) => {
-          const item = (
-            <MenuListItem
-              key={to}
-              label={label}
-              icon={<Icon size={15} strokeWidth={2} />}
-              onClick={() => navigate(to)}
-            />
-          )
-          if (index === 0) return [item]
-          return [<hr key={`divider-${to}`} className={menuDividerStyle} />, item]
-        })}
-      </div>
+      {!isAuthenticated ? null : (
+        <div className={menuListStyle}>
+          {MENU_ITEMS.flatMap(({ label, to, icon: Icon }, index) => {
+            const item = (
+              <MenuListItem
+                key={to}
+                label={label}
+                icon={<Icon size={15} strokeWidth={2} />}
+                onClick={() => navigate(to)}
+              />
+            )
+            if (index === 0) return [item]
+            return [<hr key={`divider-${to}`} className={menuDividerStyle} />, item]
+          })}
+        </div>
+      )}
     </div>
   )
 }

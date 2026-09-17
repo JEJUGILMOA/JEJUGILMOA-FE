@@ -42,25 +42,28 @@ export type MapPlanDetailPayload = {
   legs: MapPlanLegPayload[]
 }
 
-function dayFallback(day: PlanDayDetail) {
-  if (
-    typeof day.departureLatitude === 'number' &&
-    typeof day.departureLongitude === 'number' &&
-    Number.isFinite(day.departureLatitude) &&
-    Number.isFinite(day.departureLongitude)
-  ) {
-    return {
-      latitude: day.departureLatitude,
-      longitude: day.departureLongitude,
-    }
+function toFiniteCoord(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null
+  }
+  if (typeof value === 'string' && value.trim() !== '') {
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
   }
   return null
 }
 
+function dayFallback(day: PlanDayDetail) {
+  const latitude = toFiniteCoord(day.departureLatitude)
+  const longitude = toFiniteCoord(day.departureLongitude)
+  if (latitude == null || longitude == null) return null
+  return { latitude, longitude }
+}
+
 function toCoord(point: [number, number] | number[]) {
-  const longitude = point[0]
-  const latitude = point[1]
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
+  const longitude = toFiniteCoord(point[0])
+  const latitude = toFiniteCoord(point[1])
+  if (latitude == null || longitude == null) return null
   return { latitude, longitude }
 }
 
@@ -83,20 +86,16 @@ export async function buildMapPlanDetail(planId: number): Promise<MapPlanDetailP
     placeIds.map(async (id) => {
       try {
         const place = await fetchPlaceById(id)
-        if (
-          typeof place.latitude === 'number' &&
-          typeof place.longitude === 'number' &&
-          Number.isFinite(place.latitude) &&
-          Number.isFinite(place.longitude)
-        ) {
-          lookup.set(id, {
-            latitude: place.latitude,
-            longitude: place.longitude,
-            categoryName: place.categoryName,
-            imageUrl: place.imageUrl,
-            address: place.address,
-          })
-        }
+        const latitude = toFiniteCoord(place.latitude)
+        const longitude = toFiniteCoord(place.longitude)
+        if (latitude == null || longitude == null) return
+        lookup.set(id, {
+          latitude,
+          longitude,
+          categoryName: place.categoryName,
+          imageUrl: place.imageUrl,
+          address: place.address,
+        })
       } catch {
         // skip missing coords
       }
@@ -211,18 +210,26 @@ export function toBridgePlanSummary(plan: {
   title: string
   startDate: string
   endDate: string
-  status: string
+  status?: string
   waypointCount?: number
   nights?: number
   days?: number
   dDay?: number
 }) {
+  const raw = plan.status
+  const status: 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' =
+    raw === 'IN_PROGRESS'
+      ? 'IN_PROGRESS'
+      : raw === 'COMPLETED' || raw === 'CANCELLED'
+        ? raw
+        : 'DRAFT'
+
   return {
     planId: Number(plan.planId),
-    title: plan.title,
-    startDate: plan.startDate,
-    endDate: plan.endDate,
-    status: plan.status as 'DRAFT' | 'IN_PROGRESS' | 'COMPLETED',
+    title: plan.title || '여행 계획',
+    startDate: plan.startDate || '',
+    endDate: plan.endDate || '',
+    status,
     waypointCount: plan.waypointCount ?? 0,
     nights: plan.nights ?? 0,
     days: plan.days ?? 0,

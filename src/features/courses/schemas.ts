@@ -1,7 +1,15 @@
 import { z } from 'zod'
 
 const optionalString = z.string().nullish().transform((value) => value ?? undefined)
-const optionalNumber = z.number().nullish().transform((value) => value ?? undefined)
+/** number|숫자문자열 모두 허용 (목록 waypoint 좌표 등) */
+const optionalNumber = z
+  .union([z.number(), z.string()])
+  .nullish()
+  .transform((value) => {
+    if (value == null || value === '') return undefined
+    const n = typeof value === 'number' ? value : Number(value)
+    return Number.isFinite(n) ? n : undefined
+  })
 const optionalBoolean = z.boolean().nullish().transform((value) => value ?? undefined)
 
 export const courseThemeSchema = z.enum([
@@ -40,6 +48,9 @@ export const courseStopSchema = z.object({
   placeDescription: optionalString,
   description: optionalString,
   travelTimeToNext: optionalNumber,
+  /** OpenAPI CourseStopItem에는 없으나, BE가 넣으면 그대로 사용 */
+  latitude: optionalNumber,
+  longitude: optionalNumber,
 })
 
 export const recommendedCourseDetailSchema = z.object({
