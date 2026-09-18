@@ -105,6 +105,9 @@ export const contentRecipe = recipe({
         alignItems: 'flex-start',
         gap: vars.space[2],
         padding: vars.space[3],
+        // 제목 2줄 + 메타 1줄 + 캡션 1줄 기준 — 캡션(메모) 유무로 카드 높이가 들쭉날쭉해지지
+        // 않도록 고정한다. 그 이상 필요하면(평점 표시 등) 자연스럽게 더 늘어난다.
+        minHeight: '112px',
       },
       horizontal: {
         flexDirection: 'column',
@@ -181,14 +184,8 @@ export const metaText = style({
   color: colors.text[2],
 })
 
-export const captionText = style([
-  metaText,
-  {
-    overflow: 'visible',
-    whiteSpace: 'normal',
-    textOverflow: 'clip',
-  },
-])
+/** 지금은 metaText와 동일(한 줄 말줄임)하지만, 색상 등으로 구분해야 할 때를 대비해 분리해둔다 */
+export const captionText = style([metaText, {}])
 
 export const badgeStyle = style({
   display: 'inline-flex',
