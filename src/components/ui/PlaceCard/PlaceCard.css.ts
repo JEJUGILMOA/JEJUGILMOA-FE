@@ -105,6 +105,10 @@ export const contentRecipe = recipe({
         alignItems: 'flex-start',
         gap: vars.space[2],
         padding: vars.space[3],
+        // 제목 1줄 + 메타 1줄 + 캡션 1줄 기준(대부분 제목이 한 줄이라) — 캡션(메모) 유무로
+        // 카드 높이가 들쭉날쭉해지지 않도록 고정한다. 제목이 2줄이 되거나 평점이 붙으면
+        // 그만큼 자연스럽게 더 늘어난다.
+        minHeight: '90px',
       },
       horizontal: {
         flexDirection: 'column',
@@ -181,14 +185,8 @@ export const metaText = style({
   color: colors.text[2],
 })
 
-export const captionText = style([
-  metaText,
-  {
-    overflow: 'visible',
-    whiteSpace: 'normal',
-    textOverflow: 'clip',
-  },
-])
+/** 메모는 주소(metaText)보다 옅은 회색으로 구분한다 */
+export const captionText = style([metaText, { color: colors.text[4] }])
 
 export const badgeStyle = style({
   display: 'inline-flex',
