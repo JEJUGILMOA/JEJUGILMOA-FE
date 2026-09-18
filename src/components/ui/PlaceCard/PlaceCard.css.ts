@@ -104,7 +104,7 @@ export const contentRecipe = recipe({
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         gap: vars.space[2],
-        padding: vars.space[4],
+        padding: vars.space[3],
       },
       horizontal: {
         flexDirection: 'column',
@@ -141,7 +141,10 @@ export const titleRecipe = recipe({
       vertical: {
         fontSize: vars.fontSize.md,
         letterSpacing: '-0.01em',
-        whiteSpace: 'nowrap',
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical',
+        whiteSpace: 'normal',
       },
       horizontal: {
         fontSize: vars.fontSize.md,
