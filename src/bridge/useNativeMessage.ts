@@ -164,6 +164,33 @@ function handleNativeMessage(data: unknown) {
         }),
       )
       break
+    case 'REQUEST_PLACE_DETAIL':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:request-place-detail', {
+          detail: { placeId: message.placeId },
+        }),
+      )
+      break
+    case 'REQUEST_PLACE_SEARCH':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:request-place-search', {
+          detail: { keyword: message.keyword },
+        }),
+      )
+      break
+    case 'REQUEST_FAVORITE_PLACE_IDS':
+      window.dispatchEvent(new CustomEvent('gilmoa:request-favorite-place-ids'))
+      break
+    case 'REQUEST_TOGGLE_PLACE_FAVORITE':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:request-toggle-place-favorite', {
+          detail: {
+            placeId: message.placeId,
+            nextFavorite: message.nextFavorite,
+          },
+        }),
+      )
+      break
     case 'MODAL_ACTION':
       window.dispatchEvent(new CustomEvent('gilmoa:modal-action', { detail: { id: message.id } }))
       break
@@ -178,6 +205,18 @@ function handleNativeMessage(data: unknown) {
       break
     case 'ITINERARY_SEARCH':
       window.dispatchEvent(new CustomEvent('gilmoa:itinerary-search', { detail: { query: message.query } }))
+      break
+    case 'ITINERARY_SEARCH_HERE':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:itinerary-search-here', {
+          detail: {
+            minLat: message.minLat,
+            maxLat: message.maxLat,
+            minLng: message.minLng,
+            maxLng: message.maxLng,
+          },
+        }),
+      )
       break
     case 'ITINERARY_NEXT':
       window.dispatchEvent(new CustomEvent('gilmoa:itinerary-next'))
@@ -200,6 +239,11 @@ function handleNativeMessage(data: unknown) {
     case 'TAB_POP_TO_ROOT':
       window.dispatchEvent(
         new CustomEvent('gilmoa:tab-pop-to-root', { detail: { path: message.path } }),
+      )
+      break
+    case 'NAVIGATE_WEB_PATH':
+      window.dispatchEvent(
+        new CustomEvent('gilmoa:navigate-web-path', { detail: { path: message.path } }),
       )
       break
     case 'INVALIDATE_DATA':
@@ -290,13 +334,22 @@ export function useNativeMessage() {
       navigate(path, { replace: true })
     }
 
+    const onNavigateWebPath = (event: Event) => {
+      const path = (event as CustomEvent<{ path?: string }>).detail?.path
+      if (typeof path !== 'string' || !path.startsWith('/')) return
+      // replace가 아니라 push — 뒤로가기로 탭 루트(로그인 직전 바닥)에 돌아갈 수 있게
+      navigate(path)
+    }
+
     window.addEventListener('gilmoa:android-back', onAndroidBack)
     window.addEventListener('gilmoa:tab-pop-to-root', onTabPopToRoot)
+    window.addEventListener('gilmoa:navigate-web-path', onNavigateWebPath)
     nativeBridge.requestAndroidBackHandler(true)
 
     return () => {
       window.removeEventListener('gilmoa:android-back', onAndroidBack)
       window.removeEventListener('gilmoa:tab-pop-to-root', onTabPopToRoot)
+      window.removeEventListener('gilmoa:navigate-web-path', onNavigateWebPath)
       nativeBridge.requestAndroidBackHandler(false)
     }
   }, [navigate])

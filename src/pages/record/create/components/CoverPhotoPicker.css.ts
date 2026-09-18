@@ -6,7 +6,7 @@ import { vars } from '@/styles/vars.css.ts'
 export const gridStyle = style({
   display: 'grid',
   gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: vars.space[2],
+  gap: vars.space[1],
 })
 
 export const tileRecipe = recipe({
@@ -16,11 +16,13 @@ export const tileRecipe = recipe({
     borderRadius: vars.radius.sm,
     overflow: 'hidden',
     backgroundColor: colors.surface[4],
+    border: '2px solid transparent',
+    boxSizing: 'border-box',
   },
   variants: {
     selected: {
       true: {
-        boxShadow: `0 0 0 2px ${colors.primary[500]}`,
+        borderColor: colors.primary[500],
       },
       false: {},
     },

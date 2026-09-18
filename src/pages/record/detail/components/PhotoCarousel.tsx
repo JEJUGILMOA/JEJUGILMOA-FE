@@ -1,5 +1,6 @@
 import { Bookmark, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { nativeBridge } from '@/bridge/nativeBridge'
 import { ImagePlaceholder, SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { Popover } from '@/components/ui/Popover/Popover'
 import { cn } from '@/utils/cn'
@@ -38,6 +39,18 @@ export type PhotoCarouselProps = {
   }
 }
 
+function openPhotoViewer(photoUrls: string[], initialIndex: number) {
+  if (nativeBridge.isNativeWebView()) {
+    nativeBridge.postToNative({
+      type: 'OPEN_NATIVE_PHOTO_VIEWER',
+      photoUrls,
+      initialIndex,
+    })
+    return true
+  }
+  return false
+}
+
 /** 대표 사진 캐러셀 + 우측 상단 액션. 드래그로 사진을 넘기고, 탭하면 전체화면으로 본다 */
 export function PhotoCarousel({
   photoUrls,
@@ -56,7 +69,9 @@ export function PhotoCarousel({
     index,
     onIndexChange: setIndex,
     onTap: () => {
-      if (total > 0) setViewerOpen(true)
+      if (total === 0) return
+      if (openPhotoViewer(photoUrls, index)) return
+      setViewerOpen(true)
     },
   })
 
@@ -69,6 +84,7 @@ export function PhotoCarousel({
             transform: `translateX(calc(${-index * 100}% + ${dragOffset}px))`,
             transition: isDragging ? 'none' : undefined,
           }}
+          onContextMenu={(event) => event.preventDefault()}
           {...trackHandlers}
         >
           {photoUrls.map((url, i) => (

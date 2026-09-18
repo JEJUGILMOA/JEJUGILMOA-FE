@@ -96,20 +96,22 @@ export const dateRangeStyle = style({
 })
 
 export const linkedPlanButtonStyle = style({
-  alignSelf: 'flex-start',
+  flexShrink: 0,
   padding: 0,
-})
-
-export const summaryStyle = style({
-  fontSize: vars.fontSize.md,
-  color: colors.text[2],
-  lineHeight: vars.lineHeight.relaxed,
 })
 
 export const authorRowStyle = style({
   display: 'flex',
   alignItems: 'center',
   gap: vars.space[2],
+})
+
+/** 방문 장소/사진 수(좌) · 계획 보기(우) */
+export const metaRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: vars.space[3],
 })
 
 export const avatarStyle = style({

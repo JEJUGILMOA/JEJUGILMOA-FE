@@ -7,7 +7,13 @@ import { loginWithApple, loginWithDevAuth } from '@/features/auth/api'
 import { startOAuthLogin } from '@/features/auth/oauth'
 import { applyDevLoginResult, applyOAuthLoginResult, toBridgeAuthUser } from '@/features/auth/session'
 import { nativeBridge } from '@/bridge/nativeBridge'
-import { ROUTES } from '@/constants'
+import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
+import {
+  EXTERNAL_PRIVACY_POLICY_URL,
+  EXTERNAL_TERMS_URL,
+  ROUTES,
+} from '@/constants'
+import { openExternalUrl } from '@/utils/openExternalUrl'
 import appIcon from '@/assets/images/appicon.png'
 import { AppleIcon, GoogleIcon, KakaoIcon, NaverIcon } from './components/SocialIcons'
 import { SocialLoginButton } from './components/SocialLoginButton'
@@ -15,9 +21,13 @@ import {
   brandCopyStyle,
   buttonsStyle,
   headerStyle,
+  legalDotStyle,
+  legalFooterStyle,
+  legalLinkStyle,
   logoMarkStyle,
   logoImageStyle,
   pageStyle,
+  shellStyle,
   subtitleStyle,
   titleStyle,
 } from './LoginPage.css.ts'
@@ -148,6 +158,15 @@ export function LoginPage() {
     nativeBridge.postToNative({ type: 'REQUEST_APPLE_LOGIN' })
   }
 
+  const goBack = () => {
+    // 네이티브: 헤더 뒤로가기는 WebViewScreen이 스택 pop. 웹 헤더(브라우저)만 여기로 옴.
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+    navigate(returnTo, { replace: true })
+  }
+
   /** 개발용 이메일 로그인 — body accessToken을 네이티브가 각 탭 WebView에 주입 */
   const handleDevLogin = async () => {
     setLoadingProvider('dev')
@@ -177,54 +196,79 @@ export function LoginPage() {
   }
 
   return (
-    <div className={pageStyle}>
-      <header className={headerStyle}>
-        <div className={logoMarkStyle} aria-hidden>
-          <img src={appIcon} alt="" className={logoImageStyle} />
-        </div>
-        <div className={brandCopyStyle}>
-          <h1 className={titleStyle}>제주 길모아</h1>
-          <p className={subtitleStyle}>우리의 모든 길이 모이는 곳</p>
-        </div>
-      </header>
+    <div className={shellStyle}>
+      <PageHeader title="로그인" showBack onBack={goBack} />
+      <div className={pageStyle}>
+        <header className={headerStyle}>
+          <div className={logoMarkStyle} aria-hidden>
+            <img src={appIcon} alt="" className={logoImageStyle} />
+          </div>
+          <div className={brandCopyStyle}>
+            <h1 className={titleStyle}>제주 길모아</h1>
+            <p className={subtitleStyle}>우리의 모든 길이 모이는 곳</p>
+          </div>
+        </header>
 
-      <div className={buttonsStyle}>
-        {WEB_PROVIDERS.map((provider) => (
-          <SocialLoginButton
-            key={provider.id}
-            label={provider.label}
-            backgroundColor={provider.backgroundColor}
-            textColor={provider.textColor}
-            borderColor={provider.borderColor}
-            icon={provider.icon}
-            loading={loadingProvider === provider.id}
-            disabled={loadingProvider !== null}
-            onClick={() => handleWebLogin(provider.id)}
-          />
-        ))}
-        {inNative ? (
-          <SocialLoginButton
-            label="Apple로 시작하기"
-            backgroundColor="#000000"
-            textColor="#FFFFFF"
-            icon={<AppleIcon />}
-            loading={loadingProvider === 'apple'}
-            disabled={loadingProvider !== null}
-            onClick={handleAppleLogin}
-          />
-        ) : null}
-        {showDevLogin ? (
-          <SocialLoginButton
-            label="개발 로그인 (user@example.com)"
-            backgroundColor="#F3F4F6"
-            textColor="#374151"
-            borderColor="#E5E7EB"
-            icon={<span aria-hidden>→</span>}
-            loading={loadingProvider === 'dev'}
-            disabled={loadingProvider !== null}
-            onClick={() => void handleDevLogin()}
-          />
-        ) : null}
+        <div className={buttonsStyle}>
+          {WEB_PROVIDERS.map((provider) => (
+            <SocialLoginButton
+              key={provider.id}
+              label={provider.label}
+              backgroundColor={provider.backgroundColor}
+              textColor={provider.textColor}
+              borderColor={provider.borderColor}
+              icon={provider.icon}
+              loading={loadingProvider === provider.id}
+              disabled={loadingProvider !== null}
+              onClick={() => handleWebLogin(provider.id)}
+            />
+          ))}
+          {inNative ? (
+            <SocialLoginButton
+              label="Apple로 시작하기"
+              backgroundColor="#000000"
+              textColor="#FFFFFF"
+              icon={<AppleIcon />}
+              loading={loadingProvider === 'apple'}
+              disabled={loadingProvider !== null}
+              onClick={handleAppleLogin}
+            />
+          ) : null}
+          {showDevLogin ? (
+            <SocialLoginButton
+              label="개발 로그인 (user@example.com)"
+              backgroundColor="#F3F4F6"
+              textColor="#374151"
+              borderColor="#E5E7EB"
+              icon={<span aria-hidden>→</span>}
+              loading={loadingProvider === 'dev'}
+              disabled={loadingProvider !== null}
+              onClick={() => void handleDevLogin()}
+            />
+          ) : null}
+        </div>
+
+        <p className={legalFooterStyle}>
+          시작하기를 누르면{' '}
+          <button
+            type="button"
+            className={legalLinkStyle}
+            onClick={() => openExternalUrl(EXTERNAL_TERMS_URL)}
+          >
+            이용약관
+          </button>
+          <span className={legalDotStyle} aria-hidden>
+            ·
+          </span>
+          <button
+            type="button"
+            className={legalLinkStyle}
+            onClick={() => openExternalUrl(EXTERNAL_PRIVACY_POLICY_URL)}
+          >
+            개인정보처리방침
+          </button>
+          에 동의하게 됩니다.
+        </p>
       </div>
     </div>
   )

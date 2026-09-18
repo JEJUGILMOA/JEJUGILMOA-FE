@@ -14,6 +14,7 @@ import {
 import type { UserSettings } from '@/features/auth/schemas'
 import { useAuthStore } from '@/stores/authStore'
 import { EXTERNAL_PRIVACY_POLICY_URL, EXTERNAL_SUPPORT_URL, ROUTES } from '@/constants'
+import { openExternalUrl } from '@/utils/openExternalUrl'
 import { cn } from '@/utils/cn'
 import {
   dangerTextStyle,
@@ -186,17 +187,6 @@ export function SettingsPage() {
     } catch {
       toast.error('회원 탈퇴에 실패했어요.')
     }
-  }
-
-  const openExternalUrl = (url: string) => {
-    if (nativeBridge.isNativeWebView()) {
-      nativeBridge.postToNative({
-        type: 'OPEN_EXTERNAL_URL',
-        url,
-      })
-      return
-    }
-    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   const openPrivacyPolicy = () => openExternalUrl(EXTERNAL_PRIVACY_POLICY_URL)

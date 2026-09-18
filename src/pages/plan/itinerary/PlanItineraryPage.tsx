@@ -14,8 +14,10 @@ import { toast } from '@/components/ui/Toast/Toast'
 import { ROUTES } from '@/constants'
 import { MOCK_PLACES } from '@/data/mockExplore'
 import { usePlanDraft, useRecommendationsQuery, useSearchPlanPlacesQuery } from '@/features/plans/hooks'
+import { useMapPlacesQuery } from '@/features/map/hooks'
+import type { MapBounds } from '@/features/map/schemas'
 import { planDraftStore } from '@/features/plans/planDraftStore'
-import { TRAVEL_THEMES, TRAVEL_THEME_LABELS } from '@/features/plans/travelTheme'
+import { TRAVEL_THEMES, TRAVEL_THEME_LABELS, TRAVEL_THEME_PLACE_CATEGORY } from '@/features/plans/travelTheme'
 import type {
   DepartureInfo,
   GeoCoordinate,
@@ -193,6 +195,8 @@ export function PlanItineraryPage() {
   // 서버가 다른 장소를 돌려주게 한다. 서버가 이전 결과를 기억하지 않는 stateless API라서다.
   const [refreshedPlaceIds, setRefreshedPlaceIds] = useState<number[]>([])
   const [refreshedContentIds, setRefreshedContentIds] = useState<string[]>([])
+  /** 「현 위치에서 검색」으로 잡은 뷰포트 — 있으면 추천 대신 이 지역 장소 목록 */
+  const [areaSearchBounds, setAreaSearchBounds] = useState<MapBounds | null>(null)
 
   // 미리보기의 연필 아이콘으로 들어왔으면 저장 후 다음 STEP(예산입력)으로 이어가지 않고
   // 미리보기로 바로 돌아간다 — 이 화면만 고쳐달라고 들어온 거라 나머지 단계를 강제로 거칠 필요가 없다.
@@ -414,9 +418,13 @@ export function PlanItineraryPage() {
   const debouncedRecommendQuery = useDebouncedValue(trimmedRecommendQuery, SEARCH_DEBOUNCE_MS)
   const isRecommendQueryDebouncing = trimmedRecommendQuery !== debouncedRecommendQuery
   const isRecommendTabActive = Boolean(plan) && sheetTab === 'recommend' && !isSelectingDeparture
+  // 검색어가 있으면 추천 목록을 숨긴다 — 디바운스 대기 중이어도 추천으로 되돌아가지 않게 한다.
+  const isKeywordSearchMode = Boolean(trimmedRecommendQuery)
+  const isAreaSearchMode = areaSearchBounds != null && !isKeywordSearchMode
   const shouldFetchRecommendations =
     isRecommendTabActive &&
-    !trimmedRecommendQuery &&
+    !isKeywordSearchMode &&
+    !isAreaSearchMode &&
     (recommendMode === 'popular' || referencePlaceIds.length > 0)
   const shouldSearchPlaces = isRecommendTabActive && Boolean(debouncedRecommendQuery)
   // 출발지 검색도 같은 장소 검색 API를 재사용한다 — 검색어가 있을 때만 실행
@@ -427,6 +435,43 @@ export function PlanItineraryPage() {
     { keyword: debouncedRecommendQuery, size: 40 },
     shouldSearchPlaces || shouldSearchDeparture,
   )
+  const areaPlacesQuery = useMapPlacesQuery(
+    areaSearchBounds ? { ...areaSearchBounds, limit: 40 } : null,
+    { enabled: isRecommendTabActive && isAreaSearchMode },
+  )
+
+  // 키워드 검색·탭 전환 시 지역 검색 결과를 비운다
+  useEffect(() => {
+    if (isKeywordSearchMode || sheetTab !== 'recommend') {
+      setAreaSearchBounds(null)
+    }
+  }, [isKeywordSearchMode, sheetTab])
+
+  // 네이티브 「현 위치에서 검색」
+  useEffect(() => {
+    const onSearchHere = (event: Event) => {
+      const detail = (event as CustomEvent<MapBounds>).detail
+      if (
+        !detail ||
+        typeof detail.minLat !== 'number' ||
+        typeof detail.maxLat !== 'number' ||
+        typeof detail.minLng !== 'number' ||
+        typeof detail.maxLng !== 'number'
+      ) {
+        return
+      }
+      setRecommendQuery('')
+      setAreaSearchBounds({
+        minLat: detail.minLat,
+        maxLat: detail.maxLat,
+        minLng: detail.minLng,
+        maxLng: detail.maxLng,
+      })
+      setSheetTab('recommend')
+    }
+    window.addEventListener('gilmoa:itinerary-search-here', onSearchHere)
+    return () => window.removeEventListener('gilmoa:itinerary-search-here', onSearchHere)
+  }, [])
 
   // 새로 본 장소는 이름·좌표를 캐시에 기억해둔다 (제목 표시, 다음 앵커 좌표 계산용)
   useEffect(() => {
@@ -461,6 +506,22 @@ export function PlanItineraryPage() {
       return next
     })
   }, [placeSearchQuery.data])
+
+  useEffect(() => {
+    if (!areaPlacesQuery.data) return
+    setPlaceInfoCache((prev) => {
+      const next = { ...prev }
+      for (const item of areaPlacesQuery.data) {
+        next[String(item.id)] = {
+          title: item.name,
+          categoryLabel: item.categoryName ?? '',
+          latitude: item.latitude,
+          longitude: item.longitude,
+        }
+      }
+      return next
+    })
+  }, [areaPlacesQuery.data])
 
   if (isPending) {
     return (
@@ -546,13 +607,36 @@ export function PlanItineraryPage() {
     longitude: number
   }
 
-  const searchDisplayPlaces: DisplayPlace[] = (placeSearchQuery.data?.content ?? [])
+  const searchDisplayPlaces: DisplayPlace[] = (() => {
+    // enabled=false여도 react-query는 이전 검색 data를 남겨 둔다.
+    // 디바운스 전(debounced='')에 그 캐시를 쓰면 추천↔검색이 겹쳐 깜빡인다.
+    if (!debouncedRecommendQuery) return []
+    return (placeSearchQuery.data?.content ?? [])
+      .filter((item) => !assignedEverywhere.has(String(item.id)))
+      .map((item) => ({
+        id: String(item.id),
+        title: item.name,
+        categoryLabel: item.categoryName ?? '',
+        imageUrl: item.imageUrl,
+        addable: true,
+        latitude: item.latitude,
+        longitude: item.longitude,
+      }))
+  })()
+
+  const areaDisplayPlaces: DisplayPlace[] = (areaPlacesQuery.data ?? [])
     .filter((item) => !assignedEverywhere.has(String(item.id)))
+    .filter((item) => {
+      // 현 위치 검색은 한 번만 받고, 카테고리 칩은 클라이언트에서 걸러 쓴다.
+      if (!activeTheme) return true
+      const target = TRAVEL_THEME_PLACE_CATEGORY[activeTheme]
+      return (item.categoryName ?? '') === target
+    })
     .map((item) => ({
       id: String(item.id),
       title: item.name,
       categoryLabel: item.categoryName ?? '',
-      imageUrl: item.imageUrl,
+      imageUrl: item.imageUrl ?? null,
       addable: true,
       latitude: item.latitude,
       longitude: item.longitude,
@@ -582,12 +666,29 @@ export function PlanItineraryPage() {
         },
   )
 
-  const displayPlaces = trimmedRecommendQuery ? searchDisplayPlaces : recommendDisplayPlaces
-  const isLoadingDisplayPlaces = trimmedRecommendQuery
-    ? isRecommendQueryDebouncing || placeSearchQuery.isLoading
-    : recommendationsQuery.isLoading
-  const hasDisplayPlacesError = trimmedRecommendQuery ? placeSearchQuery.isError : recommendationsQuery.isError
-  const recommendHasMore = !trimmedRecommendQuery && (recommendationsQuery.data?.hasMore ?? false)
+  // 검색어가 있으면 추천을 절대 다시 그리지 않는다.
+  // 디바운스 대기(아직 API 키워드 확정 전)에는 빈 목록+로딩만 — 캐시된 이전 검색/추천을 섞지 않는다.
+  const displayPlaces = isKeywordSearchMode
+    ? searchDisplayPlaces
+    : isAreaSearchMode
+      ? areaDisplayPlaces
+      : recommendDisplayPlaces
+  const isLoadingDisplayPlaces = isKeywordSearchMode
+    ? !debouncedRecommendQuery ||
+      (searchDisplayPlaces.length === 0 &&
+        (isRecommendQueryDebouncing ||
+          placeSearchQuery.isLoading ||
+          placeSearchQuery.isFetching))
+    : isAreaSearchMode
+      ? areaPlacesQuery.isLoading
+      : recommendationsQuery.isLoading
+  const hasDisplayPlacesError = isKeywordSearchMode
+    ? Boolean(debouncedRecommendQuery) && placeSearchQuery.isError
+    : isAreaSearchMode
+      ? areaPlacesQuery.isError
+      : recommendationsQuery.isError
+  const recommendHasMore =
+    !isKeywordSearchMode && !isAreaSearchMode && (recommendationsQuery.data?.hasMore ?? false)
 
   const handleRefreshRecommendations = () => {
     const data = recommendationsQuery.data
@@ -1159,7 +1260,8 @@ export function PlanItineraryPage() {
               ) : null}
             </div>
 
-            {!trimmedRecommendQuery ? (
+            {/* 키워드 검색일 때만 카테고리 숨김 — 현 위치 검색은 추천처럼 칩으로 필터 */}
+            {!isKeywordSearchMode ? (
               <HorizontalScrollArea>
                 <div className={courseRowStyle}>
                   <Chip
@@ -1184,7 +1286,8 @@ export function PlanItineraryPage() {
             ) : null}
 
             {recommendMode === 'nearby' &&
-            !trimmedRecommendQuery &&
+            !isKeywordSearchMode &&
+            !isAreaSearchMode &&
             referencePlaceIds.length === 0 ? (
               <p className={emptyTextStyle}>
                 출발지나 장소를 먼저 담아야 가까운 장소를 추천해드릴 수 있어요.
@@ -1194,15 +1297,18 @@ export function PlanItineraryPage() {
             ) : hasDisplayPlacesError ? (
               <>
                 <p className={emptyTextStyle}>
-                  {trimmedRecommendQuery ? '검색' : '추천'}을 불러오지 못했어요. 다시 시도해 주세요.
+                  {isKeywordSearchMode ? '검색' : isAreaSearchMode ? '이 지역 장소' : '추천'}을
+                  불러오지 못했어요. 다시 시도해 주세요.
                 </p>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    void (trimmedRecommendQuery
+                    void (isKeywordSearchMode
                       ? placeSearchQuery.refetch()
-                      : recommendationsQuery.refetch())
+                      : isAreaSearchMode
+                        ? areaPlacesQuery.refetch()
+                        : recommendationsQuery.refetch())
                   }
                 >
                   다시 시도
@@ -1227,7 +1333,7 @@ export function PlanItineraryPage() {
                     disabled={!place.addable}
                   />
                 ))}
-                {!trimmedRecommendQuery ? (
+                {!isKeywordSearchMode && !isAreaSearchMode ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -1249,6 +1355,7 @@ export function PlanItineraryPage() {
         dateLabel={dayDateLabel}
         searchQuery={recommendQuery}
         isSelectingDeparture={isSelectingDeparture}
+        showSearchHere={sheetTab === 'recommend' && !isSelectingDeparture}
         goBack={goBack}
         handleNext={handleNext}
         changeDay={changeDay}
@@ -1294,6 +1401,7 @@ function ItineraryNativeChromeSync({
   dateLabel,
   searchQuery,
   isSelectingDeparture,
+  showSearchHere,
   goBack,
   handleNext,
   changeDay,
@@ -1305,6 +1413,7 @@ function ItineraryNativeChromeSync({
   dateLabel: string
   searchQuery: string
   isSelectingDeparture: boolean
+  showSearchHere: boolean
   goBack: () => void
   handleNext: () => void
   changeDay: (day: number) => void
@@ -1338,8 +1447,9 @@ function ItineraryNativeChromeSync({
       isSelectingDeparture,
       nextLabel: '',
       sheetTitle: '',
+      showSearchHere,
     })
-  }, [selectedDay, dayCount, dateLabel, searchQuery, isSelectingDeparture])
+  }, [selectedDay, dayCount, dateLabel, searchQuery, isSelectingDeparture, showSearchHere])
 
   useEffect(() => {
     if (!nativeBridge.isNativeWebView()) return

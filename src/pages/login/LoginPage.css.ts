@@ -1,8 +1,15 @@
 import { style } from '@vanilla-extract/css'
 import { vars } from '@/styles/vars.css.ts'
 
-export const pageStyle = style({
+export const shellStyle = style({
   minHeight: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  backgroundColor: '#FFFFFF',
+})
+
+export const pageStyle = style({
+  flex: 1,
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
@@ -66,6 +73,35 @@ export const buttonsStyle = style({
   width: '100%',
   maxWidth: 360,
   margin: '0 auto',
+})
+
+export const legalFooterStyle = style({
+  margin: `${vars.space[8]} auto 0`,
+  maxWidth: 360,
+  width: '100%',
+  textAlign: 'center',
+  fontSize: vars.fontSize.xs,
+  lineHeight: vars.lineHeight.relaxed,
+  color: '#9CA3AF',
+  fontFamily: vars.fontFamily.sans,
+})
+
+export const legalLinkStyle = style({
+  display: 'inline',
+  margin: 0,
+  padding: 0,
+  border: 'none',
+  background: 'none',
+  color: '#6B7280',
+  fontSize: 'inherit',
+  fontFamily: 'inherit',
+  textDecoration: 'underline',
+  textUnderlineOffset: 2,
+  cursor: 'pointer',
+})
+
+export const legalDotStyle = style({
+  margin: `0 ${vars.space[1]}`,
 })
 
 export const statusPageStyle = style({

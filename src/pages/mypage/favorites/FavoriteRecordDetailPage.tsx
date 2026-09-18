@@ -14,6 +14,7 @@ import {
   useToggleRecordBookmarkMutation,
 } from '@/features/records/hooks'
 import type { ReactionType } from '@/features/records/types'
+import { ExpandableMemo } from '@/pages/record/detail/components/ExpandableMemo'
 import { PhotoCarousel } from '@/pages/record/detail/components/PhotoCarousel'
 import { RoutePreview } from '@/pages/record/detail/components/RoutePreview'
 import { VisitedPlaceList } from '@/pages/record/detail/components/VisitedPlaceList'
@@ -35,7 +36,6 @@ import {
   reactionButtonRecipe,
   shareButtonStyle,
   subHeaderStyle,
-  summaryStyle,
   titleGroupStyle,
   titleStyle,
 } from '@/pages/record/detail/RecordDetailPage.css.ts'
@@ -158,7 +158,7 @@ export function FavoriteRecordDetailPage() {
               ) : null}
             </div>
 
-            <p className={summaryStyle}>{view.summary}</p>
+            {view.summary ? <ExpandableMemo text={view.summary} /> : null}
 
             <div className={authorRowStyle}>
               {view.authorProfileImageUrl ? (

@@ -15,7 +15,7 @@ import {
   useToggleFavoriteMutation,
 } from '@/features/favorites/hooks'
 import { usePlaceQuery } from '@/features/places/hooks'
-import { openNaverMapPlace } from '@/features/places/openNaverMap'
+import { openExternalMapPlace } from '@/features/places/openExternalMap'
 import type { Place } from '@/features/places/types'
 import { PhotoCarousel } from '@/pages/record/detail/components/PhotoCarousel'
 import { overlayButtonStyle } from '@/pages/record/detail/components/PhotoCarousel.css.ts'
@@ -73,7 +73,7 @@ export function PlacePage() {
 
   const openMap = () => {
     if (!place) return
-    openNaverMapPlace({
+    openExternalMapPlace({
       name: place.name,
       latitude: place.latitude,
       longitude: place.longitude,
@@ -174,7 +174,7 @@ export function PlacePage() {
             <button
               type="button"
               className={overlayButtonStyle}
-              aria-label="네이버 지도에서 보기"
+              aria-label="지도에서 보기"
               onClick={openMap}
             >
               <MapPin size={16} strokeWidth={1.75} />

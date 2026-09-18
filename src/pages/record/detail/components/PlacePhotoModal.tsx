@@ -4,16 +4,11 @@ import { createPortal } from 'react-dom'
 import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
 import { useDragCarousel } from './useDragCarousel'
 import {
-  addressTextStyle,
   closeButtonStyle,
   counterStyle,
-  infoBarStyle,
-  infoTopRowStyle,
   navButtonNextStyle,
   navButtonPrevStyle,
-  noteTextStyle,
   overlayStyle,
-  placeNameTextStyle,
   slideImageStyle,
   trackStyle,
   wrapStyle,
@@ -21,24 +16,19 @@ import {
 
 export type PlacePhotoModalProps = {
   photoUrls: string[]
+  /** 스크린리더용 라벨 */
   placeName: string
   onClose: () => void
   /** 팝업을 열 때 시작할 사진 인덱스. 기본값 0 */
   initialIndex?: number
-  /** 장소 주소. 있으면 하단 정보 바에 같이 보여준다 */
-  address?: string
-  /** 이 장소에 남긴 메모. 있으면 하단 정보 바에 같이 보여준다 */
-  note?: string
 }
 
-/** 방문 장소 썸네일 클릭 시 그 장소의 사진과 상세 정보(이름·주소·메모)를 함께 보여주는 전체화면 팝업 */
+/** 사진만 보는 전체화면 캐러셀. 탭하면 닫힌다 */
 export function PlacePhotoModal({
   photoUrls,
   placeName,
   onClose,
   initialIndex = 0,
-  address,
-  note,
 }: PlacePhotoModalProps) {
   const [index, setIndex] = useState(initialIndex)
   const total = photoUrls.length
@@ -73,6 +63,7 @@ export function PlacePhotoModal({
             transform: `translateX(calc(${-index * 100}% + ${dragOffset}px))`,
             transition: isDragging ? 'none' : undefined,
           }}
+          onContextMenu={(event) => event.preventDefault()}
           {...trackHandlers}
         >
           {photoUrls.map((url, i) => (
@@ -91,16 +82,9 @@ export function PlacePhotoModal({
           <X size={18} aria-hidden />
         </button>
 
-        <div className={infoBarStyle}>
-          <div className={infoTopRowStyle}>
-            <p className={placeNameTextStyle}>{placeName}</p>
-            <span className={counterStyle}>
-              {index + 1} / {total}
-            </span>
-          </div>
-          {address ? <p className={addressTextStyle}>{address}</p> : null}
-          {note ? <p className={noteTextStyle}>{note}</p> : null}
-        </div>
+        <span className={counterStyle}>
+          {index + 1} / {total}
+        </span>
 
         {index > 0 ? (
           <button

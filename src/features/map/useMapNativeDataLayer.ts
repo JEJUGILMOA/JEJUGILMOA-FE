@@ -6,10 +6,17 @@ import { fetchMapHeatmap, fetchMapPlaces } from '@/features/map/api'
 import type { MapBounds } from '@/features/map/schemas'
 import { pushCurrentTripToNative } from '@/features/map/pushCurrentTripToNative'
 import { fetchPlanSummaries } from '@/features/plans/summariesApi'
-import { fetchPlaceById } from '@/features/places/api'
+import { fetchPlaceById, fetchPlaces } from '@/features/places/api'
+import {
+  addFavorite,
+  fetchFavoritePlaceIds,
+  removeFavorite,
+} from '@/features/favorites/api'
 import { checkTripVisit, completeTrip, fetchCurrentTrip, skipTripWaypoint } from '@/features/trips/api'
 import { TripWaypointParseError, type TripWaypoint } from '@/features/trips/schemas'
 import { authStore } from '@/stores/authStore'
+import { queryClient } from '@/api/queryClient'
+import { QUERY_KEYS } from '@/constants'
 import { ZodError } from 'zod'
 
 const MAP_PLACES_LIMIT = 25
@@ -165,6 +172,133 @@ async function pushCurrentTrip() {
   }
 }
 
+async function pushPlaceDetail(placeId: string) {
+  try {
+    const place = await fetchPlaceById(placeId)
+    const description = place.description?.trim() || place.overview?.trim() || undefined
+    nativeBridge.postToNative({
+      type: 'MAP_PLACE_DETAIL',
+      placeId,
+      name: place.name,
+      address: place.address,
+      description,
+      imageUrl: place.imageUrl ?? place.images[0],
+      // 빈 배열도 명시적으로 전달해 네이티브가 이전 장소 이미지를 붙잡지 않게 함
+      imageUrls:
+        place.images.length > 0
+          ? place.images
+          : place.imageUrl
+            ? [place.imageUrl]
+            : [],
+      photoCount:
+        place.images.length > 0 ? place.images.length : place.imageUrl ? 1 : 0,
+      phone: place.tel,
+      homepage: place.homepage,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      categoryName: place.categoryName,
+    })
+  } catch (error) {
+    nativeBridge.postToNative({
+      type: 'MAP_PLACE_DETAIL',
+      placeId,
+      error: getErrorMessage(error, '장소 정보를 불러오지 못했어요'),
+    })
+  }
+}
+
+async function pushPlaceSearch(keyword: string) {
+  const trimmed = keyword.trim()
+  if (!trimmed) {
+    nativeBridge.postToNative({
+      type: 'MAP_PLACE_SEARCH_RESULTS',
+      keyword: '',
+      places: [],
+    })
+    return
+  }
+  try {
+    const places = await fetchPlaces({ keyword: trimmed, size: 30, page: 0 })
+    nativeBridge.postToNative({
+      type: 'MAP_PLACE_SEARCH_RESULTS',
+      keyword: trimmed,
+      places: places.map((place) => ({
+        id: place.id,
+        name: place.name,
+        address: place.address,
+        imageUrl: place.imageUrl,
+        categoryName: place.categoryName,
+      })),
+    })
+  } catch (error) {
+    nativeBridge.postToNative({
+      type: 'MAP_PLACE_SEARCH_RESULTS',
+      keyword: trimmed,
+      places: [],
+      error: getErrorMessage(error, '장소 검색에 실패했어요'),
+    })
+  }
+}
+
+async function pushFavoritePlaceIds() {
+  if (!isLoggedIn()) {
+    nativeBridge.postToNative({
+      type: 'MAP_FAVORITE_PLACE_IDS',
+      placeIds: [],
+    })
+    return
+  }
+  try {
+    const ids = await fetchFavoritePlaceIds()
+    nativeBridge.postToNative({
+      type: 'MAP_FAVORITE_PLACE_IDS',
+      placeIds: [...ids],
+    })
+  } catch (error) {
+    nativeBridge.postToNative({
+      type: 'MAP_FAVORITE_PLACE_IDS',
+      placeIds: [],
+      error: getErrorMessage(error, '즐겨찾기를 불러오지 못했어요'),
+    })
+  }
+}
+
+async function togglePlaceFavorite(placeId: string, nextFavorite: boolean) {
+  if (!isLoggedIn()) {
+    nativeBridge.postToNative({
+      type: 'MAP_PLACE_FAVORITE_RESULT',
+      placeId,
+      isFavorite: !nextFavorite,
+      error: LOGIN_REQUIRED_MESSAGE,
+    })
+    return
+  }
+  try {
+    if (nextFavorite) {
+      await addFavorite(placeId)
+    } else {
+      await removeFavorite(placeId)
+    }
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.favoritePlaceIds })
+    await queryClient.invalidateQueries({ queryKey: ['favorites'] })
+    nativeBridge.postToNative({
+      type: 'MAP_PLACE_FAVORITE_RESULT',
+      placeId,
+      isFavorite: nextFavorite,
+    })
+  } catch (error) {
+    nativeBridge.postToNative({
+      type: 'MAP_PLACE_FAVORITE_RESULT',
+      placeId,
+      isFavorite: !nextFavorite,
+      error: getErrorMessage(
+        error,
+        nextFavorite ? '즐겨찾기 추가에 실패했어요' : '즐겨찾기 해제에 실패했어요',
+      ),
+    })
+  }
+}
+
 /**
  * 네이티브 지도 탭 숨은 WebView용 데이터 레이어.
  * REQUEST_* 수신 → FE API → SET_MAP / MAP_* 응답
@@ -301,6 +435,26 @@ export function useMapNativeDataLayer(enabled: boolean) {
         }
       })()
     }
+    const onPlaceDetail = (event: Event) => {
+      const placeId = (event as CustomEvent<{ placeId?: string }>).detail?.placeId
+      if (!placeId) return
+      void pushPlaceDetail(placeId)
+    }
+    const onPlaceSearch = (event: Event) => {
+      const keyword = (event as CustomEvent<{ keyword?: string }>).detail?.keyword
+      if (typeof keyword !== 'string') return
+      void pushPlaceSearch(keyword)
+    }
+    const onFavoritePlaceIds = () => {
+      void pushFavoritePlaceIds()
+    }
+    const onTogglePlaceFavorite = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{ placeId?: string; nextFavorite?: boolean }>
+      ).detail
+      if (!detail?.placeId || typeof detail.nextFavorite !== 'boolean') return
+      void togglePlaceFavorite(detail.placeId, detail.nextFavorite)
+    }
 
     window.addEventListener('gilmoa:request-plan-summaries', onPlanSummaries)
     window.addEventListener('gilmoa:request-plan-detail', onPlanDetail)
@@ -309,6 +463,10 @@ export function useMapNativeDataLayer(enabled: boolean) {
     window.addEventListener('gilmoa:request-trip-visit', onTripVisit)
     window.addEventListener('gilmoa:request-trip-skip', onTripSkip)
     window.addEventListener('gilmoa:request-trip-complete', onTripComplete)
+    window.addEventListener('gilmoa:request-place-detail', onPlaceDetail)
+    window.addEventListener('gilmoa:request-place-search', onPlaceSearch)
+    window.addEventListener('gilmoa:request-favorite-place-ids', onFavoritePlaceIds)
+    window.addEventListener('gilmoa:request-toggle-place-favorite', onTogglePlaceFavorite)
 
     return () => {
       window.removeEventListener('gilmoa:request-plan-summaries', onPlanSummaries)
@@ -318,6 +476,10 @@ export function useMapNativeDataLayer(enabled: boolean) {
       window.removeEventListener('gilmoa:request-trip-visit', onTripVisit)
       window.removeEventListener('gilmoa:request-trip-skip', onTripSkip)
       window.removeEventListener('gilmoa:request-trip-complete', onTripComplete)
+      window.removeEventListener('gilmoa:request-place-detail', onPlaceDetail)
+      window.removeEventListener('gilmoa:request-place-search', onPlaceSearch)
+      window.removeEventListener('gilmoa:request-favorite-place-ids', onFavoritePlaceIds)
+      window.removeEventListener('gilmoa:request-toggle-place-favorite', onTogglePlaceFavorite)
     }
   }, [enabled])
 }

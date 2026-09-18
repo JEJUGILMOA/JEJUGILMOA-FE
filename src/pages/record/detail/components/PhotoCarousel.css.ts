@@ -13,6 +13,17 @@ export const wrapStyle = style({
   backgroundColor: colors.surface[4],
 })
 
+export const slideImageStyle = style({
+  flex: '0 0 100%',
+  width: '100%',
+  height: '100%',
+  userSelect: 'none',
+  WebkitUserSelect: 'none',
+  // iOS 롱프레스 콜아웃·이미지 저장 시트 억제
+  WebkitTouchCallout: 'none',
+  pointerEvents: 'none',
+})
+
 export const trackStyle = style({
   display: 'flex',
   width: '100%',
@@ -20,13 +31,9 @@ export const trackStyle = style({
   touchAction: 'pan-y',
   transition: 'transform 0.25s ease',
   cursor: 'grab',
-})
-
-export const slideImageStyle = style({
-  flex: '0 0 100%',
-  width: '100%',
-  height: '100%',
   userSelect: 'none',
+  WebkitUserSelect: 'none',
+  WebkitTouchCallout: 'none',
 })
 
 export const placeholderStyle = style({

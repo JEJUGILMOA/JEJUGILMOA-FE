@@ -213,6 +213,45 @@ export type WebToNativeMessage =
     }
   | { type: 'MAP_ERROR'; code?: string; message: string }
   | {
+      type: 'MAP_PLACE_DETAIL'
+      placeId: string
+      name?: string
+      address?: string
+      description?: string
+      imageUrl?: string
+      imageUrls?: string[]
+      photoCount?: number
+      phone?: string
+      homepage?: string
+      latitude?: number
+      longitude?: number
+      categoryName?: string
+      error?: string
+    }
+  | {
+      type: 'MAP_PLACE_SEARCH_RESULTS'
+      keyword: string
+      places: {
+        id: string
+        name: string
+        address?: string
+        imageUrl?: string
+        categoryName?: string
+      }[]
+      error?: string
+    }
+  | {
+      type: 'MAP_FAVORITE_PLACE_IDS'
+      placeIds: string[]
+      error?: string
+    }
+  | {
+      type: 'MAP_PLACE_FAVORITE_RESULT'
+      placeId: string
+      isFavorite: boolean
+      error?: string
+    }
+  | {
       type: 'SET_MODAL'
       visible: boolean
       id?: string
@@ -244,6 +283,8 @@ export type WebToNativeMessage =
       isSelectingDeparture?: boolean
       nextLabel?: string
       sheetTitle?: string
+      /** 장소 추가 탭일 때만 — 네이티브 「현 위치에서 검색」 버튼 */
+      showSearchHere?: boolean
     }
   | { type: 'REQUEST_APPLE_LOGIN' }
   | {
@@ -265,6 +306,26 @@ export type WebToNativeMessage =
   | { type: 'TOGGLE_TRIP_VISIT_SPOOF' }
   /** 계획 저장·여행 시작 후 네이티브 탭 갱신 */
   | { type: 'REFRESH_TABS'; tabs: Array<'plan' | 'map' | 'home' | 'record' | 'my'> }
+  | {
+      /** 기록 상세 — 방문 장소 네이티브 바텀시트 */
+      type: 'OPEN_VISITED_PLACE_SHEET'
+      place: {
+        placeId: string
+        placeName: string
+        address: string
+        visitDate: string
+        note: string
+        photoUrls: string[]
+      }
+    }
+  | { type: 'CLOSE_VISITED_PLACE_SHEET' }
+  | {
+      /** 상세 페이지 등 — 네이티브 전체화면 사진 캐러셀 */
+      type: 'OPEN_NATIVE_PHOTO_VIEWER'
+      photoUrls: string[]
+      initialIndex?: number
+    }
+  | { type: 'CLOSE_NATIVE_PHOTO_VIEWER' }
 
 /** 네이티브 → 웹 */
 export type NativeToWebMessage =
@@ -319,17 +380,34 @@ export type NativeToWebMessage =
       waypointId: number
     }
   | { type: 'REQUEST_TRIP_COMPLETE'; tripId: number }
+  | { type: 'REQUEST_PLACE_DETAIL'; placeId: string }
+  | { type: 'REQUEST_PLACE_SEARCH'; keyword: string }
+  | { type: 'REQUEST_FAVORITE_PLACE_IDS' }
+  | {
+      type: 'REQUEST_TOGGLE_PLACE_FAVORITE'
+      placeId: string
+      nextFavorite: boolean
+    }
   | { type: 'MODAL_ACTION'; id: string }
   | { type: 'MODAL_DISMISS' }
   | { type: 'TOAST_ACTION'; id: string }
   | { type: 'ITINERARY_DAY'; day: number }
   | { type: 'ITINERARY_SEARCH'; query: string }
+  | {
+      type: 'ITINERARY_SEARCH_HERE'
+      minLat: number
+      maxLat: number
+      minLng: number
+      maxLng: number
+    }
   | { type: 'ITINERARY_NEXT' }
   | { type: 'ITINERARY_DEPARTURE_CANCEL' }
   | { type: 'NATIVE_LAYOUT'; screenHeight: number }
   | { type: 'KEYBOARD_VISIBLE'; visible: boolean; height?: number }
   /** 같은 탭 재탭 시 탭 루트 경로로 이동 */
   | { type: 'TAB_POP_TO_ROOT'; path: string }
+  /** 로그인 후 등 — 히스토리 위에 경로 push */
+  | { type: 'NAVIGATE_WEB_PATH'; path: string }
   /** 웹 React Query 캐시 무효화 */
   | { type: 'INVALIDATE_DATA'; scopes: Array<'plans' | 'currentTrip'> }
   | {

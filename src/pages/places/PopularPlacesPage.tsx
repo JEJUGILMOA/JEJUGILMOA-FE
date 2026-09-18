@@ -12,8 +12,8 @@ import {
   placePath,
   type PlaceCategoryLabel,
 } from '@/constants'
-import { usePlacesInfiniteQuery, usePopularPlacesInfiniteQuery } from '@/features/places/hooks'
-import type { PlaceListItem, PopularPlace } from '@/features/places/types'
+import { usePopularPlacesInfiniteQuery } from '@/features/places/hooks'
+import type { PopularPlace } from '@/features/places/types'
 import { useLoadMoreSentinel } from '@/hooks/useLoadMoreSentinel'
 import { PopularPlaceListCard } from './components/PopularPlaceListCard/PopularPlaceListCard'
 import {
@@ -63,16 +63,6 @@ function mapPopularPlace(place: PopularPlace): PopularPlaceListItem {
   }
 }
 
-function mapBrowsePlace(place: PlaceListItem): PopularPlaceListItem {
-  return {
-    id: place.id,
-    title: place.name,
-    category: place.categoryName,
-    address: place.address,
-    imageUrls: place.imageUrl ? [place.imageUrl] : [],
-  }
-}
-
 export function PopularPlacesPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -92,32 +82,21 @@ export function PopularPlacesPage() {
   const isUnsupportedCategory = !isAllFilter && !apiCategoryName
 
   const popularQuery = usePopularPlacesInfiniteQuery(
-    { size: POPULAR_PAGE_LIMIT },
-    { enabled: isAllFilter },
-  )
-  const placesQuery = usePlacesInfiniteQuery(
     { category: apiCategoryName, size: POPULAR_PAGE_LIMIT },
-    { enabled: !isAllFilter && Boolean(apiCategoryName) },
+    { enabled: !isUnsupportedCategory },
   )
-
-  const activeQuery = isAllFilter ? popularQuery : placesQuery
 
   const places = useMemo(() => {
     if (isUnsupportedCategory) return []
-
-    if (isAllFilter) {
-      return (popularQuery.data?.pages.flatMap((page) => page.content) ?? []).map(mapPopularPlace)
-    }
-
-    return (placesQuery.data?.pages.flatMap((page) => page.content) ?? []).map(mapBrowsePlace)
-  }, [isAllFilter, isUnsupportedCategory, placesQuery.data, popularQuery.data])
+    return (popularQuery.data?.pages.flatMap((page) => page.content) ?? []).map(mapPopularPlace)
+  }, [isUnsupportedCategory, popularQuery.data])
 
   const sentinelRef = useLoadMoreSentinel({
     enabled: !isUnsupportedCategory && places.length > 0,
-    hasNextPage: Boolean(activeQuery.hasNextPage),
-    isFetchingNextPage: activeQuery.isFetchingNextPage,
+    hasNextPage: Boolean(popularQuery.hasNextPage),
+    isFetchingNextPage: popularQuery.isFetchingNextPage,
     onLoadMore: () => {
-      void activeQuery.fetchNextPage()
+      void popularQuery.fetchNextPage()
     },
   })
 
@@ -128,7 +107,8 @@ export function PopularPlacesPage() {
     ? '다른 카테고리를 선택해 보세요.'
     : '다른 카테고리를 선택하거나 전체를 눌러 보세요.'
 
-  const showInitialLoading = !isUnsupportedCategory && activeQuery.isPending && places.length === 0
+  const showInitialLoading =
+    !isUnsupportedCategory && popularQuery.isPending && places.length === 0
 
   return (
     <div className={pageStyle}>
@@ -154,11 +134,11 @@ export function PopularPlacesPage() {
 
       {showInitialLoading ? <Loading label="인기 관광지 불러오는 중" /> : null}
 
-      {!isUnsupportedCategory && activeQuery.isError && places.length === 0 ? (
-        <ErrorState onRetry={() => void activeQuery.refetch()} />
+      {!isUnsupportedCategory && popularQuery.isError && places.length === 0 ? (
+        <ErrorState onRetry={() => void popularQuery.refetch()} />
       ) : null}
 
-      {!isUnsupportedCategory && !showInitialLoading && !activeQuery.isError ? (
+      {!isUnsupportedCategory && !showInitialLoading && !popularQuery.isError ? (
         places.length > 0 ? (
           <>
             <div className={listStyle} role="list" aria-label="인기 관광지 목록">
@@ -175,7 +155,7 @@ export function PopularPlacesPage() {
               ))}
             </div>
             <div ref={sentinelRef} className={loadMoreSentinelStyle} aria-hidden />
-            {activeQuery.isFetchingNextPage ? (
+            {popularQuery.isFetchingNextPage ? (
               <p className={loadMoreStatusStyle}>더 불러오는 중…</p>
             ) : null}
           </>

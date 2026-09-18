@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { Pencil } from 'lucide-react'
 import { PageHeader } from '@/components/ui/PageHeader/PageHeader'
 import { TextField } from '@/components/ui/TextField/TextField'
 import { Loading } from '@/components/ui/Loading/Loading'
@@ -11,7 +10,6 @@ import { ROUTES } from '@/constants'
 import { ProfileAvatar } from '@/pages/mypage/components/ProfileAvatar/ProfileAvatar'
 import {
   avatarWrapStyle,
-  editBadgeStyle,
   emailReadonlyStyle,
   fieldGroupStyle,
   fieldLabelStyle,
@@ -83,14 +81,6 @@ export function ProfileEditPage() {
 
       <div className={avatarWrapStyle}>
         <ProfileAvatar nickname={nickname || profile.nickname} imageUrl={profile.profileImageUrl} size="md" />
-        <button
-          type="button"
-          className={editBadgeStyle}
-          aria-label="프로필 사진 변경"
-          onClick={() => toast.info('사진 변경은 곧 지원될 예정이에요.')}
-        >
-          <Pencil size={12} strokeWidth={2} />
-        </button>
       </div>
 
       <div className={fieldGroupStyle}>

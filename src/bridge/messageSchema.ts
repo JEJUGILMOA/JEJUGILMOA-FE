@@ -25,7 +25,7 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('OPEN_EXTERNAL_URL'),
-    /** http(s)뿐 아니라 nmap:// 등 앱 스킴 허용 */
+    /** http(s)뿐 아니라 maps:// · geo: 등 앱 스킴 허용 */
     url: z.string().min(1),
     fallbackUrl: z.string().min(1).optional(),
   }),
@@ -296,6 +296,47 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     message: z.string(),
   }),
   z.object({
+    type: z.literal('MAP_PLACE_DETAIL'),
+    placeId: z.string(),
+    name: z.string().optional(),
+    address: z.string().optional(),
+    description: z.string().optional(),
+    imageUrl: z.string().optional(),
+    imageUrls: z.array(z.string()).optional(),
+    photoCount: z.number().optional(),
+    phone: z.string().optional(),
+    homepage: z.string().optional(),
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    categoryName: z.string().optional(),
+    error: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('MAP_PLACE_SEARCH_RESULTS'),
+    keyword: z.string(),
+    places: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        address: z.string().optional(),
+        imageUrl: z.string().optional(),
+        categoryName: z.string().optional(),
+      }),
+    ),
+    error: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('MAP_FAVORITE_PLACE_IDS'),
+    placeIds: z.array(z.string()),
+    error: z.string().optional(),
+  }),
+  z.object({
+    type: z.literal('MAP_PLACE_FAVORITE_RESULT'),
+    placeId: z.string(),
+    isFavorite: z.boolean(),
+    error: z.string().optional(),
+  }),
+  z.object({
     type: z.literal('SET_MODAL'),
     visible: z.boolean(),
     id: z.string().optional(),
@@ -339,6 +380,7 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     isSelectingDeparture: z.boolean().optional(),
     nextLabel: z.string().optional(),
     sheetTitle: z.string().optional(),
+    showSearchHere: z.boolean().optional(),
   }),
   z.object({ type: z.literal('REQUEST_APPLE_LOGIN') }),
   z.object({
@@ -360,6 +402,24 @@ export const webToNativeMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('REFRESH_TABS'),
     tabs: z.array(z.enum(['plan', 'map', 'home', 'record', 'my'])).min(1),
   }),
+  z.object({
+    type: z.literal('OPEN_VISITED_PLACE_SHEET'),
+    place: z.object({
+      placeId: z.string(),
+      placeName: z.string(),
+      address: z.string(),
+      visitDate: z.string(),
+      note: z.string(),
+      photoUrls: z.array(z.string()),
+    }),
+  }),
+  z.object({ type: z.literal('CLOSE_VISITED_PLACE_SHEET') }),
+  z.object({
+    type: z.literal('OPEN_NATIVE_PHOTO_VIEWER'),
+    photoUrls: z.array(z.string()).min(1),
+    initialIndex: z.number().optional(),
+  }),
+  z.object({ type: z.literal('CLOSE_NATIVE_PHOTO_VIEWER') }),
 ])
 
 export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
@@ -434,6 +494,20 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
     tripId: z.number(),
   }),
   z.object({
+    type: z.literal('REQUEST_PLACE_DETAIL'),
+    placeId: z.string(),
+  }),
+  z.object({
+    type: z.literal('REQUEST_PLACE_SEARCH'),
+    keyword: z.string(),
+  }),
+  z.object({ type: z.literal('REQUEST_FAVORITE_PLACE_IDS') }),
+  z.object({
+    type: z.literal('REQUEST_TOGGLE_PLACE_FAVORITE'),
+    placeId: z.string(),
+    nextFavorite: z.boolean(),
+  }),
+  z.object({
     type: z.literal('MODAL_ACTION'),
     id: z.string(),
   }),
@@ -450,6 +524,13 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('ITINERARY_SEARCH'),
     query: z.string(),
   }),
+  z.object({
+    type: z.literal('ITINERARY_SEARCH_HERE'),
+    minLat: z.number(),
+    maxLat: z.number(),
+    minLng: z.number(),
+    maxLng: z.number(),
+  }),
   z.object({ type: z.literal('ITINERARY_NEXT') }),
   z.object({ type: z.literal('ITINERARY_DEPARTURE_CANCEL') }),
   z.object({
@@ -464,6 +545,10 @@ export const nativeToWebMessageSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('TAB_POP_TO_ROOT'),
     path: z.enum(['/', '/plan', '/record', '/my', '/map']),
+  }),
+  z.object({
+    type: z.literal('NAVIGATE_WEB_PATH'),
+    path: z.string().min(1),
   }),
   z.object({
     type: z.literal('INVALIDATE_DATA'),

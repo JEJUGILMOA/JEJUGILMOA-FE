@@ -260,13 +260,13 @@ function formatApiDate(date: string): string {
  * (실제로 recordId 7에서 확인됨) — null이면 시작일만으로 라벨을 만든다. 이걸 안 막으면
  * `null.replaceAll(...)`에서 터져서, 이 기록이 섞인 목록 전체(`Promise.all(...).map(...)`)가
  * 통째로 실패해 "둘러보기"가 텅 비어 보이는 문제가 있었다.
+ *
+ * 같은 날이어도 시작일·종료일을 그대로 `~`로 보여준다.
  */
-function buildTripDateRangeLabel(startDate: string, endDate: string | null, visitedPlaceCount: number): string {
-  const visitedLabel = `${visitedPlaceCount}곳 방문`
+function buildTripDateRangeLabel(startDate: string, endDate: string | null): string {
   const start = formatApiDate(startDate)
-  if (!endDate) return `${start} · ${visitedLabel}`
-  const end = formatApiDate(endDate)
-  return start === end ? `${start} · ${visitedLabel}` : `${start} - ${end.slice(5)} · ${visitedLabel}`
+  if (!endDate) return start
+  return `${start} ~ ${formatApiDate(endDate)}`
 }
 
 function mapDetailToSavedRecord(detail: TravelRecordDetailResponse): SavedRecord {
@@ -279,7 +279,7 @@ function mapDetailToSavedRecord(detail: TravelRecordDetailResponse): SavedRecord
     thumbnailUrl: detail.thumbnailUrl ?? photoUrls[0] ?? null,
     photoUrls,
     imageObjectKeyByUrl: mapImageObjectKeyByUrl(detail.allImages),
-    tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate, detail.places.length),
+    tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate),
     visitedPlaces: mapDetailToVisitedPlaces(detail.places),
     visitedPlaceCount: detail.places.length,
     photoCount: photoUrls.length,
@@ -312,7 +312,7 @@ function mapDetailToExploreRecord(
     linkedPlanItinerary: detail.plan ? buildItineraryFromVisitedPlaces(visitedPlaces) : null,
     path: [],
     photoUrls,
-    tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate, detail.places.length),
+    tripDateRangeLabel: buildTripDateRangeLabel(detail.actualStartDate, detail.actualEndDate),
     visitedPlaces,
     createdAt: detail.createdAt,
     isBookmarked: favoriteIds.has(id),

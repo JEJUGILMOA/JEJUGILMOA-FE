@@ -1,11 +1,26 @@
 import { useNavigate } from 'react-router'
-import { BookOpen, ChevronRight, MapPin, Settings, Share2, Sparkles, UserX } from 'lucide-react'
+import {
+  BookOpen,
+  ChevronRight,
+  FileText,
+  Headset,
+  MapPin,
+  Settings,
+  Share2,
+  Sparkles,
+  UserX,
+} from 'lucide-react'
 import { getErrorMessage } from '@/api/error'
 import { Skeleton } from '@/components/ui/Skeleton/Skeleton'
 import { openLogin } from '@/features/auth/openLogin'
 import { useMyProfileQuery } from '@/features/auth/hooks'
 import { useAuthStore } from '@/stores/authStore'
-import { ROUTES } from '@/constants'
+import {
+  EXTERNAL_PRIVACY_POLICY_URL,
+  EXTERNAL_SUPPORT_URL,
+  ROUTES,
+} from '@/constants'
+import { openExternalUrl } from '@/utils/openExternalUrl'
 import { MenuListItem } from '@/pages/mypage/components/MenuListItem/MenuListItem'
 import { ProfileAvatar } from '@/pages/mypage/components/ProfileAvatar/ProfileAvatar'
 import {
@@ -30,6 +45,20 @@ const MENU_ITEMS = [
   { label: '공유기록', to: ROUTES.mySharedRecords, icon: Share2 },
   { label: '차단 관리', to: ROUTES.myBlocks, icon: UserX },
   { label: '설정', to: ROUTES.mySettings, icon: Settings },
+] as const
+
+/** 비로그인에서도 약관·고객센터 접근 가능 (탈퇴는 계정 있을 때만) */
+const GUEST_POLICY_ITEMS = [
+  {
+    label: '약관 및 정책',
+    icon: FileText,
+    onClick: () => openExternalUrl(EXTERNAL_PRIVACY_POLICY_URL),
+  },
+  {
+    label: '고객센터',
+    icon: Headset,
+    onClick: () => openExternalUrl(EXTERNAL_SUPPORT_URL),
+  },
 ] as const
 
 export function MyPage() {
@@ -100,7 +129,7 @@ export function MyPage() {
         </div>
       </button>
 
-      {!isAuthenticated ? null : (
+      {isAuthenticated ? (
         <div className={menuListStyle}>
           {MENU_ITEMS.flatMap(({ label, to, icon: Icon }, index) => {
             const item = (
@@ -115,7 +144,22 @@ export function MyPage() {
             return [<hr key={`divider-${to}`} className={menuDividerStyle} />, item]
           })}
         </div>
-      )}
+      ) : isAuthResolved ? (
+        <div className={menuListStyle}>
+          {GUEST_POLICY_ITEMS.flatMap(({ label, icon: Icon, onClick }, index) => {
+            const item = (
+              <MenuListItem
+                key={label}
+                label={label}
+                icon={<Icon size={15} strokeWidth={2} />}
+                onClick={onClick}
+              />
+            )
+            if (index === 0) return [item]
+            return [<hr key={`divider-${label}`} className={menuDividerStyle} />, item]
+          })}
+        </div>
+      ) : null}
     </div>
   )
 }

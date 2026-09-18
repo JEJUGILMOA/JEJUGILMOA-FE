@@ -3,6 +3,8 @@ import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 const SWIPE_THRESHOLD_PX = 40
 /** 이 거리 이상 움직이면 탭이 아님 (스크롤·스와이프 의도) */
 const TAP_SLOP_PX = 14
+/** 이 시간보다 길게 누르면 탭이 아님 (롱프레스로 전체보기 열리는 것 방지) */
+const MAX_TAP_DURATION_MS = 280
 
 type DragCarouselOptions = {
   total: number
@@ -18,6 +20,7 @@ export function useDragCarousel({ total, index, onIndexChange, onTap }: DragCaro
   const [isDragging, setIsDragging] = useState(false)
   const startXRef = useRef<number | null>(null)
   const startYRef = useRef<number | null>(null)
+  const startTimeRef = useRef(0)
   const dragOffsetRef = useRef(0)
   const axisLockRef = useRef<'x' | 'y' | null>(null)
   const movedBeyondSlopRef = useRef(false)
@@ -33,6 +36,7 @@ export function useDragCarousel({ total, index, onIndexChange, onTap }: DragCaro
     }
     startXRef.current = null
     startYRef.current = null
+    startTimeRef.current = 0
     dragOffsetRef.current = 0
     axisLockRef.current = null
     movedBeyondSlopRef.current = false
@@ -45,6 +49,7 @@ export function useDragCarousel({ total, index, onIndexChange, onTap }: DragCaro
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     startXRef.current = event.clientX
     startYRef.current = event.clientY
+    startTimeRef.current = Date.now()
     dragOffsetRef.current = 0
     axisLockRef.current = null
     movedBeyondSlopRef.current = false
@@ -90,6 +95,8 @@ export function useDragCarousel({ total, index, onIndexChange, onTap }: DragCaro
     const offset = dragOffsetRef.current
     const axis = axisLockRef.current
     const moved = movedBeyondSlopRef.current
+    const heldMs = Date.now() - startTimeRef.current
+    const isQuickTap = !moved && axis == null && heldMs <= MAX_TAP_DURATION_MS
 
     if (axis === 'x' && total > 1) {
       if (offset <= -SWIPE_THRESHOLD_PX && index < total - 1) {
@@ -97,7 +104,7 @@ export function useDragCarousel({ total, index, onIndexChange, onTap }: DragCaro
       } else if (offset >= SWIPE_THRESHOLD_PX && index > 0) {
         onIndexChange(index - 1)
       }
-    } else if (!moved && axis == null) {
+    } else if (isQuickTap) {
       onTap?.()
     }
 

@@ -58,6 +58,7 @@ export const ROUTES = {
 
 /** 약관 및 정책 / 고객센터 (외부 사이트) */
 export const EXTERNAL_PRIVACY_POLICY_URL = 'https://www.gilmoa.site/privacy-policy'
+export const EXTERNAL_TERMS_URL = 'https://www.gilmoa.site/terms'
 export const EXTERNAL_SUPPORT_URL = 'https://www.gilmoa.site/support'
 
 export function placePath(placeId: string) {

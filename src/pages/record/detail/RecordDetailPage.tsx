@@ -24,6 +24,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { RecordManageSheet } from '@/pages/record/components/RecordManageSheet'
 import { ReportRecordModal } from '@/pages/record/components/ReportRecordModal'
 import { PhotoCarousel } from './components/PhotoCarousel'
+import { ExpandableMemo } from './components/ExpandableMemo'
 import { RoutePreview } from './components/RoutePreview'
 import { VisitedPlaceList } from './components/VisitedPlaceList'
 import {
@@ -40,6 +41,7 @@ import {
   dateRangeStyle,
   infoStyle,
   linkedPlanButtonStyle,
+  metaRowStyle,
   metaStyle,
   pageStyle,
   photoBleedStyle,
@@ -47,7 +49,6 @@ import {
   reactionSummaryStyle,
   shareButtonStyle,
   subHeaderStyle,
-  summaryStyle,
   titleGroupStyle,
   titleStyle,
 } from './RecordDetailPage.css.ts'
@@ -90,7 +91,7 @@ function fromOwnRecord(record: SavedRecord, nickname: string, profileImageUrl: s
     authorName: nickname,
     authorProfileImageUrl: profileImageUrl,
     visibilityLabel: record.visibility === 'public' ? '전체 공개' : '비공개',
-    linkedPlanLabel: record.tripDateRangeLabel ? `${record.title} 계획 보기` : null,
+    linkedPlanLabel: record.tripId ? '계획 보기' : null,
     isOwn: true,
   }
 }
@@ -112,7 +113,7 @@ function fromExploreRecord(record: ExploreRecord): DetailViewModel {
     authorName: record.authorName,
     authorProfileImageUrl: record.authorProfileImageUrl,
     visibilityLabel: '전체 공개',
-    linkedPlanLabel: record.linkedPlanTitle ? `${record.linkedPlanTitle} 계획 보기` : null,
+    linkedPlanLabel: record.linkedPlanTitle ? '계획 보기' : null,
     isOwn: false,
   }
 }
@@ -310,41 +311,43 @@ export function RecordDetailPage() {
 
             <div className={titleGroupStyle}>
               <h1 className={titleStyle}>{view.title}</h1>
+
+              <div className={authorRowStyle}>
+                {view.authorProfileImageUrl ? (
+                  <img className={avatarImageStyle} src={view.authorProfileImageUrl} alt="" />
+                ) : (
+                  <span className={avatarStyle} aria-hidden>
+                    {view.authorName[0]}
+                  </span>
+                )}
+                <span className={authorNameStyle}>{view.authorName}</span>
+                <span className={authorTimeStyle}>
+                  {formatDistanceToNow(new Date(view.createdAt), { locale: ko, addSuffix: true })}
+                </span>
+              </div>
+
               {view.tripDateRangeLabel ? (
                 <p className={dateRangeStyle}>{view.tripDateRangeLabel}</p>
               ) : null}
             </div>
 
-            {view.linkedPlanLabel ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className={linkedPlanButtonStyle}
-                onClick={() => navigate(ROUTES.recordPlan(view.id))}
-              >
-                {view.linkedPlanLabel} <ChevronRight size={14} aria-hidden />
-              </Button>
-            ) : null}
+            {view.summary ? <ExpandableMemo text={view.summary} /> : null}
 
-            <p className={summaryStyle}>{view.summary}</p>
-
-            <div className={authorRowStyle}>
-              {view.authorProfileImageUrl ? (
-                <img className={avatarImageStyle} src={view.authorProfileImageUrl} alt="" />
-              ) : (
-                <span className={avatarStyle} aria-hidden>
-                  {view.authorName[0]}
-                </span>
-              )}
-              <span className={authorNameStyle}>{view.authorName}</span>
-              <span className={authorTimeStyle}>
-                {formatDistanceToNow(new Date(view.createdAt), { locale: ko, addSuffix: true })}
-              </span>
+            <div className={metaRowStyle}>
+              <p className={metaStyle}>
+                방문 장소 {view.visitedPlaces.length}곳 · 사진 {view.photoUrls.length}장
+              </p>
+              {view.linkedPlanLabel ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={linkedPlanButtonStyle}
+                  onClick={() => navigate(ROUTES.recordPlan(view.id))}
+                >
+                  {view.linkedPlanLabel} <ChevronRight size={14} aria-hidden />
+                </Button>
+              ) : null}
             </div>
-
-            <p className={metaStyle}>
-              방문 장소 {view.visitedPlaces.length}곳 · 사진 {view.photoUrls.length}장
-            </p>
 
             <div className={actionRowStyle}>
               {view.isOwn ? (

@@ -60,6 +60,8 @@ const authPageHandle = {
   title: '로그인',
   hideNav: true,
   flush: true,
+  showHeader: true,
+  showBack: true,
 } as const satisfies RouteHandle
 
 export const router = createBrowserRouter([

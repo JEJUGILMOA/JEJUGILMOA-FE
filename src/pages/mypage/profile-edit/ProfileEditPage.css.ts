@@ -29,27 +29,9 @@ export const saveButtonStyle = style([
 ])
 
 export const avatarWrapStyle = style({
-  position: 'relative',
   width: 74,
   height: 74,
   marginInline: 'auto',
-})
-
-export const editBadgeStyle = style({
-  position: 'absolute',
-  right: -2,
-  bottom: -2,
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  width: 30,
-  height: 30,
-  borderRadius: '50%',
-  border: `3px solid ${colors.surface[1]}`,
-  backgroundColor: colors.text[1],
-  color: colors.text[5],
-  cursor: 'pointer',
-  padding: 0,
 })
 
 export const fieldGroupStyle = style({
