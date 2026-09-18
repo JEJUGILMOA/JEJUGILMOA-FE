@@ -73,6 +73,7 @@ export function VisitedPlaceList({ places }: VisitedPlaceListProps) {
         <PlacePhotoModal
           photoUrls={openPlace.photoUrls}
           placeName={openPlace.placeName}
+          address={openPlace.address || undefined}
           note={openPlace.note || undefined}
           onClose={() => setOpenPlaceId(null)}
         />
