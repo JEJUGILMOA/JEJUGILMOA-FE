@@ -168,12 +168,27 @@ export const titleRecipe = recipe({
 })
 
 export const metaText = style({
+  display: 'block',
+  width: '100%',
+  minWidth: 0,
+  overflow: 'hidden',
+  whiteSpace: 'nowrap',
+  textOverflow: 'ellipsis',
   fontSize: '11px',
-  fontWeight: vars.fontWeight.regular,
+  fontWeight: vars.fontWeight.medium,
   lineHeight: vars.lineHeight.normal,
   letterSpacing: '-0.005em',
   color: colors.text[2],
 })
+
+export const captionText = style([
+  metaText,
+  {
+    overflow: 'visible',
+    whiteSpace: 'normal',
+    textOverflow: 'clip',
+  },
+])
 
 export const badgeStyle = style({
   display: 'inline-flex',
@@ -226,6 +241,14 @@ export const infoColumn = style({
   alignItems: 'flex-start',
   gap: '6px',
 })
+
+/**
+ * vertical/horizontal 변형 전용. 그 둘의 contentRecipe는 flexDirection:column이라
+ * infoColumn이 alignItems:flex-start 때문에 제일 긴 텍스트만큼만 너비를 갖는다 — 그래서
+ * 주소 말줄임(ellipsis)이 안 먹힌다. compact는 row라 infoColumn의 flex:1이 이미 너비를
+ * 채워주므로 이 클래스를 쓰면 안 된다(진짜 카드 폭보다 더 넓어지려 해서 레이아웃이 깨짐).
+ */
+export const infoColumnFill = style([infoColumn, { width: '100%' }])
 
 export const trailingColumn = style({
   display: 'flex',

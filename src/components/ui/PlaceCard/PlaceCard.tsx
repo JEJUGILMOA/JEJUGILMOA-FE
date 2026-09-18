@@ -6,10 +6,12 @@ import { cn } from '@/utils/cn'
 import {
   badgesRow,
   badgeStyle,
+  captionText,
   contentRecipe,
   distanceStyle,
   imageRecipe,
   infoColumn,
+  infoColumnFill,
   metaText,
   placeCardRecipe,
   ratingIcon,
@@ -42,6 +44,8 @@ export type PlaceCardProps = {
   rating?: number
   /** 부가 설명 (카테고리·주소 등) */
   meta?: string
+  /** meta 아래 한 줄 더 — 방문 메모 등 */
+  caption?: string
   /** 단일 뱃지 텍스트 (하위 호환). `badges`가 있으면 무시 */
   badge?: string
   /** Badge 컴포넌트로 렌더되는 뱃지 목록 */
@@ -91,6 +95,7 @@ export function PlaceCard({
   imageUrl,
   rating,
   meta,
+  caption,
   badge,
   badges,
   distance,
@@ -126,6 +131,7 @@ export function PlaceCard({
 
   const titleEl = title ? <h3 className={titleRecipe({ variant })}>{title}</h3> : null
   const metaEl = meta ? <span className={metaText}>{meta}</span> : null
+  const captionEl = caption ? <span className={captionText}>{caption}</span> : null
   const badgesEl =
     badges && badges.length > 0 ? (
       <div className={badgesRow}>
@@ -159,9 +165,10 @@ export function PlaceCard({
       </div>
     ) : (
       <div className={contentRecipe({ variant })}>
-        <div className={infoColumn}>
+        <div className={infoColumnFill}>
           {titleEl}
           {metaEl}
+          {captionEl}
           {badgesEl}
         </div>
         {ratingEl}

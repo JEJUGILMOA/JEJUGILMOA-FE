@@ -28,6 +28,9 @@ export const gridStyle = style({
   display: 'grid',
   gridTemplateColumns: '1fr 1fr',
   gap: vars.space[3],
+  // 기본값(stretch)이면 같은 행의 카드가 제일 큰 카드 높이에 맞춰 늘어나
+  // 메모 없는 카드 아래에 빈 공간이 생긴다 — 카드마다 자기 내용만큼만 높이를 갖게 함
+  alignItems: 'start',
 })
 
 export const collapseButtonStyle = style({
