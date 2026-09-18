@@ -2,87 +2,50 @@ import { style } from '@vanilla-extract/css'
 import { colors } from '@/styles/colors.css.ts'
 import { vars } from '@/styles/vars.css.ts'
 
-export const sectionTitleStyle = style({
+export const headerRowStyle = style({
+  display: 'flex',
+  alignItems: 'center',
   marginBottom: vars.space[3],
+})
+
+export const sectionTitleStyle = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space[1],
+  margin: 0,
   fontSize: vars.fontSize.lg,
   fontWeight: vars.fontWeight.semibold,
   color: colors.text[1],
 })
 
-export const listStyle = style({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: vars.space[4],
+export const countStyle = style({
+  fontSize: vars.fontSize.md,
+  fontWeight: vars.fontWeight.regular,
+  color: colors.text[4],
 })
 
-export const rowStyle = style({
-  display: 'flex',
+export const gridStyle = style({
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
   gap: vars.space[3],
+  // 기본값(stretch)이면 같은 행의 카드가 제일 큰 카드 높이에 맞춰 늘어나
+  // 메모 없는 카드 아래에 빈 공간이 생긴다 — 카드마다 자기 내용만큼만 높이를 갖게 함
+  alignItems: 'start',
 })
 
-export const thumbnailStyle = style({
-  display: 'flex',
-  flexShrink: 0,
-  width: '64px',
-  height: '64px',
-  borderRadius: vars.radius.sm,
-  overflow: 'hidden',
-  backgroundColor: colors.surface[5],
-})
-
-export const thumbnailButtonStyle = style([
-  thumbnailStyle,
-  {
-    padding: 0,
-    border: 'none',
-    cursor: 'pointer',
-  },
-])
-
-export const thumbnailImageStyle = style({
-  width: '100%',
-  height: '100%',
-})
-
-export const placeNameStyle = style({
-  fontSize: vars.fontSize.sm,
-  fontWeight: vars.fontWeight.semibold,
-  color: colors.text[1],
-})
-
-export const noteStyle = style({
-  marginTop: vars.space[1],
-  fontSize: vars.fontSize.sm,
-  color: colors.text[3],
-})
-
-export const addressStyle = style({
-  marginTop: vars.space[1],
-  fontSize: vars.fontSize.xs,
-  color: colors.text[4],
-})
-
-export const metaRowStyle = style({
+export const collapseButtonStyle = style({
   display: 'flex',
   alignItems: 'center',
-  gap: vars.space[2],
-  marginTop: vars.space[1],
-})
-
-export const metaTextStyle = style({
-  fontSize: vars.fontSize.xs,
-  color: colors.text[4],
-})
-
-export const ratingStyle = style({
-  display: 'inline-flex',
-  alignItems: 'center',
+  justifyContent: 'center',
   gap: '2px',
-  fontSize: vars.fontSize.xs,
-  fontWeight: vars.fontWeight.semibold,
+  width: '100%',
+  marginTop: vars.space[3],
+  padding: vars.space[2],
+  border: 'none',
+  borderRadius: vars.radius.full,
+  backgroundColor: colors.surface[4],
+  fontSize: vars.fontSize.sm,
+  fontWeight: vars.fontWeight.medium,
   color: colors.text[3],
-})
-
-export const ratingIconStyle = style({
-  color: '#FFAC00',
+  cursor: 'pointer',
 })
