@@ -1,85 +1,72 @@
 import { useState } from 'react'
-import { Star } from 'lucide-react'
-import { SafeImage } from '@/components/ui/ImagePlaceholder/ImagePlaceholder'
+import { ChevronDown, ChevronUp } from 'lucide-react'
+import { PlaceCard } from '@/components/ui/PlaceCard/PlaceCard'
 import type { VisitedPlaceRecord } from '@/features/records/types'
 import { PlacePhotoModal } from './PlacePhotoModal'
 import {
-  addressStyle,
-  listStyle,
-  metaRowStyle,
-  metaTextStyle,
-  noteStyle,
-  placeNameStyle,
-  ratingIconStyle,
-  ratingStyle,
-  rowStyle,
+  collapseButtonStyle,
+  countStyle,
+  gridStyle,
+  headerRowStyle,
   sectionTitleStyle,
-  thumbnailButtonStyle,
-  thumbnailImageStyle,
-  thumbnailStyle,
 } from './VisitedPlaceList.css.ts'
 
 export type VisitedPlaceListProps = {
   places: VisitedPlaceRecord[]
 }
 
-/** STEP 08.10: 방문 장소별 메모 (사진 + 글). 사진 클릭 시 그 장소의 사진 전체를 팝업으로 본다 */
+/** 접었을 때 보여주는 카드 개수. 넘치면 "전체보기"로 나머지를 같은 자리에서 펼친다 */
+const PREVIEW_COUNT = 4
+
+/** STEP 08.10: 방문 장소 카드 그리드 (사진 클릭 시 그 장소의 사진 전체를 팝업으로 본다) */
 export function VisitedPlaceList({ places }: VisitedPlaceListProps) {
   const [openPlaceId, setOpenPlaceId] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(false)
   const openPlace = places.find((place) => place.placeId === openPlaceId) ?? null
 
   if (places.length === 0) return null
 
+  const hasMore = places.length > PREVIEW_COUNT
+  const visiblePlaces = expanded ? places : places.slice(0, PREVIEW_COUNT)
+
   return (
     <section>
-      <h2 className={sectionTitleStyle}>방문 장소</h2>
-      <div className={listStyle}>
-        {places.map((place) => (
-          <div key={place.placeId} className={rowStyle}>
-            {place.photoUrls[0] ? (
-              <button
-                type="button"
-                className={thumbnailButtonStyle}
-                aria-label={`${place.placeName} 사진 보기`}
-                onClick={() => setOpenPlaceId(place.placeId)}
-              >
-                <SafeImage
-                  src={place.photoUrls[0]}
-                  className={thumbnailImageStyle}
-                  placeholderSize="sm"
-                  showPlaceholderLabel={false}
-                />
-              </button>
-            ) : (
-              <div className={thumbnailStyle}>
-                <SafeImage
-                  src={undefined}
-                  placeholderSize="sm"
-                  showPlaceholderLabel={false}
-                />
-              </div>
-            )}
-            <div>
-              <p className={placeNameStyle}>{place.placeName}</p>
-              {place.address ? <p className={addressStyle}>{place.address}</p> : null}
-              {place.rating !== null || place.stayMinutes !== null ? (
-                <div className={metaRowStyle}>
-                  {place.rating !== null ? (
-                    <span className={ratingStyle}>
-                      <Star size={12} className={ratingIconStyle} fill="currentColor" strokeWidth={0} />
-                      {place.rating.toFixed(1)}
-                    </span>
-                  ) : null}
-                  {place.stayMinutes !== null ? (
-                    <span className={metaTextStyle}>{place.stayMinutes}분 머묾</span>
-                  ) : null}
-                </div>
-              ) : null}
-              {place.note ? <p className={noteStyle}>{place.note}</p> : null}
-            </div>
-          </div>
+      <div className={headerRowStyle}>
+        <h2 className={sectionTitleStyle}>
+          방문 장소 <span className={countStyle}>{places.length}</span>
+        </h2>
+      </div>
+
+      <div className={gridStyle}>
+        {visiblePlaces.map((place) => (
+          <PlaceCard
+            key={place.placeId}
+            title={place.placeName}
+            imageUrl={place.photoUrls[0]}
+            meta={place.address || undefined}
+            rating={place.rating ?? undefined}
+            onClick={() => setOpenPlaceId(place.placeId)}
+          />
         ))}
       </div>
+
+      {hasMore ? (
+        <button
+          type="button"
+          className={collapseButtonStyle}
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          {expanded ? (
+            <>
+              접기 <ChevronUp size={14} aria-hidden />
+            </>
+          ) : (
+            <>
+              전체보기 <ChevronDown size={14} aria-hidden />
+            </>
+          )}
+        </button>
+      ) : null}
 
       {openPlace ? (
         <PlacePhotoModal
